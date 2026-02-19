@@ -1,0 +1,24 @@
+{
+  "name": "liquidator-web",
+  "version": "1.0.0",
+  "description": "长桥一键清仓工具 - 本地安全运行",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [
+    "longbridge",
+    "trading",
+    "liquidate"
+  ],
+  "author": "0xechan",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.22.1",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
