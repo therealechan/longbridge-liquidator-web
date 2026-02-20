@@ -104,3 +104,66 @@ describe('POST /api/buyback', () => {
     assert.ok([400, 503].includes(res.status));
   });
 });
+
+describe('POST /api/conditional-order', () => {
+  it('rejects missing positions array', async () => {
+    const res = await request(app)
+      .post('/api/conditional-order')
+      .send({ app_key: 'k', app_secret: 's', orderConfig: { type: 'stop-loss', percentage: 5, timeInForce: 'Day' } });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('rejects missing orderConfig', async () => {
+    const res = await request(app)
+      .post('/api/conditional-order')
+      .send({
+        app_key: 'k', app_secret: 's',
+        positions: [{ symbol: 'AAPL.US', quantity: 10, currentPrice: 150 }],
+      });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('rejects invalid type', async () => {
+    const res = await request(app)
+      .post('/api/conditional-order')
+      .send({
+        app_key: 'k', app_secret: 's',
+        positions: [{ symbol: 'AAPL.US', quantity: 10, currentPrice: 150 }],
+        orderConfig: { type: 'invalid', percentage: 5, timeInForce: 'Day' },
+      });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('rejects percentage out of range (0)', async () => {
+    const res = await request(app)
+      .post('/api/conditional-order')
+      .send({
+        app_key: 'k', app_secret: 's',
+        positions: [{ symbol: 'AAPL.US', quantity: 10, currentPrice: 150 }],
+        orderConfig: { type: 'stop-loss', percentage: 0, timeInForce: 'Day' },
+      });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('rejects percentage out of range (100)', async () => {
+    const res = await request(app)
+      .post('/api/conditional-order')
+      .send({
+        app_key: 'k', app_secret: 's',
+        positions: [{ symbol: 'AAPL.US', quantity: 10, currentPrice: 150 }],
+        orderConfig: { type: 'stop-loss', percentage: 100, timeInForce: 'Day' },
+      });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('rejects invalid symbol', async () => {
+    const res = await request(app)
+      .post('/api/conditional-order')
+      .send({
+        app_key: 'k', app_secret: 's',
+        positions: [{ symbol: '<script>', quantity: 10, currentPrice: 150 }],
+        orderConfig: { type: 'stop-loss', percentage: 5, timeInForce: 'Day' },
+      });
+    assert.ok([400, 503].includes(res.status));
+  });
+});

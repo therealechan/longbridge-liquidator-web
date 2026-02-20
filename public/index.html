@@ -95,7 +95,25 @@
         ratioQuarter: '1/4',
         error: '错误',
         ok: '确定',
-        dailyPnl: '当日盈亏'
+        dailyPnl: '当日盈亏',
+        conditionalOrder: '条件卖出',
+        stopLoss: '止损',
+        takeProfit: '止盈',
+        trailingStop: '追踪止损',
+        condPercentage: '百分比',
+        condTimeInForce: '有效期',
+        condTifDay: '当日有效',
+        condTifGtc: '撤单前有效',
+        condPreview: '预览',
+        condTriggerPrice: '触发价',
+        condTrailingPct: '追踪幅度',
+        condCurrentPrice: '现价',
+        condSubmit: '提交条件单',
+        condConfirmTitle: '确认提交条件单？',
+        condWarning: '将为以下持仓设置条件卖出单',
+        condSuccess: '条件单提交完成',
+        condPartialFailure: '部分条件单提交失败',
+        condOrderCount: '提交订单'
       },
       'zh-TW': {
         title: '一鍵清倉',
@@ -170,7 +188,25 @@
         ratioQuarter: '1/4',
         error: '錯誤',
         ok: '確定',
-        dailyPnl: '當日盈虧'
+        dailyPnl: '當日盈虧',
+        conditionalOrder: '條件賣出',
+        stopLoss: '止損',
+        takeProfit: '止盈',
+        trailingStop: '追蹤止損',
+        condPercentage: '百分比',
+        condTimeInForce: '有效期',
+        condTifDay: '當日有效',
+        condTifGtc: '撤單前有效',
+        condPreview: '預覽',
+        condTriggerPrice: '觸發價',
+        condTrailingPct: '追蹤幅度',
+        condCurrentPrice: '現價',
+        condSubmit: '提交條件單',
+        condConfirmTitle: '確認提交條件單？',
+        condWarning: '將為以下持倉設置條件賣出單',
+        condSuccess: '條件單提交完成',
+        condPartialFailure: '部分條件單提交失敗',
+        condOrderCount: '提交訂單'
       },
       'en': {
         title: 'Liquidate All',
@@ -245,7 +281,25 @@
         ratioQuarter: '1/4',
         error: 'Error',
         ok: 'OK',
-        dailyPnl: 'Daily P/L'
+        dailyPnl: 'Daily P/L',
+        conditionalOrder: 'Conditional Sell',
+        stopLoss: 'Stop Loss',
+        takeProfit: 'Take Profit',
+        trailingStop: 'Trailing Stop',
+        condPercentage: 'Percentage',
+        condTimeInForce: 'Time in Force',
+        condTifDay: 'Day',
+        condTifGtc: 'Good Til Canceled',
+        condPreview: 'Preview',
+        condTriggerPrice: 'Trigger Price',
+        condTrailingPct: 'Trailing %',
+        condCurrentPrice: 'Current',
+        condSubmit: 'Submit Orders',
+        condConfirmTitle: 'Confirm Conditional Orders?',
+        condWarning: 'Will set conditional sell orders for the following positions',
+        condSuccess: 'Conditional Orders Submitted',
+        condPartialFailure: 'Some conditional orders failed',
+        condOrderCount: 'Orders Submitted'
       }
     };
     
@@ -824,6 +878,56 @@
       color: white;
     }
 
+    .ratio-btn.active-warning {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-foreground);
+    }
+
+    .cond-form-group {
+      margin-bottom: 12px;
+    }
+
+    .cond-form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .cond-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--background);
+      color: var(--foreground);
+      font-size: 14px;
+      font-family: 'Geist Mono', monospace;
+    }
+
+    .cond-input:focus {
+      outline: none;
+      border-color: var(--foreground);
+    }
+
+    .cond-preview-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cond-preview-item:last-child { border-bottom: none; }
+
+    .cond-preview-arrow {
+      color: var(--muted);
+      margin: 0 6px;
+    }
+
     .modal-actions {
       display: flex;
       gap: 10px;
@@ -1273,6 +1377,10 @@
         <i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i>
         <span data-i18n="liquidate">一键清仓</span>
       </button>
+      <button class="btn btn-primary" id="conditionalBtn" onclick="openConditionalModal()" style="display: none; width: 100%; padding: 14px; font-weight: 600; margin-top: 8px; background: transparent; color: var(--foreground); border: 1px solid var(--border);">
+        <i data-lucide="shield" class="btn-icon" style="width: 16px; height: 16px;"></i>
+        <span data-i18n="conditionalOrder">条件卖出</span>
+      </button>
       <button class="btn btn-primary" id="buybackBtn" onclick="openBuybackModal()" style="display: none; width: 100%; padding: 14px; font-weight: 600; margin-top: 8px; background: var(--success); color: white;">
         <i data-lucide="shopping-cart" class="btn-icon" style="width: 16px; height: 16px;"></i>
         <span data-i18n="buyback">一键买入</span>
@@ -1408,6 +1516,50 @@
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeBuybackModal()" id="buybackModalCancelBtn">取消</button>
         <button class="btn-modal-danger" onclick="confirmBuyback()" id="buybackModalConfirmBtn" style="background: var(--success);">确认买入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conditional Order Modal -->
+  <div class="modal-overlay" id="conditionalModal" onclick="closeConditionalModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-title" style="color: var(--foreground);">
+        <i data-lucide="shield" style="width: 18px; height: 18px;"></i>
+        <span id="condModalTitle">条件卖出</span>
+      </div>
+      <div class="modal-warning-banner" style="background: var(--surface); border-color: var(--border); color: var(--muted);">
+        <i data-lucide="alert-circle" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+        <span id="condModalWarning">将为以下持仓设置条件卖出单</span>
+      </div>
+
+      <div class="cond-form-group">
+        <label class="cond-form-label" id="condTypeLabel">类型</label>
+        <div class="ratio-selector" id="condTypeSelector"></div>
+      </div>
+
+      <div class="cond-form-group">
+        <label class="cond-form-label" id="condPctLabel">百分比</label>
+        <input type="number" class="cond-input" id="condPctInput" min="0.1" max="99.9" step="0.1" value="5" oninput="updateConditionalPreview()">
+      </div>
+
+      <div class="cond-form-group">
+        <label class="cond-form-label" id="condTifLabel">有效期</label>
+        <div class="ratio-selector" id="condTifSelector"></div>
+      </div>
+
+      <div class="cond-form-group">
+        <label class="cond-form-label" id="condQtyLabel">数量</label>
+        <div class="ratio-selector" id="condRatioSelector"></div>
+      </div>
+
+      <div class="cond-form-group">
+        <label class="cond-form-label" id="condPreviewLabel">预览</label>
+        <div class="modal-positions" id="condPreviewList" style="max-height: 180px;"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeConditionalModal()" id="condCancelBtn">取消</button>
+        <button class="btn-modal-danger" onclick="confirmConditionalOrder()" id="condSubmitBtn" style="background: var(--accent); color: var(--accent-foreground);">提交条件单</button>
       </div>
     </div>
   </div>
@@ -1770,6 +1922,7 @@
       btn.disabled = !hasSelection;
       btn.style.opacity = hasSelection ? '' : '0.5';
       btn.style.cursor = hasSelection ? '' : 'not-allowed';
+      if (typeof updateConditionalBtn === 'function') updateConditionalBtn();
     }
 
     function showLoading(show) {
@@ -2141,6 +2294,7 @@
       if (e.key === 'Escape') {
         closeLiquidateModal();
         closeBuybackModal();
+        closeConditionalModal();
         closeLiveWarning();
         closeErrorModal();
         closeSuccessModal();
@@ -2443,6 +2597,258 @@
     function clearBuybackSnapshot() {
       localStorage.removeItem('lastLiquidatedPositions');
       updateBuybackBtn();
+    }
+
+    // ── Conditional Order functions ──
+    let condOrderType = 'stop-loss';
+    let condTimeInForce = 'Day';
+    let condRatio = 1;
+
+    function updateConditionalBtn() {
+      const btn = document.getElementById('conditionalBtn');
+      const hasSelection = selectedSymbols.size > 0;
+      btn.style.display = hasSelection ? 'flex' : 'none';
+      btn.innerHTML = `<i data-lucide="shield" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="conditionalOrder">${t('conditionalOrder')}</span>`;
+      lucide.createIcons();
+    }
+
+    function setCondOrderType(type) {
+      condOrderType = type;
+      renderCondTypeSelector();
+      updateConditionalPreview();
+    }
+
+    function setCondTimeInForce(tif) {
+      condTimeInForce = tif;
+      renderCondTifSelector();
+    }
+
+    function setCondRatio(ratio) {
+      condRatio = ratio;
+      renderRatioSelector('condRatioSelector', condRatio, 'setCondRatio', false);
+      document.getElementById('condRatioSelector').querySelectorAll('.ratio-btn').forEach(btn => {
+        if (btn.classList.contains('active')) {
+          btn.classList.remove('active');
+          btn.classList.add('active-warning');
+        }
+      });
+      updateConditionalPreview();
+    }
+
+    function renderCondTypeSelector() {
+      const types = [
+        { value: 'stop-loss', label: t('stopLoss') },
+        { value: 'take-profit', label: t('takeProfit') },
+        { value: 'trailing-stop', label: t('trailingStop') }
+      ];
+      document.getElementById('condTypeSelector').innerHTML = types.map(tp =>
+        `<button class="ratio-btn${tp.value === condOrderType ? ' active-warning' : ''}" onclick="setCondOrderType('${tp.value}')">${tp.label}</button>`
+      ).join('');
+    }
+
+    function renderCondTifSelector() {
+      const tifs = [
+        { value: 'Day', label: t('condTifDay') },
+        { value: 'GoodTilCanceled', label: t('condTifGtc') }
+      ];
+      document.getElementById('condTifSelector').innerHTML = tifs.map(tf =>
+        `<button class="ratio-btn${tf.value === condTimeInForce ? ' active-warning' : ''}" onclick="setCondTimeInForce('${tf.value}')">${tf.label}</button>`
+      ).join('');
+    }
+
+    function updateConditionalPreview() {
+      const pct = parseFloat(document.getElementById('condPctInput').value) || 0;
+      const selected = currentPositions.filter(p => selectedSymbols.has(p.symbol));
+      const container = document.getElementById('condPreviewList');
+
+      if (pct <= 0 || pct >= 100 || selected.length === 0) {
+        container.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--muted); font-size: 13px;">—</div>';
+        return;
+      }
+
+      container.innerHTML = selected.map(pos => {
+        const sym = escapeHtml(pos.symbol);
+        const qty = getAdjustedQty(pos.quantity, condRatio);
+        const price = pos.market_price;
+
+        let triggerHtml;
+        if (condOrderType === 'trailing-stop') {
+          triggerHtml = `<span style="color: var(--foreground);">${t('condTrailingPct')}: ${pct}%</span>`;
+        } else {
+          const factor = condOrderType === 'stop-loss' ? (1 - pct / 100) : (1 + pct / 100);
+          const triggerPrice = (price * factor).toFixed(2);
+          const color = condOrderType === 'stop-loss' ? 'var(--danger)' : 'var(--success)';
+          triggerHtml = `<span style="font-family: 'Geist Mono', monospace;">${formatCurrency(price, pos.symbol)}</span>` +
+            `<span class="cond-preview-arrow">→</span>` +
+            `<span style="font-family: 'Geist Mono', monospace; color: ${color};">${formatCurrency(parseFloat(triggerPrice), pos.symbol)}</span>`;
+        }
+
+        return `<div class="cond-preview-item">
+          <span><span class="modal-position-symbol">${sym}</span> × ${qty}</span>
+          <span>${triggerHtml}</span>
+        </div>`;
+      }).join('');
+    }
+
+    function openConditionalModal() {
+      const selected = currentPositions.filter(p => selectedSymbols.has(p.symbol));
+      if (selected.length === 0) return;
+
+      condOrderType = 'stop-loss';
+      condTimeInForce = 'Day';
+      condRatio = 1;
+      document.getElementById('condPctInput').value = '5';
+
+      document.getElementById('condModalTitle').textContent = t('conditionalOrder');
+      document.getElementById('condModalWarning').textContent = t('condWarning');
+      document.getElementById('condPctLabel').textContent = t('condPercentage');
+      document.getElementById('condTifLabel').textContent = t('condTimeInForce');
+      document.getElementById('condPreviewLabel').textContent = t('condPreview');
+      document.getElementById('condCancelBtn').textContent = modalI18n[currentLang]?.cancel || 'Cancel';
+      document.getElementById('condSubmitBtn').textContent = t('condSubmit');
+
+      renderCondTypeSelector();
+      renderCondTifSelector();
+      renderRatioSelector('condRatioSelector', condRatio, 'setCondRatio', false);
+      document.getElementById('condRatioSelector').querySelectorAll('.ratio-btn').forEach(btn => {
+        if (btn.classList.contains('active')) {
+          btn.classList.remove('active');
+          btn.classList.add('active-warning');
+        }
+      });
+      updateConditionalPreview();
+
+      const overlay = document.getElementById('conditionalModal');
+      overlay.classList.add('active');
+      overlay.style.display = 'flex';
+      animateModalIn(overlay, overlay.querySelector('.modal-card'));
+      lucide.createIcons();
+    }
+
+    function closeConditionalModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      const overlay = document.getElementById('conditionalModal');
+      const card = overlay.querySelector('.modal-card');
+      animateModalOut(overlay, card, () => {
+        overlay.classList.remove('active');
+        overlay.style.display = '';
+      });
+    }
+
+    async function confirmConditionalOrder() {
+      const pct = parseFloat(document.getElementById('condPctInput').value) || 0;
+      if (pct <= 0 || pct >= 100) return;
+
+      const ratio = condRatio;
+      const type = condOrderType;
+      const tif = condTimeInForce;
+      closeConditionalModal();
+
+      const selected = currentPositions.filter(p => selectedSymbols.has(p.symbol));
+      if (selected.length === 0) return;
+
+      const condBtn = document.getElementById('conditionalBtn');
+      condBtn.classList.add('btn-loading');
+      condBtn.innerHTML = `<span class="btn-spinner" style="border-top-color: var(--foreground);"></span><span>${t('loading')}</span>`;
+
+      const orderPositions = selected.map(p => ({
+        symbol: p.symbol,
+        quantity: getAdjustedQty(p.quantity, ratio),
+        currentPrice: p.market_price
+      }));
+
+      if (isDemoMode) {
+        await new Promise(r => setTimeout(r, 800));
+        handleConditionalSuccess(orderPositions, type, pct);
+        return;
+      }
+
+      const appKey = document.getElementById('appKey').value.trim();
+      const appSecret = document.getElementById('appSecret').value.trim();
+      const accessToken = document.getElementById('accessToken').value.trim();
+
+      try {
+        const resp = await fetch('/api/conditional-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            app_key: appKey,
+            app_secret: appSecret,
+            access_token: accessToken,
+            positions: orderPositions,
+            orderConfig: { type, percentage: pct, timeInForce: tif }
+          })
+        });
+
+        const text = await resp.text();
+        if (!text) throw new Error('Empty response from server');
+
+        let data;
+        try { data = JSON.parse(text); }
+        catch (e) { throw new Error('Invalid JSON response: ' + text.substring(0, 100)); }
+
+        if (!resp.ok) throw new Error(data.error || 'Conditional order request failed');
+
+        const succeededPositions = orderPositions.filter(p =>
+          (data.results || []).some(r => r.success && r.symbol === p.symbol)
+        );
+        const failedResults = (data.results || []).filter(r => !r.success);
+
+        handleConditionalSuccess(succeededPositions, type, pct);
+
+        if (failedResults.length > 0) {
+          const failedMsg = failedResults.map(r => `${r.symbol}: ${r.error}`).join('\n');
+          showErrorModal(t('condPartialFailure') + '\n' + failedMsg);
+        }
+      } catch (err) {
+        condBtn.classList.remove('btn-loading');
+        condBtn.innerHTML = `<i data-lucide="shield" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="conditionalOrder">${t('conditionalOrder')}</span>`;
+        lucide.createIcons();
+        showErrorModal(err.message);
+      }
+    }
+
+    function handleConditionalSuccess(positions, type, pct) {
+      const condBtn = document.getElementById('conditionalBtn');
+      condBtn.classList.remove('btn-loading');
+      condBtn.innerHTML = `<i data-lucide="shield" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="conditionalOrder">${t('conditionalOrder')}</span>`;
+      lucide.createIcons();
+
+      const count = positions.length;
+      const typeLabel = type === 'stop-loss' ? t('stopLoss') : type === 'take-profit' ? t('takeProfit') : t('trailingStop');
+
+      const detailHtml = positions.map(p => {
+        const sym = escapeHtml(p.symbol);
+        let info;
+        if (type === 'trailing-stop') {
+          info = `${t('condTrailingPct')}: ${pct}%`;
+        } else {
+          const factor = type === 'stop-loss' ? (1 - pct / 100) : (1 + pct / 100);
+          const trigger = (p.currentPrice * factor).toFixed(2);
+          info = `${formatCurrency(p.currentPrice, p.symbol)} → ${formatCurrency(parseFloat(trigger), p.symbol)}`;
+        }
+        return `${sym} × ${p.quantity} (${info})`;
+      }).join('<br>');
+
+      const summaryHtml = `
+        <div style="text-align: center; padding: 8px 0;">
+          <div style="font-size: 14px; color: var(--muted); margin-bottom: 4px;">${t('condOrderCount')}</div>
+          <div style="font-size: 24px; font-weight: 700; color: var(--foreground);">${count} × ${typeLabel}</div>
+          <div style="margin-top: 12px; font-size: 13px; color: var(--muted);">
+            ${detailHtml}
+          </div>
+        </div>
+      `;
+      document.getElementById('successModalTitle').textContent = t('condSuccess');
+      document.getElementById('successModalOkBtn').textContent = t('ok');
+      document.getElementById('successModalSummary').innerHTML = summaryHtml;
+      const overlay = document.getElementById('successModal');
+      overlay.classList.add('active');
+      overlay.style.display = 'flex';
+      animateModalIn(overlay, overlay.querySelector('.modal-card'));
+      lucide.createIcons();
+      const iconContainer = overlay.querySelector('.success-modal-icon');
+      if (iconContainer) requestAnimationFrame(() => animateCheckIcon(iconContainer));
     }
 
     // ── Init: run logo draw animations on page load ──

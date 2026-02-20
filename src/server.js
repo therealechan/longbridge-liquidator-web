@@ -7,7 +7,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.static('public'));
 
 // ── Longbridge SDK (lazy-loaded) ──
-let Config, TradeContext, QuoteContext, OrderType, OrderSide, TimeInForceType, Decimal;
+let Config, TradeContext, QuoteContext, OrderType, OrderSide, TimeInForceType, TriggerPriceType, Decimal;
 let sdkAvailable = false;
 
 try {
@@ -18,6 +18,7 @@ try {
   OrderType = lb.OrderType;
   OrderSide = lb.OrderSide;
   TimeInForceType = lb.TimeInForceType;
+  TriggerPriceType = lb.TriggerPriceType;
   Decimal = lb.Decimal;
   sdkAvailable = true;
 } catch (e) {
@@ -267,6 +268,106 @@ app.post('/api/buyback', async (req, res) => {
     res.json({ success: allSucceeded, results });
   } catch (err) {
     console.error('buyback error:', err.message);
+    invalidateCache();
+    res.status(500).json({ error: sanitizeError(err.message) });
+  }
+});
+
+// ── POST /api/conditional-order ──
+const COND_TYPES = new Set(['stop-loss', 'take-profit', 'trailing-stop']);
+
+app.post('/api/conditional-order', async (req, res) => {
+  if (!sdkAvailable) {
+    return res.status(503).json({
+      error: 'longport SDK not installed. Run: npm install',
+    });
+  }
+
+  const positions = req.body.positions;
+  if (!Array.isArray(positions) || positions.length === 0) {
+    return res.status(400).json({ error: 'positions must be a non-empty array' });
+  }
+
+  const orderConfig = req.body.orderConfig;
+  if (!orderConfig || typeof orderConfig !== 'object') {
+    return res.status(400).json({ error: 'orderConfig is required' });
+  }
+
+  if (!COND_TYPES.has(orderConfig.type)) {
+    return res.status(400).json({ error: `Invalid type: must be one of ${[...COND_TYPES].join(', ')}` });
+  }
+
+  const pct = Number(orderConfig.percentage);
+  if (!Number.isFinite(pct) || pct <= 0 || pct >= 100) {
+    return res.status(400).json({ error: 'percentage must be between 0 and 100 (exclusive)' });
+  }
+
+  for (const pos of positions) {
+    if (!pos || typeof pos.symbol !== 'string' || !SYMBOL_RE.test(pos.symbol)) {
+      return res.status(400).json({ error: `Invalid symbol: ${String(pos?.symbol).substring(0, 20)}` });
+    }
+    if (!Number.isInteger(pos.quantity) || pos.quantity <= 0) {
+      return res.status(400).json({ error: `Invalid quantity for ${pos.symbol}: must be a positive integer` });
+    }
+    if (typeof pos.currentPrice !== 'number' || pos.currentPrice <= 0) {
+      return res.status(400).json({ error: `Invalid currentPrice for ${pos.symbol}: must be a positive number` });
+    }
+  }
+
+  const tif = orderConfig.timeInForce === 'GoodTilCanceled'
+    ? TimeInForceType.GoodTilCanceled
+    : TimeInForceType.Day;
+
+  try {
+    const config = createConfig(req.body);
+    const ctx = await getTradeContext(config, req.body);
+
+    const results = [];
+
+    for (const pos of positions) {
+      try {
+        let orderParams;
+
+        if (orderConfig.type === 'trailing-stop') {
+          orderParams = {
+            symbol: pos.symbol,
+            orderType: OrderType.TSMPCT,
+            side: OrderSide.Sell,
+            submittedQuantity: new Decimal(String(pos.quantity)),
+            timeInForce: tif,
+            trailingPercent: new Decimal(String(pct)),
+          };
+        } else {
+          const factor = orderConfig.type === 'stop-loss'
+            ? (1 - pct / 100)
+            : (1 + pct / 100);
+          const triggerPrice = +(pos.currentPrice * factor).toFixed(4);
+
+          orderParams = {
+            symbol: pos.symbol,
+            orderType: OrderType.MIT,
+            side: OrderSide.Sell,
+            submittedQuantity: new Decimal(String(pos.quantity)),
+            timeInForce: tif,
+            triggerPrice: new Decimal(String(triggerPrice)),
+          };
+        }
+
+        const order = await ctx.submitOrder(orderParams);
+        results.push({
+          symbol: pos.symbol,
+          success: true,
+          orderId: String(order.orderId),
+        });
+      } catch (e) {
+        results.push({ symbol: pos.symbol, success: false, error: sanitizeError(e.message) });
+      }
+    }
+
+    const allSucceeded = results.every(r => r.success);
+    res.json({ success: allSucceeded, results });
+  } catch (err) {
+    console.error('conditional-order error:', err.message);
     invalidateCache();
     res.status(500).json({ error: sanitizeError(err.message) });
   }

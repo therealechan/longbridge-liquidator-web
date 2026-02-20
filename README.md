@@ -37,6 +37,7 @@
 - 🎨 **精美界面 / Modern UI** — Geist 字体，深色/浅色主题，响应式设计
 - 🌐 **多语言 / i18n** — 简体中文 · 繁體中文 · English
 - ⚡ **选择性清仓 / Selective Liquidate** — 勾选持仓，支持全部/1/2/1/3/1/4 比例卖出
+- 🛡️ **条件卖出 / Conditional Sell** — 批量设置止盈、止损、追踪止损条件单
 - 📊 **实时持仓 / Live Positions** — 实时行情报价，多币种显示（USD / HKD / SGD）
 - 🔄 **一键刷新 / Refresh** — 持仓页面支持刷新按钮，快速更新数据
 - 💾 **凭证记忆 / Credential Persistence** — API 凭证自动保存，刷新页面无需重新输入
@@ -121,15 +122,17 @@ The server uses the native Node.js Longbridge SDK — no Python required.
 
 1. 在网页中输入长桥 API 凭证（App Key / App Secret / Access Token）
 2. 点击「查看持仓」查看当前所有持仓
-3. 勾选需要清仓的标的（默认全选）
+3. 勾选需要操作的标的（默认全选）
 4. 点击「一键清仓」以市价单卖出选中持仓
+5. 点击「条件卖出」批量设置止盈/止损/追踪止损条件单
 
 ---
 
 1. Enter your Longbridge API credentials (App Key / App Secret / Access Token)
 2. Click "View Positions" to see current holdings
-3. Select positions to liquidate (all selected by default)
+3. Select positions to operate on (all selected by default)
 4. Click "Liquidate" to sell selected positions at market price
+5. Click "Conditional Sell" to batch set take-profit / stop-loss / trailing stop orders
 
 ## 安全说明 / Security
 
