@@ -271,6 +271,13 @@
           i18n[lang].openSource +
           ' <a href="' + ghUrl + '" target="_blank" class="footer-link">GitHub</a>';
       }
+      // Update daily P/L label
+      try {
+        const pnlEl = document.getElementById('dailyPnl');
+        if (pnlEl && currentPositions && currentPositions.length > 0) {
+          pnlEl.innerHTML = formatDailyPnl(currentPositions);
+        }
+      } catch(e) {}
       // Update mode toggle label
       if (typeof updateModeUI === 'function') updateModeUI();
     }
