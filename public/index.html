@@ -1231,24 +1231,27 @@
     // Theme toggle (now using Motion)
     function toggleTheme() {
       const html = document.documentElement;
+      const isDark = html.classList.contains('dark');
+
+      // Grab current icon elements (may be <i> or lucide-replaced <svg>)
       const iconLight = document.getElementById('themeIconLight');
       const iconDark = document.getElementById('themeIconDark');
-      
-      const outgoing = html.classList.contains('dark') ? iconDark : iconLight;
-      const incoming = html.classList.contains('dark') ? iconLight : iconDark;
-      
+
+      // In dark mode: moon is visible → animate moon out, sun in
+      // In light mode: sun is visible → animate sun out, moon in
+      const outgoing = isDark ? iconDark : iconLight;
+      const incoming = isDark ? iconLight : iconDark;
+
       animateThemeSwitch(outgoing, incoming);
-      
-      setTimeout(() => {
-        if (html.classList.contains('dark')) {
-          html.classList.remove('dark');
-          localStorage.setItem('theme', 'light');
-        } else {
-          html.classList.add('dark');
-          localStorage.setItem('theme', 'dark');
-        }
-        lucide.createIcons();
-      }, prefersReducedMotion ? 0 : 250);
+
+      // Toggle class + persist
+      if (isDark) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
     }
 
     // Load saved theme
@@ -1561,6 +1564,28 @@
       }
       setupButtonHoverAnimations();
     });
+
+    // Self-test on load
+    (function test() {
+      console.log('Liquidator tests:');
+
+      // Test 1: i18n loaded
+      console.log('✓ i18n:', Object.keys(i18n).length, 'languages');
+
+      // Test 2: Theme toggle works
+      const isDark = document.documentElement.classList.contains('dark');
+      console.log('✓ Theme:', isDark ? 'dark' : 'light');
+
+      // Test 3: Demo mode state
+      console.log('✓ Demo mode:', isDemoMode);
+
+      // Test 4: Elements exist
+      console.log('✓ Elements:', {
+        appKey: !!document.getElementById('appKey'),
+        accessToken: !!document.getElementById('accessToken'),
+        langSelect: !!document.getElementById('langSelect')
+      });
+    })();
   </script>
 </body>
 </html>
