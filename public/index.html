@@ -55,7 +55,20 @@
         faqA1s1: '1. 登录长桥证券 App',
         faqA1s2: '2. 进入「我的」→「开发者中心」→「开发者账户」',
         faqA1s3: '3. 创建 API Key，记录 App Key 和 App Secret',
-        faqA1s4: '4. 确保账户已开通交易权限'
+        faqA1s4: '4. 确保账户已开通交易权限',
+        faqQ2: '问：什么是 Demo Mode 和 Live Mode？',
+        faqA2s1: 'Demo Mode（演示模式）：使用模拟数据，无需真实 API 凭证，适合体验界面。',
+        faqA2s2: 'Live Mode（实盘模式）：连接真实 Longbridge API，可查看真实持仓并执行交易。',
+        faqA2s3: '⚠️ Live Mode 仅在本地开发环境可用（需运行 npm run dev）。',
+        faqQ3: '问：为什么线上演示只能用 Demo Mode？',
+        faqA3s1: '线上版本是纯静态部署（如 GitHub Pages），没有后端服务器。',
+        faqA3s2: '真实 API 调用需要后端代理，必须在本地运行 npm run dev 才能使用 Live Mode。',
+        faqQ4: '问：如何获取 Access Token？',
+        faqA4s1: 'Access Token 与 App Key / App Secret 在同一页面获取。',
+        faqA4s2: '登录长桥开发者中心 → 用户中心 → 应用凭证，即可找到所有三个凭证。',
+        faqA4s3: '详见：https://open.longportapp.com/',
+        error: '错误',
+        ok: '确定'
       },
       'zh-TW': {
         title: '一鍵清倉',
@@ -94,7 +107,20 @@
         faqA1s1: '1. 登入長橋證券 App',
         faqA1s2: '2. 進入「我的」→「開發者中心」→「開發者賬戶」',
         faqA1s3: '3. 創建 API Key，記錄 App Key 和 App Secret',
-        faqA1s4: '4. 確保賬戶已開通交易權限'
+        faqA1s4: '4. 確保賬戶已開通交易權限',
+        faqQ2: '問：什麼是 Demo Mode 和 Live Mode？',
+        faqA2s1: 'Demo Mode（演示模式）：使用模擬數據，無需真實 API 憑證，適合體驗介面。',
+        faqA2s2: 'Live Mode（實盤模式）：連接真實 Longbridge API，可查看真實持倉並執行交易。',
+        faqA2s3: '⚠️ Live Mode 僅在本地開發環境可用（需運行 npm run dev）。',
+        faqQ3: '問：為什麼線上演示只能用 Demo Mode？',
+        faqA3s1: '線上版本是純靜態部署（如 GitHub Pages），沒有後端伺服器。',
+        faqA3s2: '真實 API 調用需要後端代理，必須在本地運行 npm run dev 才能使用 Live Mode。',
+        faqQ4: '問：如何獲取 Access Token？',
+        faqA4s1: 'Access Token 與 App Key / App Secret 在同一頁面獲取。',
+        faqA4s2: '登入長橋開發者中心 → 用戶中心 → 應用憑證，即可找到所有三個憑證。',
+        faqA4s3: '詳見：https://open.longportapp.com/',
+        error: '錯誤',
+        ok: '確定'
       },
       'en': {
         title: 'Liquidate All',
@@ -133,7 +159,20 @@
         faqA1s1: '1. Login to Longbridge App',
         faqA1s2: '2. Go to "Me" → "Developer Center" → "Developer Account"',
         faqA1s3: '3. Create API Key, save App Key and App Secret',
-        faqA1s4: '4. Ensure trading permission is enabled'
+        faqA1s4: '4. Ensure trading permission is enabled',
+        faqQ2: 'Q: What are Demo Mode and Live Mode?',
+        faqA2s1: 'Demo Mode: Uses mock data, no real API credentials needed. Great for exploring the UI.',
+        faqA2s2: 'Live Mode: Connects to the real Longbridge API for live positions and trading.',
+        faqA2s3: '⚠️ Live Mode only works in local development (requires npm run dev).',
+        faqQ3: 'Q: Why can the online demo only use Demo Mode?',
+        faqA3s1: 'The online version is a static deployment (e.g. GitHub Pages) with no backend server.',
+        faqA3s2: 'Real API calls require a backend proxy — you must run npm run dev locally to use Live Mode.',
+        faqQ4: 'Q: How to get an Access Token?',
+        faqA4s1: 'The Access Token is obtained from the same page as App Key / App Secret.',
+        faqA4s2: 'Login to Longbridge Developer Center → User Center → App Credentials to find all three.',
+        faqA4s3: 'See: https://open.longportapp.com/',
+        error: 'Error',
+        ok: 'OK'
       }
     };
     
@@ -699,6 +738,15 @@
     .btn-modal-danger:hover { background: var(--danger-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
     .btn-modal-danger:active { transform: translateY(0); }
 
+    /* Error Modal */
+    .error-modal-message {
+      font-size: 14px;
+      color: var(--foreground-secondary);
+      line-height: 1.7;
+      margin-bottom: 20px;
+      word-break: break-word;
+    }
+
     /* FAQ Accordion */
     .faq-item { border-bottom: 1px solid var(--border); }
     .faq-item:last-child { border-bottom: none; }
@@ -738,7 +786,7 @@
       transition: max-height 0.3s ease, padding 0.3s ease;
     }
 
-    .faq-item.open .faq-answer { max-height: 200px; }
+    .faq-item.open .faq-answer { max-height: 300px; }
 
     .faq-answer-inner {
       padding: 0 0 14px;
@@ -972,6 +1020,47 @@
           </div>
         </div>
       </div>
+
+      <div class="faq-item" id="faqItem2">
+        <button class="faq-question" onclick="toggleFaq('faqItem2')">
+          <span data-i18n="faqQ2">问：什么是 Demo Mode 和 Live Mode？</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            <span data-i18n="faqA2s1">Demo Mode（演示模式）：使用模拟数据，无需真实 API 凭证，适合体验界面。</span><br>
+            <span data-i18n="faqA2s2">Live Mode（实盘模式）：连接真实 Longbridge API，可查看真实持仓并执行交易。</span><br>
+            <span data-i18n="faqA2s3">⚠️ Live Mode 仅在本地开发环境可用（需运行 npm run dev）。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" id="faqItem3">
+        <button class="faq-question" onclick="toggleFaq('faqItem3')">
+          <span data-i18n="faqQ3">问：为什么线上演示只能用 Demo Mode？</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            <span data-i18n="faqA3s1">线上版本是纯静态部署（如 GitHub Pages），没有后端服务器。</span><br>
+            <span data-i18n="faqA3s2">真实 API 调用需要后端代理，必须在本地运行 npm run dev 才能使用 Live Mode。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" id="faqItem4">
+        <button class="faq-question" onclick="toggleFaq('faqItem4')">
+          <span data-i18n="faqQ4">问：如何获取 Access Token？</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            <span data-i18n="faqA4s1">Access Token 与 App Key / App Secret 在同一页面获取。</span><br>
+            <span data-i18n="faqA4s2">登录长桥开发者中心 → 用户中心 → 应用凭证，即可找到所有三个凭证。</span><br>
+            <span data-i18n="faqA4s3">详见：https://open.longportapp.com/</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -1065,6 +1154,20 @@
       <div class="live-warning-actions">
         <button class="btn-secondary" onclick="closeLiveWarning()" id="liveWarningCancelBtn">Cancel</button>
         <button class="btn-modal-danger" onclick="confirmLiveMode()" id="liveWarningConfirmBtn" style="background: #f59e0b;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Modal -->
+  <div class="modal-overlay" id="errorModal" onclick="closeErrorModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-title" style="color: var(--danger);">
+        <i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i>
+        <span id="errorModalTitle">错误</span>
+      </div>
+      <div class="error-modal-message" id="errorModalMessage"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeErrorModal()" id="errorModalOkBtn" style="background: var(--danger); color: white;">确定</button>
       </div>
     </div>
   </div>
@@ -1386,6 +1489,27 @@
       document.getElementById('alert').classList.remove('active');
     }
 
+    function showErrorModal(message) {
+      document.getElementById('errorModalTitle').textContent = t('error');
+      document.getElementById('errorModalMessage').textContent = message;
+      document.getElementById('errorModalOkBtn').textContent = t('ok');
+      const overlay = document.getElementById('errorModal');
+      overlay.classList.add('active');
+      overlay.style.display = 'flex';
+      animateModalIn(overlay, overlay.querySelector('.modal-card'));
+      lucide.createIcons();
+    }
+
+    function closeErrorModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      const overlay = document.getElementById('errorModal');
+      const card = overlay.querySelector('.modal-card');
+      animateModalOut(overlay, card, () => {
+        overlay.classList.remove('active');
+        overlay.style.display = '';
+      });
+    }
+
     function formatCurrency(value) {
       return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
     }
@@ -1414,7 +1538,7 @@
       }
 
       if (!appKey || !appSecret || !accessToken) {
-        showAlert(t('apiRequired'), 'warning');
+        showErrorModal(t('apiRequired'));
         return;
       }
 
@@ -1451,7 +1575,7 @@
         document.getElementById('positionsCard').classList.add('active');
         document.getElementById('configCard').style.display = 'none';
       } catch (err) {
-        showAlert(err.message, 'warning');
+        showErrorModal(err.message);
       } finally {
         showLoading(false);
         lucide.createIcons();
@@ -1535,6 +1659,7 @@
       if (e.key === 'Escape') {
         closeLiquidateModal();
         closeLiveWarning();
+        closeErrorModal();
       }
     });
 
