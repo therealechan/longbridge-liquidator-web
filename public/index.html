@@ -1395,6 +1395,7 @@
       const appSecret = document.getElementById('appSecret').value.trim();
       const accessToken = document.getElementById('accessToken').value.trim();
 
+      // Demo mode: use mock data directly, no fetch needed
       if (isDemoMode) {
         hideAlert();
         showLoading(true);
@@ -1426,7 +1427,21 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ app_key: appKey, app_secret: appSecret, access_token: accessToken })
         });
-        const data = await resp.json();
+
+        // Read response as text first to avoid "Unexpected end of JSON input"
+        const text = await resp.text();
+        if (!text) {
+          throw new Error('Empty response from server');
+        }
+
+        // Safe JSON parse
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Invalid JSON response: ' + text.substring(0, 100));
+        }
+
         if (!resp.ok) throw new Error(data.error || 'API request failed');
 
         currentPositions = data.positions || [];
