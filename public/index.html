@@ -89,8 +89,13 @@
         faqA4s1: '支持美股 (.US)、港股 (.HK)、新加坡 (.SG)。',
         faqA4s2: '清仓使用市价单 (Market Order)，按当前市价立即成交。',
         faqA4s3: '部分失败时，成功的订单正常处理，失败的显示错误信息。',
+        ratioAll: '全部',
+        ratioHalf: '1/2',
+        ratioThird: '1/3',
+        ratioQuarter: '1/4',
         error: '错误',
-        ok: '确定'
+        ok: '确定',
+        dailyPnl: '当日盈亏'
       },
       'zh-TW': {
         title: '一鍵清倉',
@@ -126,7 +131,7 @@
         soldCount: '賣出股票',
         totalMarketValue: '總市值',
         partialFailure: '部分股票賣出失敗',
-        stockUnit: '只',
+        stockUnit: '隻',
         shareUnit: '股',
         buyback: '一鍵買入',
         buybackConfirmTitle: '確認買入？',
@@ -159,8 +164,13 @@
         faqA4s1: '支持美股 (.US)、港股 (.HK)、新加坡 (.SG)。',
         faqA4s2: '清倉使用市價單 (Market Order)，按當前市價立即成交。',
         faqA4s3: '部分失敗時，成功的訂單正常處理，失敗的顯示錯誤信息。',
+        ratioAll: '全部',
+        ratioHalf: '1/2',
+        ratioThird: '1/3',
+        ratioQuarter: '1/4',
         error: '錯誤',
-        ok: '確定'
+        ok: '確定',
+        dailyPnl: '當日盈虧'
       },
       'en': {
         title: 'Liquidate All',
@@ -229,8 +239,13 @@
         faqA4s1: 'Supports US stocks (.US), Hong Kong stocks (.HK), and Singapore stocks (.SG).',
         faqA4s2: 'Liquidation uses Market Orders, executing immediately at the current market price.',
         faqA4s3: 'If some orders fail, successful ones are processed normally and failures show error details.',
+        ratioAll: 'All',
+        ratioHalf: '1/2',
+        ratioThird: '1/3',
+        ratioQuarter: '1/4',
         error: 'Error',
-        ok: 'OK'
+        ok: 'OK',
+        dailyPnl: 'Daily P/L'
       }
     };
     
@@ -516,6 +531,7 @@
     .symbol { font-family: 'Geist Mono', monospace; font-weight: 600; }
     .mono { font-family: 'Geist Mono', monospace; }
     .total-value { font-family: 'Geist Mono', monospace; font-size: 18px; font-weight: 600; color: var(--success); }
+    .daily-pnl { font-family: 'Geist Mono', monospace; font-size: 13px; font-weight: 500; margin-top: 2px; }
 
     .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
 
@@ -766,6 +782,39 @@
     .modal-total-value {
       font-family: 'Geist Mono', monospace;
       color: var(--danger);
+    }
+
+    .ratio-selector {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .ratio-btn {
+      flex: 1;
+      padding: 6px 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--foreground);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .ratio-btn:hover { border-color: var(--muted); }
+
+    .ratio-btn.active {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: white;
+    }
+
+    .ratio-btn.active-success {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
     }
 
     .modal-actions {
@@ -1187,7 +1236,10 @@
           <span class="card-title" data-i18n="positions">持仓明细</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-          <div class="total-value" id="totalValue">$0.00</div>
+          <div style="text-align: right;">
+            <div class="total-value" id="totalValue">$0.00</div>
+            <div class="daily-pnl" id="dailyPnl"></div>
+          </div>
           <button class="refresh-btn" id="refreshBtn" onclick="refreshPositions()" aria-label="Refresh positions" title="Refresh">
             <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
           </button>
@@ -1313,6 +1365,7 @@
         <i data-lucide="alert-circle" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
         <span id="modalWarningText">将按照市价卖出以下持仓</span>
       </div>
+      <div class="ratio-selector" id="liquidateRatioSelector"></div>
       <div class="modal-positions" id="modalPositions"></div>
       <div class="modal-total">
         <span id="modalTotalLabel">总市值</span>
@@ -1336,6 +1389,7 @@
         <i data-lucide="info" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
         <span id="buybackModalWarning">将按照市价买入以下持仓</span>
       </div>
+      <div class="ratio-selector" id="buybackRatioSelector"></div>
       <div class="modal-positions" id="buybackModalPositions"></div>
       <div style="padding: 0 20px 8px; font-size: 12px; color: var(--muted); text-align: center;">
         <span id="buybackPriceNote">实际成交价以市场价为准</span>
@@ -1918,9 +1972,29 @@
       return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(total);
     }
 
+    function formatDailyPnl(positions) {
+      const byCurrency = {};
+      positions.forEach(p => {
+        if (p.prev_close == null || p.prev_close <= 0) return;
+        const cur = getCurrencyForSymbol(p.symbol);
+        byCurrency[cur] = (byCurrency[cur] || 0) + (p.market_price - p.prev_close) * p.quantity;
+      });
+      const entries = Object.entries(byCurrency);
+      if (entries.length === 0) return '';
+      const parts = entries.map(([cur, val]) => {
+        const sign = val > 0 ? '+' : '';
+        const color = val > 0 ? 'var(--success)' : val < 0 ? 'var(--danger)' : 'var(--muted)';
+        const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: cur }).format(val);
+        return `<span style="color:${color}">${sign}${formatted}</span>`;
+      });
+      return `${t('dailyPnl')}: ${parts.join(' / ')}`;
+    }
+
     function renderPositions(positions, totalValue) {
       const tbody = document.querySelector('#positionsTable tbody');
       document.getElementById('totalValue').textContent = positions.length > 0 ? formatTotalValue(positions) : formatCurrency(0);
+      const pnlEl = document.getElementById('dailyPnl');
+      pnlEl.innerHTML = positions.length > 0 ? formatDailyPnl(positions) : '';
 
       // Default: select all
       selectedSymbols = new Set(positions.map(p => p.symbol));
@@ -1963,10 +2037,72 @@
       'en': { title: 'Confirm Liquidation?', total: 'Total Value', cancel: 'Cancel', confirm: 'Confirm Sell', success: 'Liquidation Complete', warning: 'Will be sold at market price', selected: 'Selected Positions' }
     };
 
+    let liquidateRatio = 1;
+    let buybackRatio = 1;
+
+    function getAdjustedQty(qty, ratio) {
+      if (ratio >= 1) return qty;
+      return Math.max(1, Math.floor(qty * ratio));
+    }
+
+    function renderRatioSelector(containerId, currentRatio, setFn, isSuccess) {
+      const ratios = [
+        { value: 1, label: t('ratioAll') },
+        { value: 0.5, label: t('ratioHalf') },
+        { value: 1/3, label: t('ratioThird') },
+        { value: 0.25, label: t('ratioQuarter') }
+      ];
+      const activeClass = isSuccess ? 'active-success' : 'active';
+      document.getElementById(containerId).innerHTML = ratios.map(r =>
+        `<button class="ratio-btn${Math.abs(r.value - currentRatio) < 0.01 ? ' ' + activeClass : ''}" onclick="${setFn}(${r.value})">${r.label}</button>`
+      ).join('');
+    }
+
+    function updateLiquidateModalContent() {
+      const selected = currentPositions.filter(p => selectedSymbols.has(p.symbol));
+      document.getElementById('modalPositions').innerHTML = selected.map(pos => {
+        const sym = escapeHtml(pos.symbol);
+        const qty = getAdjustedQty(pos.quantity, liquidateRatio);
+        return `
+        <div class="modal-position-item">
+          <span><span class="modal-position-symbol">${sym}</span> × ${qty}</span>
+          <span class="modal-position-value">${formatCurrency(qty * pos.market_price, pos.symbol)}</span>
+        </div>
+      `}).join('');
+      const adjustedPositions = selected.map(p => ({ ...p, quantity: getAdjustedQty(p.quantity, liquidateRatio) }));
+      document.getElementById('modalTotalValue').textContent = adjustedPositions.length > 0 ? formatTotalValue(adjustedPositions) : formatCurrency(0);
+    }
+
+    function setLiquidateRatio(ratio) {
+      liquidateRatio = ratio;
+      renderRatioSelector('liquidateRatioSelector', liquidateRatio, 'setLiquidateRatio', false);
+      updateLiquidateModalContent();
+    }
+
+    function setBuybackRatio(ratio) {
+      buybackRatio = ratio;
+      renderRatioSelector('buybackRatioSelector', buybackRatio, 'setBuybackRatio', true);
+      updateBuybackModalContent();
+    }
+
+    function updateBuybackModalContent() {
+      const saved = getSavedPositions();
+      document.getElementById('buybackModalPositions').innerHTML = saved.map(pos => {
+        const qty = getAdjustedQty(pos.quantity, buybackRatio);
+        return `
+        <div class="modal-position-row">
+          <span class="modal-position-symbol">${escapeHtml(pos.symbol)}</span>
+          <span class="modal-position-qty">${qty}${t('shareUnit')}</span>
+        </div>
+      `}).join('');
+      document.getElementById('buybackModalTotalValue').textContent = `${saved.length} ${t('stockUnit')}`;
+    }
+
     function openLiquidateModal() {
       const selected = currentPositions.filter(p => selectedSymbols.has(p.symbol));
       if (selected.length === 0) return;
 
+      liquidateRatio = 1;
       const lang = modalI18n[currentLang] || modalI18n['en'];
       document.getElementById('modalTitle').textContent = lang.title;
       document.getElementById('modalWarningText').textContent = lang.warning;
@@ -1974,17 +2110,8 @@
       document.getElementById('modalCancelBtn').textContent = lang.cancel;
       document.getElementById('modalConfirmBtn').textContent = lang.confirm;
 
-      const totalValue = selected.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
-      document.getElementById('modalTotalValue').textContent = selected.length > 0 ? formatTotalValue(selected) : formatCurrency(0);
-
-      document.getElementById('modalPositions').innerHTML = selected.map(pos => {
-        const sym = escapeHtml(pos.symbol);
-        return `
-        <div class="modal-position-item">
-          <span><span class="modal-position-symbol">${sym}</span> × ${pos.quantity}</span>
-          <span class="modal-position-value">${formatCurrency(pos.quantity * pos.market_price, pos.symbol)}</span>
-        </div>
-      `}).join('');
+      renderRatioSelector('liquidateRatioSelector', liquidateRatio, 'setLiquidateRatio', false);
+      updateLiquidateModalContent();
 
       const overlay = document.getElementById('liquidateModal');
       overlay.classList.add('active');
@@ -2014,6 +2141,7 @@
     });
 
     async function confirmLiquidate() {
+      const ratio = liquidateRatio;
       closeLiquidateModal();
 
       const liquidateBtn = document.getElementById('liquidateBtn');
@@ -2021,16 +2149,18 @@
       liquidateBtn.innerHTML = `<span class="btn-spinner" style="border-top-color: white;"></span><span>${t('loading')}</span>`;
 
       const lang = modalI18n[currentLang] || modalI18n['en'];
-      const soldPositions = currentPositions.filter(p => selectedSymbols.has(p.symbol));
+      const selectedPositions = currentPositions.filter(p => selectedSymbols.has(p.symbol));
+      const soldPositions = selectedPositions.map(p => ({
+        ...p,
+        sellQty: getAdjustedQty(p.quantity, ratio)
+      }));
 
       if (isDemoMode) {
-        // Demo mode: simulate delay, no real API call
         await new Promise(r => setTimeout(r, 800));
         handleLiquidateSuccess(soldPositions, lang);
         return;
       }
 
-      // Live mode: call /api/liquidate
       const appKey = document.getElementById('appKey').value.trim();
       const appSecret = document.getElementById('appSecret').value.trim();
       const accessToken = document.getElementById('accessToken').value.trim();
@@ -2043,7 +2173,7 @@
             app_key: appKey,
             app_secret: appSecret,
             access_token: accessToken,
-            positions: soldPositions.map(p => ({ symbol: p.symbol, quantity: p.quantity }))
+            positions: soldPositions.map(p => ({ symbol: p.symbol, quantity: p.sellQty }))
           })
         });
 
@@ -2059,7 +2189,6 @@
 
         if (!resp.ok) throw new Error(data.error || 'Liquidation request failed');
 
-        // Handle partial failures: only remove successfully sold positions
         const succeededSymbols = new Set(
           (data.results || []).filter(r => r.success).map(r => r.symbol)
         );
@@ -2082,11 +2211,11 @@
 
     function handleLiquidateSuccess(soldPositions, lang) {
       const soldCount = soldPositions.length;
-      const soldValue = soldPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
-      const soldSymbols = new Set(soldPositions.map(p => p.symbol));
+      const soldQtyMap = new Map(soldPositions.map(p => [p.symbol, p.sellQty || p.quantity]));
+      const soldValue = soldPositions.reduce((sum, p) => sum + ((p.sellQty || p.quantity) * p.market_price), 0);
 
       // Save liquidated positions snapshot for buy-back
-      const snapshot = soldPositions.map(p => ({ symbol: p.symbol, quantity: p.quantity }));
+      const snapshot = soldPositions.map(p => ({ symbol: p.symbol, quantity: p.sellQty || p.quantity }));
       const existing = JSON.parse(localStorage.getItem('lastLiquidatedPositions') || '[]');
       const merged = [...existing];
       for (const s of snapshot) {
@@ -2096,8 +2225,14 @@
       }
       localStorage.setItem('lastLiquidatedPositions', JSON.stringify(merged));
 
-      // Remove only successfully sold positions
-      currentPositions = currentPositions.filter(p => !soldSymbols.has(p.symbol));
+      // Update positions: reduce quantity or remove if fully sold
+      for (const p of currentPositions) {
+        const soldQty = soldQtyMap.get(p.symbol);
+        if (soldQty != null) {
+          p.quantity -= soldQty;
+        }
+      }
+      currentPositions = currentPositions.filter(p => p.quantity > 0);
       selectedSymbols.clear();
       const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
       renderPositions(currentPositions, totalValue);
@@ -2117,7 +2252,8 @@
 
       updateBuybackBtn();
       lucide.createIcons();
-      showSuccessModal(soldCount, soldValue, soldPositions);
+      const displayPositions = soldPositions.map(p => ({ ...p, quantity: p.sellQty || p.quantity }));
+      showSuccessModal(soldCount, soldValue, displayPositions);
     }
 
     // ── Buy Back functions ──
@@ -2141,6 +2277,7 @@
       const saved = getSavedPositions();
       if (saved.length === 0) return;
 
+      buybackRatio = 1;
       document.getElementById('buybackModalTitle').textContent = t('buybackConfirmTitle');
       document.getElementById('buybackModalWarning').textContent = t('buybackWarning');
       document.getElementById('buybackPriceNote').textContent = t('buybackPriceNote');
@@ -2148,13 +2285,8 @@
       document.getElementById('buybackModalCancelBtn').textContent = modalI18n[currentLang]?.cancel || 'Cancel';
       document.getElementById('buybackModalConfirmBtn').textContent = t('buybackConfirm');
 
-      document.getElementById('buybackModalPositions').innerHTML = saved.map(pos => `
-        <div class="modal-position-row">
-          <span class="modal-position-symbol">${escapeHtml(pos.symbol)}</span>
-          <span class="modal-position-qty">${pos.quantity}${t('shareUnit')}</span>
-        </div>
-      `).join('');
-      document.getElementById('buybackModalTotalValue').textContent = `${saved.length} ${t('stockUnit')}`;
+      renderRatioSelector('buybackRatioSelector', buybackRatio, 'setBuybackRatio', true);
+      updateBuybackModalContent();
 
       const overlay = document.getElementById('buybackModal');
       overlay.classList.add('active');
@@ -2167,9 +2299,15 @@
     }
 
     async function confirmBuyback() {
+      const ratio = buybackRatio;
       closeBuybackModal();
       const saved = getSavedPositions();
       if (saved.length === 0) return;
+
+      const buyPositions = saved.map(p => ({
+        ...p,
+        buyQty: getAdjustedQty(p.quantity, ratio)
+      }));
 
       const buybackBtn = document.getElementById('buybackBtn');
       buybackBtn.classList.add('btn-loading');
@@ -2177,7 +2315,7 @@
 
       if (isDemoMode) {
         await new Promise(r => setTimeout(r, 800));
-        handleBuybackSuccess(saved);
+        handleBuybackSuccess(buyPositions);
         return;
       }
 
@@ -2193,7 +2331,7 @@
             app_key: appKey,
             app_secret: appSecret,
             access_token: accessToken,
-            positions: saved.map(p => ({ symbol: p.symbol, quantity: p.quantity }))
+            positions: buyPositions.map(p => ({ symbol: p.symbol, quantity: p.buyQty }))
           })
         });
 
@@ -2211,7 +2349,7 @@
         );
         const failedResults = (data.results || []).filter(r => !r.success);
 
-        const successfulPositions = saved.filter(p => succeededSymbols.has(p.symbol));
+        const successfulPositions = buyPositions.filter(p => succeededSymbols.has(p.symbol));
         handleBuybackSuccess(successfulPositions);
 
         if (failedResults.length > 0) {
@@ -2227,10 +2365,20 @@
     }
 
     function handleBuybackSuccess(boughtPositions) {
-      const boughtSymbols = new Set(boughtPositions.map(p => p.symbol));
+      const buyQtyMap = new Map(boughtPositions.map(p => [p.symbol, p.buyQty || p.quantity]));
 
-      // Remove bought symbols from snapshot
-      const remaining = getSavedPositions().filter(p => !boughtSymbols.has(p.symbol));
+      // Update snapshot: reduce quantity or remove if fully bought back
+      const saved = getSavedPositions();
+      const remaining = [];
+      for (const p of saved) {
+        const boughtQty = buyQtyMap.get(p.symbol);
+        if (boughtQty != null) {
+          const left = p.quantity - boughtQty;
+          if (left > 0) remaining.push({ ...p, quantity: left });
+        } else {
+          remaining.push(p);
+        }
+      }
       if (remaining.length === 0) {
         localStorage.removeItem('lastLiquidatedPositions');
       } else {
@@ -2242,7 +2390,6 @@
 
       updateBuybackBtn();
 
-      // Re-enable liquidate button for fresh positions
       const liqBtn = document.getElementById('liquidateBtn');
       liqBtn.disabled = false;
       liqBtn.style.opacity = '1';
@@ -2251,14 +2398,14 @@
 
       lucide.createIcons();
 
-      // Show success modal
       const count = boughtPositions.length;
+      const displayPositions = boughtPositions.map(p => ({ ...p, quantity: p.buyQty || p.quantity }));
       const summaryHtml = `
         <div style="text-align: center; padding: 8px 0;">
           <div style="font-size: 14px; color: var(--muted); margin-bottom: 4px;">${t('boughtCount')}</div>
           <div style="font-size: 24px; font-weight: 700; color: var(--success);">${count} ${t('stockUnit')}</div>
           <div style="margin-top: 12px; font-size: 13px; color: var(--muted);">
-            ${boughtPositions.map(p => `${escapeHtml(p.symbol)} × ${p.quantity}`).join('<br>')}
+            ${displayPositions.map(p => `${escapeHtml(p.symbol)} × ${p.quantity}`).join('<br>')}
           </div>
         </div>
       `;
@@ -2268,14 +2415,18 @@
       const overlay = document.getElementById('successModal');
       overlay.classList.add('active');
 
-      // Refresh positions to show newly bought stocks
       if (!isDemoMode) {
         setTimeout(() => refreshPositions(), 1000);
       } else {
-        // In demo mode, add back mock positions
         for (const p of boughtPositions) {
-          const mock = mockPositions.find(m => m.symbol === p.symbol);
-          if (mock) currentPositions.push({ ...mock, quantity: p.quantity });
+          const qty = p.buyQty || p.quantity;
+          const existing = currentPositions.find(cp => cp.symbol === p.symbol);
+          if (existing) {
+            existing.quantity += qty;
+          } else {
+            const mock = mockPositions.find(m => m.symbol === p.symbol);
+            if (mock) currentPositions.push({ ...mock, quantity: qty });
+          }
         }
         const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
         renderPositions(currentPositions, totalValue);
