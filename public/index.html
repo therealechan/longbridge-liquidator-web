@@ -1166,6 +1166,9 @@
       document.getElementById(id).classList.toggle('open');
     }
 
+    // Demo Mode state (default: ON for safety) — must be before setLang which calls updateModeUI
+    let isDemoMode = localStorage.getItem('demoMode') !== 'false';
+
     // Language select init
     document.getElementById('langSelect').value = currentLang;
     setLang(currentLang);
@@ -1203,9 +1206,6 @@
       document.getElementById('themeIconLight').style.display = 'none';
       document.getElementById('themeIconDark').style.display = 'block';
     }
-
-    // Demo Mode state (default: ON for safety)
-    let isDemoMode = localStorage.getItem('demoMode') !== 'false';
 
     function updateModeUI() {
       const toggle = document.getElementById('modeToggle');
