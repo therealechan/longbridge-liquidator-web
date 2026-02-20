@@ -34,7 +34,6 @@
         price: '价格',
         value: '市值',
         total: '总计',
-        confirm: '我确认以市价单卖出全部持仓',
         liquidate: '一键清仓',
         success: '清仓完成',
         footer: '© 2026 Liquidator · Built by',
@@ -57,7 +56,6 @@
         price: '價格',
         value: '市值',
         total: '總計',
-        confirm: '我確認以市價單賣出全部持倉',
         liquidate: '一鍵清倉',
         success: '清倉完成',
         footer: '© 2026 Liquidator · Built by',
@@ -80,7 +78,6 @@
         price: 'Price',
         value: 'Value',
         total: 'Total',
-        confirm: 'I confirm to market sell all positions',
         liquidate: 'Liquidate All',
         success: 'Liquidation Complete',
         footer: '© 2026 Liquidator · Built by',
@@ -322,23 +319,6 @@
 
     .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
 
-    /* Checkbox */
-    .checkbox-wrapper {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 14px;
-      background: rgba(220, 38, 38, 0.05);
-      border: 1px solid rgba(220, 38, 38, 0.2);
-      border-radius: var(--radius);
-      margin-bottom: 16px;
-      cursor: pointer;
-    }
-
-    .checkbox-wrapper input { width: 16px; height: 16px; accent-color: var(--danger); margin-top: 2px; }
-    .checkbox-wrapper label { font-size: 13px; color: var(--foreground-secondary); cursor: pointer; }
-    .checkbox-wrapper strong { color: var(--danger); font-weight: 600; }
-
     /* Alert */
     .alert { padding: 14px; border-radius: var(--radius); margin-bottom: 20px; display: none; font-size: 13px; }
     .alert.active { display: block; }
@@ -431,6 +411,121 @@
     }
 
     .demo-notice strong { color: var(--foreground); font-weight: 600; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 100%;
+      max-width: 400px;
+      margin: 0 16px;
+      animation: modalIn 0.15s ease-out;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--danger);
+    }
+
+    .modal-positions {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+
+    .modal-position-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .modal-position-item:last-child { border-bottom: none; }
+
+    .modal-position-symbol {
+      font-family: 'SF Mono', monospace;
+      font-weight: 600;
+    }
+
+    .modal-position-value {
+      font-family: 'SF Mono', monospace;
+      color: var(--muted);
+    }
+
+    .modal-total {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .modal-total-value {
+      font-family: 'SF Mono', monospace;
+      color: var(--danger);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      flex: 1;
+      background: var(--background);
+      color: var(--foreground);
+      border: 1px solid var(--border);
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-secondary:hover { background: var(--surface-hover); }
+
+    .btn-modal-danger {
+      flex: 1;
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-modal-danger:hover { background: var(--danger-hover); }
   </style>
 </head>
 <body>
@@ -531,12 +626,7 @@
         </table>
       </div>
 
-      <div class="checkbox-wrapper" onclick="document.getElementById('confirmCheck').click()">
-        <input type="checkbox" id="confirmCheck" onchange="toggleLiquidateButton()">
-        <label data-i18n="confirm">我确认以<strong>市价单</strong>卖出全部持仓</label>
-      </div>
-
-      <button class="btn btn-danger" id="liquidateBtn" disabled onclick="liquidateAll()">
+      <button class="btn btn-danger" id="liquidateBtn" onclick="openLiquidateModal()">
         <i data-lucide="zap" style="width: 16px; height: 16px;"></i>
         <span data-i18n="liquidate">一键清仓</span>
       </button>
@@ -570,87 +660,32 @@
     </footer>
   </div>
 
+  <!-- Liquidate Confirmation Modal -->
+  <div class="modal-overlay" id="liquidateModal" onclick="closeLiquidateModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-title">
+        <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
+        <span id="modalTitle">确认清仓？</span>
+      </div>
+      <div class="modal-positions" id="modalPositions"></div>
+      <div class="modal-total">
+        <span id="modalTotalLabel">总市值</span>
+        <span class="modal-total-value" id="modalTotalValue">$0.00</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeLiquidateModal()" id="modalCancelBtn">取消</button>
+        <button class="btn-modal-danger" onclick="confirmLiquidate()" id="modalConfirmBtn">确认卖出</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Initialize Lucide icons
     lucide.createIcons();
 
-    // i18n Translations
-    const i18n = {
-      'zh-CN': {
-        heroTitle: '一键清仓',
-        heroDesc: '长桥证券交易工具，本地运行，安全可靠',
-        badgeText: '本地安全模式',
-        demoTitle: '演示模式',
-        demoDesc: '展示界面效果，不连接真实账户',
-        apiConfig: 'API 配置',
-        viewPositions: '查看持仓',
-        loading: '加载中...',
-        positions: '持仓明细',
-        colSymbol: '代码',
-        colQty: '数量',
-        colPrice: '价格',
-        colValue: '市值',
-        confirmText: '我确认以<strong>市价单</strong>卖出全部持仓',
-        liquidate: '一键清仓',
-        liquidateSuccess: '清仓完成',
-        disclaimer: '本工具仅供学习交流，投资有风险，操作需谨慎'
-      },
-      'zh-TW': {
-        heroTitle: '一鍵清倉',
-        heroDesc: '長橋證券交易工具，本地運行，安全可靠',
-        badgeText: '本地安全模式',
-        demoTitle: '演示模式',
-        demoDesc: '展示界面效果，不連接真實帳戶',
-        apiConfig: 'API 配置',
-        viewPositions: '查看持倉',
-        loading: '載入中...',
-        positions: '持倉明細',
-        colSymbol: '代碼',
-        colQty: '數量',
-        colPrice: '價格',
-        colValue: '市值',
-        confirmText: '我確認以<strong>市價單</strong>賣出全部持倉',
-        liquidate: '一鍵清倉',
-        liquidateSuccess: '清倉完成',
-        disclaimer: '本工具僅供學習交流，投資有風險，操作需謹慎'
-      },
-      'en': {
-        heroTitle: 'Liquidate All',
-        heroDesc: 'Longbridge trading tool, local-only, secure & reliable',
-        badgeText: 'Local Secure Mode',
-        demoTitle: 'Demo Mode',
-        demoDesc: 'UI preview only, no real trading',
-        apiConfig: 'API Configuration',
-        viewPositions: 'View Positions',
-        loading: 'Loading...',
-        positions: 'Positions',
-        colSymbol: 'Symbol',
-        colQty: 'Quantity',
-        colPrice: 'Price',
-        colValue: 'Value',
-        confirmText: 'I confirm to <strong>market sell</strong> all positions',
-        liquidate: 'Liquidate All',
-        liquidateSuccess: 'Liquidation Complete',
-        disclaimer: 'For educational purposes only. Trading involves risk.'
-      }
-    };
-
-    let currentLang = localStorage.getItem('liquidator-lang') || 'zh-CN';
+    // Language select init
     document.getElementById('langSelect').value = currentLang;
-
-    function changeLanguage(lang) {
-      currentLang = lang;
-      localStorage.setItem('liquidator-lang', lang);
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (i18n[lang][key]) {
-          el.innerHTML = i18n[lang][key];
-        }
-      });
-    }
-
-    // Initialize language
-    changeLanguage(currentLang);
+    setLang(currentLang);
 
     // Theme toggle
     function toggleTheme() {
@@ -672,10 +707,6 @@
       lucide.createIcons();
     }
 
-    // Initialize language
-    document.getElementById('langSelect').value = currentLang;
-    setLang(currentLang);
-
     // Load saved theme
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'light') {
@@ -694,6 +725,8 @@
       { symbol: "NVDA.US", quantity: 25, market_price: 875.20 },
       { symbol: "00700.HK", quantity: 200, market_price: 385.60 },
     ];
+
+    let currentPositions = [];
 
     function showLoading(show) {
       document.getElementById('loading').classList.toggle('active', show);
@@ -726,8 +759,9 @@
       showLoading(true);
       await new Promise(r => setTimeout(r, 600));
 
-      const totalValue = mockPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
-      renderPositions(mockPositions, totalValue);
+      currentPositions = mockPositions;
+      const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
+      renderPositions(currentPositions, totalValue);
       
       document.getElementById('positionsCard').classList.add('active');
       document.getElementById('configCard').style.display = 'none';
@@ -754,22 +788,63 @@
       `).join('');
     }
 
-    function toggleLiquidateButton() {
-      document.getElementById('liquidateBtn').disabled = !document.getElementById('confirmCheck').checked;
+    // Modal i18n
+    const modalI18n = {
+      'zh-CN': { title: '确认清仓？', total: '总市值', cancel: '取消', confirm: '确认卖出', success: '清仓完成' },
+      'zh-TW': { title: '確認清倉？', total: '總市值', cancel: '取消', confirm: '確認賣出', success: '清倉完成' },
+      'en': { title: 'Confirm Liquidation?', total: 'Total Value', cancel: 'Cancel', confirm: 'Confirm Sell', success: 'Liquidation Complete' }
+    };
+
+    function openLiquidateModal() {
+      if (currentPositions.length === 0) return;
+
+      const lang = modalI18n[currentLang] || modalI18n['en'];
+      document.getElementById('modalTitle').textContent = lang.title;
+      document.getElementById('modalTotalLabel').textContent = lang.total;
+      document.getElementById('modalCancelBtn').textContent = lang.cancel;
+      document.getElementById('modalConfirmBtn').textContent = lang.confirm;
+
+      const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
+      document.getElementById('modalTotalValue').textContent = formatCurrency(totalValue);
+
+      document.getElementById('modalPositions').innerHTML = currentPositions.map(pos => `
+        <div class="modal-position-item">
+          <span><span class="modal-position-symbol">${pos.symbol}</span> × ${pos.quantity}</span>
+          <span class="modal-position-value">${formatCurrency(pos.quantity * pos.market_price)}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('liquidateModal').classList.add('active');
+      lucide.createIcons();
     }
 
-    async function liquidateAll() {
-      if (!confirm(i18n[currentLang].confirmText.replace(/<[^>]*>/g, ''))) return;
-      
+    function closeLiquidateModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('liquidateModal').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeLiquidateModal();
+    });
+
+    async function confirmLiquidate() {
+      closeLiquidateModal();
       showLoading(true);
       await new Promise(r => setTimeout(r, 800));
-      
-      showAlert(i18n[currentLang].liquidateSuccess, 'success');
+
+      const lang = modalI18n[currentLang] || modalI18n['en'];
+      showAlert(lang.success, 'success');
+      currentPositions = [];
       renderPositions([], 0);
-      document.getElementById('liquidateBtn').textContent = i18n[currentLang].liquidateSuccess;
-      document.getElementById('liquidateBtn').disabled = true;
+      
+      const btn = document.getElementById('liquidateBtn');
+      btn.innerHTML = `<i data-lucide="check" style="width: 16px; height: 16px;"></i><span>${lang.success}</span>`;
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
       
       showLoading(false);
+      lucide.createIcons();
     }
   </script>
 </body>
