@@ -9,6 +9,20 @@
 
 ---
 
+## 🚀 Live Demo
+
+**Online Demo:** https://lp-liquidator.echan.work
+
+> ⚠️ This is a demo version for UI preview only. No real trading functionality.
+
+## 🚀 在线演示
+
+**在线演示地址：** https://lp-liquidator.echan.work
+
+> ⚠️ 此为演示版本，仅用于界面预览，无真实交易功能。
+
+---
+
 ## ⚠️ 免责声明 / Disclaimer
 
 **本工具仅供学习交流，投资有风险，操作需谨慎。**
