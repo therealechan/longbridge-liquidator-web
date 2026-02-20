@@ -13,13 +13,13 @@
 
 **Online Demo:** https://lp-liquidator.echan.work
 
-> ⚠️ This is a demo version for UI preview only. No real trading functionality.
+> ⚠️ This is a demo version — Demo Mode only (mock data). No real trading. The online version is a static deployment with no backend server.
 
 ## 🚀 在线演示
 
 **在线演示地址：** https://lp-liquidator.echan.work
 
-> ⚠️ 此为演示版本，仅用于界面预览，无真实交易功能。
+> ⚠️ 此为演示版本，仅支持 Demo Mode（模拟数据），无真实交易功能。线上为纯静态部署，无后端服务器。
 
 ---
 
@@ -85,21 +85,45 @@ npm run dev
 
 The server uses the native Node.js Longbridge SDK — no Python required.
 
-### 演示模式 / Demo Mode
+### 演示模式与实盘模式 / Demo Mode & Live Mode
 
-在网页中切换 Demo/Live 模式即可。Demo 模式使用模拟数据，无需 API 密钥。
+- **Demo Mode（演示模式）**：使用模拟数据，无需 API 密钥，适合体验界面。
+- **Live Mode（实盘模式）**：连接真实 Longbridge API，需要本地运行 `npm run dev`。
 
-Toggle Demo/Live mode in the web UI. Demo mode uses mock data, no API keys needed.
+> ⚠️ Live Mode 仅在本地开发环境可用。线上演示（GitHub Pages / 静态部署）没有后端服务器，只能使用 Demo Mode。
+
+- **Demo Mode**: Uses mock data, no API keys needed. Great for exploring the UI.
+- **Live Mode**: Connects to the real Longbridge API. Requires running `npm run dev` locally.
+
+> ⚠️ Live Mode only works in local development. The online demo (static deployment) has no backend server and only supports Demo Mode.
+
+## API 配置 / API Configuration
+
+使用 Live Mode 需要三个凭证：
+
+| 凭证 / Credential | 说明 / Description |
+|---|---|
+| App Key | 应用标识 / Application identifier |
+| App Secret | 应用密钥 / Application secret |
+| Access Token | 访问令牌 / Access token for API authentication |
+
+**获取方式 / How to obtain:**
+
+1. 登录 [长桥开发者中心](https://open.longportapp.com/) / Login to Longbridge Developer Center
+2. 进入「用户中心」→「应用凭证」/ Go to "User Center" → "App Credentials"
+3. 获取 App Key、App Secret 和 Access Token / Get all three credentials from the same page
+
+> 📖 详细文档 / Docs: https://open.longportapp.com/docs
 
 ## 使用说明 / Usage
 
-1. 在网页中输入长桥 API 密钥（App Key / App Secret）
+1. 在网页中输入长桥 API 凭证（App Key / App Secret / Access Token）
 2. 点击「查看持仓」查看当前所有持仓
 3. 确认后点击「一键清仓」以市价单卖出全部持仓
 
 ---
 
-1. Enter your Longbridge API credentials (App Key / App Secret)
+1. Enter your Longbridge API credentials (App Key / App Secret / Access Token)
 2. Click "View Positions" to see current holdings
 3. Confirm and click "Liquidate All" to sell everything at market price
 

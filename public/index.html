@@ -47,6 +47,11 @@
         marketOrderWarning: '将按照市价卖出以下持仓',
         selectedPositions: '选中持仓',
         success: '清仓完成',
+        liquidationSummary: '清仓结果摘要',
+        soldCount: '卖出股票',
+        totalMarketValue: '总市值',
+        partialFailure: '部分股票卖出失败',
+        stockUnit: '只',
         footer: '© 2026 Built by',
         openSource: '· 开源于',
         disclaimer: '本工具仅供学习交流，投资有风险，操作需谨慎',
@@ -99,6 +104,11 @@
         marketOrderWarning: '將按照市價賣出以下持倉',
         selectedPositions: '選中持倉',
         success: '清倉完成',
+        liquidationSummary: '清倉結果摘要',
+        soldCount: '賣出股票',
+        totalMarketValue: '總市值',
+        partialFailure: '部分股票賣出失敗',
+        stockUnit: '只',
         footer: '© 2026 Built by',
         openSource: '· 開源於',
         disclaimer: '本工具僅供學習交流，投資有風險，操作需謹慎',
@@ -151,6 +161,11 @@
         marketOrderWarning: 'Will be sold at market price',
         selectedPositions: 'Selected Positions',
         success: 'Liquidation Complete',
+        liquidationSummary: 'Liquidation Summary',
+        soldCount: 'Stocks Sold',
+        totalMarketValue: 'Total Value',
+        partialFailure: 'Some stocks failed to sell',
+        stockUnit: '',
         footer: '© 2026 Built by',
         openSource: '· Open source on',
         disclaimer: 'For educational purposes only. Trading involves risk.',
@@ -747,6 +762,89 @@
       word-break: break-word;
     }
 
+    /* Success Modal */
+    .success-modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--success);
+    }
+
+    .success-modal-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(22, 163, 74, 0.12);
+      flex-shrink: 0;
+    }
+
+    .success-modal-icon svg {
+      width: 20px;
+      height: 20px;
+      color: var(--success);
+    }
+
+    .success-modal-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 14px;
+      background: rgba(22, 163, 74, 0.06);
+      border: 1px solid rgba(22, 163, 74, 0.15);
+      border-radius: var(--radius);
+    }
+
+    .success-summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .success-summary-label {
+      color: var(--muted);
+    }
+
+    .success-summary-value {
+      font-family: 'SF Mono', monospace;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .success-summary-value.highlight {
+      color: var(--success);
+      font-size: 16px;
+    }
+
+    .btn-success-ok {
+      width: 100%;
+      background: var(--success);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+
+    .btn-success-ok:hover {
+      background: #15803d;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    }
+
+    .btn-success-ok:active { transform: translateY(0); }
+
     /* FAQ Accordion */
     .faq-item { border-bottom: 1px solid var(--border); }
     .faq-item:last-child { border-bottom: none; }
@@ -1172,6 +1270,22 @@
     </div>
   </div>
 
+  <!-- Success Modal -->
+  <div class="modal-overlay" id="successModal" onclick="closeSuccessModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="success-modal-title">
+        <div class="success-modal-icon">
+          <i data-lucide="check" style="width: 20px; height: 20px;"></i>
+        </div>
+        <span id="successModalTitle">清仓完成</span>
+      </div>
+      <div class="success-modal-summary" id="successModalSummary"></div>
+      <div class="modal-actions">
+        <button class="btn-success-ok" onclick="closeSuccessModal()" id="successModalOkBtn">确定</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ── Motion helpers ──
     const { animate } = Motion;
@@ -1510,6 +1624,46 @@
       });
     }
 
+    function showSuccessModal(soldCount, totalValue) {
+      document.getElementById('successModalTitle').textContent = t('success');
+      document.getElementById('successModalOkBtn').textContent = t('ok');
+
+      const unit = t('stockUnit');
+      const summaryHtml = `
+        <div class="success-summary-row">
+          <span class="success-summary-label">${t('soldCount')}</span>
+          <span class="success-summary-value">${soldCount}${unit ? ' ' + unit : ''}</span>
+        </div>
+        <div class="success-summary-row">
+          <span class="success-summary-label">${t('totalMarketValue')}</span>
+          <span class="success-summary-value highlight">${formatCurrency(totalValue)}</span>
+        </div>
+      `;
+      document.getElementById('successModalSummary').innerHTML = summaryHtml;
+
+      const overlay = document.getElementById('successModal');
+      overlay.classList.add('active');
+      overlay.style.display = 'flex';
+      animateModalIn(overlay, overlay.querySelector('.modal-card'));
+      lucide.createIcons();
+
+      // Animate the check icon inside the modal
+      const iconContainer = overlay.querySelector('.success-modal-icon');
+      if (iconContainer) {
+        requestAnimationFrame(() => animateCheckIcon(iconContainer));
+      }
+    }
+
+    function closeSuccessModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      const overlay = document.getElementById('successModal');
+      const card = overlay.querySelector('.modal-card');
+      animateModalOut(overlay, card, () => {
+        overlay.classList.remove('active');
+        overlay.style.display = '';
+      });
+    }
+
     function formatCurrency(value) {
       return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
     }
@@ -1660,6 +1814,7 @@
         closeLiquidateModal();
         closeLiveWarning();
         closeErrorModal();
+        closeSuccessModal();
       }
     });
 
@@ -1669,7 +1824,11 @@
       await new Promise(r => setTimeout(r, 800));
 
       const lang = modalI18n[currentLang] || modalI18n['en'];
-      showAlert(lang.success, 'success');
+
+      // Calculate summary before removing positions
+      const soldPositions = currentPositions.filter(p => selectedSymbols.has(p.symbol));
+      const soldCount = soldPositions.length;
+      const soldValue = soldPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
 
       // Remove only selected positions
       currentPositions = currentPositions.filter(p => !selectedSymbols.has(p.symbol));
@@ -1688,6 +1847,9 @@
       
       showLoading(false);
       lucide.createIcons();
+
+      // Show success modal with summary
+      showSuccessModal(soldCount, soldValue);
     }
 
     // ── Init: run logo draw animations on page load ──
