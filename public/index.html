@@ -37,6 +37,7 @@
         liquidate: '一键清仓',
         success: '清仓完成',
         footer: '© 2026 Liquidator · Built by',
+        openSource: '开源代码托管于 GitHub',
         disclaimer: '本工具仅供学习交流，投资有风险，操作需谨慎'
       },
       'zh-TW': {
@@ -59,6 +60,7 @@
         liquidate: '一鍵清倉',
         success: '清倉完成',
         footer: '© 2026 Liquidator · Built by',
+        openSource: '開源程式碼託管於 GitHub',
         disclaimer: '本工具僅供學習交流，投資有風險，操作需謹慎'
       },
       'en': {
@@ -81,6 +83,7 @@
         liquidate: 'Liquidate All',
         success: 'Liquidation Complete',
         footer: '© 2026 Liquidator · Built by',
+        openSource: 'Open source on GitHub',
         disclaimer: 'For educational purposes only. Trading involves risk.'
       }
     };
@@ -98,6 +101,13 @@
         const key = el.getAttribute('data-i18n');
         if (i18n[lang][key]) el.textContent = i18n[lang][key];
       });
+      // Update open source line with GitHub link
+      const openSourceEl = document.querySelector('.footer-opensource');
+      if (openSourceEl && i18n[lang].openSource) {
+        const text = i18n[lang].openSource;
+        const ghUrl = 'https://github.com/therealechan/longbridge-liquidator-web';
+        openSourceEl.innerHTML = text.replace('GitHub', '<a href="' + ghUrl + '" target="_blank">GitHub</a>');
+      }
     }
   </script>
   
@@ -387,7 +397,33 @@
     .footer-copy {
       font-size: 12px;
       color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .footer-link {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover {
+      color: var(--foreground);
+    }
+
+    .footer-opensource {
+      font-size: 12px;
+      color: var(--muted);
       margin-bottom: 8px;
+    }
+
+    .footer-opensource a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-opensource a:hover {
+      color: var(--foreground);
     }
 
     .footer-disclaimer {
@@ -645,17 +681,14 @@
       </div>
       
       <div class="footer-links">
-        <a href="https://0xechan.xyz" target="_blank">
-          <i data-lucide="globe" style="width: 14px; height: 14px;"></i>
-          0xechan.xyz
-        </a>
         <a href="https://github.com/therealechan/longbridge-liquidator-web" target="_blank">
           <i data-lucide="github" style="width: 14px; height: 14px;"></i>
           GitHub
         </a>
       </div>
       
-      <div class="footer-copy"><span data-i18n="footer">© 2026 Liquidator · Built by</span> 0xechan</div>
+      <div class="footer-copy"><span data-i18n="footer">© 2026 Liquidator · Built by</span> 0xechan · <a href="https://0xechan.xyz" target="_blank" class="footer-link">0xechan.xyz</a></div>
+      <div class="footer-opensource" data-i18n-html="openSource"></div>
       <div class="footer-disclaimer" data-i18n="disclaimer">本工具仅供学习交流，投资有风险，操作需谨慎</div>
     </footer>
   </div>
