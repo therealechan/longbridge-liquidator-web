@@ -997,6 +997,7 @@
         <table class="positions-table" id="positionsTable">
           <thead>
             <tr>
+              <th class="pos-checkbox-th"><input type="checkbox" class="pos-checkbox" id="selectAllCheckbox" checked onchange="toggleSelectAll(this.checked)"></th>
               <th data-i18n="symbol">代码</th>
               <th data-i18n="quantity">数量</th>
               <th data-i18n="price">价格</th>
@@ -1036,6 +1037,10 @@
       <div class="modal-title">
         <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
         <span id="modalTitle">确认清仓？</span>
+      </div>
+      <div class="modal-warning-banner" id="modalWarningBanner">
+        <i data-lucide="alert-circle" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+        <span id="modalWarningText">将按照市价卖出以下持仓</span>
       </div>
       <div class="modal-positions" id="modalPositions"></div>
       <div class="modal-total">
@@ -1301,6 +1306,7 @@
         document.getElementById('positionsCard').classList.remove('active');
         document.getElementById('configCard').style.display = '';
         currentPositions = [];
+        selectedSymbols.clear();
       }
     }
 
@@ -1336,6 +1342,32 @@
     ];
 
     let currentPositions = [];
+    let selectedSymbols = new Set();
+
+    function toggleSelectAll(checked) {
+      selectedSymbols = checked ? new Set(currentPositions.map(p => p.symbol)) : new Set();
+      document.querySelectorAll('.pos-row-checkbox').forEach(cb => cb.checked = checked);
+      updateLiquidateBtn();
+    }
+
+    function togglePositionSelect(symbol, checked) {
+      if (checked) {
+        selectedSymbols.add(symbol);
+      } else {
+        selectedSymbols.delete(symbol);
+      }
+      const selectAllCb = document.getElementById('selectAllCheckbox');
+      if (selectAllCb) selectAllCb.checked = selectedSymbols.size === currentPositions.length;
+      updateLiquidateBtn();
+    }
+
+    function updateLiquidateBtn() {
+      const btn = document.getElementById('liquidateBtn');
+      const hasSelection = selectedSymbols.size > 0;
+      btn.disabled = !hasSelection;
+      btn.style.opacity = hasSelection ? '' : '0.5';
+      btn.style.cursor = hasSelection ? '' : 'not-allowed';
+    }
 
     function showLoading(show) {
       document.getElementById('loading').classList.toggle('active', show);
@@ -1413,41 +1445,51 @@
       const tbody = document.querySelector('#positionsTable tbody');
       document.getElementById('totalValue').textContent = formatCurrency(totalValue);
 
+      // Default: select all
+      selectedSymbols = new Set(positions.map(p => p.symbol));
+      const selectAllCb = document.getElementById('selectAllCheckbox');
+      if (selectAllCb) selectAllCb.checked = positions.length > 0;
+
       if (positions.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No positions</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No positions</td></tr>`;
+        updateLiquidateBtn();
         return;
       }
 
       tbody.innerHTML = positions.map(pos => `
         <tr>
+          <td class="pos-checkbox-td"><input type="checkbox" class="pos-checkbox pos-row-checkbox" checked onchange="togglePositionSelect('${pos.symbol}', this.checked)"></td>
           <td class="symbol">${pos.symbol}</td>
           <td class="mono">${pos.quantity}</td>
           <td class="mono">${formatCurrency(pos.market_price)}</td>
           <td class="mono" style="text-align: right;">${formatCurrency(pos.quantity * pos.market_price)}</td>
         </tr>
       `).join('');
+      updateLiquidateBtn();
     }
 
     // Modal i18n
     const modalI18n = {
-      'zh-CN': { title: '确认清仓？', total: '总市值', cancel: '取消', confirm: '确认卖出', success: '清仓完成' },
-      'zh-TW': { title: '確認清倉？', total: '總市值', cancel: '取消', confirm: '確認賣出', success: '清倉完成' },
-      'en': { title: 'Confirm Liquidation?', total: 'Total Value', cancel: 'Cancel', confirm: 'Confirm Sell', success: 'Liquidation Complete' }
+      'zh-CN': { title: '确认清仓？', total: '总市值', cancel: '取消', confirm: '确认卖出', success: '清仓完成', warning: '将按照市价卖出以下持仓', selected: '选中持仓' },
+      'zh-TW': { title: '確認清倉？', total: '總市值', cancel: '取消', confirm: '確認賣出', success: '清倉完成', warning: '將按照市價賣出以下持倉', selected: '選中持倉' },
+      'en': { title: 'Confirm Liquidation?', total: 'Total Value', cancel: 'Cancel', confirm: 'Confirm Sell', success: 'Liquidation Complete', warning: 'Will be sold at market price', selected: 'Selected Positions' }
     };
 
     function openLiquidateModal() {
-      if (currentPositions.length === 0) return;
+      const selected = currentPositions.filter(p => selectedSymbols.has(p.symbol));
+      if (selected.length === 0) return;
 
       const lang = modalI18n[currentLang] || modalI18n['en'];
       document.getElementById('modalTitle').textContent = lang.title;
+      document.getElementById('modalWarningText').textContent = lang.warning;
       document.getElementById('modalTotalLabel').textContent = lang.total;
       document.getElementById('modalCancelBtn').textContent = lang.cancel;
       document.getElementById('modalConfirmBtn').textContent = lang.confirm;
 
-      const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
+      const totalValue = selected.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
       document.getElementById('modalTotalValue').textContent = formatCurrency(totalValue);
 
-      document.getElementById('modalPositions').innerHTML = currentPositions.map(pos => `
+      document.getElementById('modalPositions').innerHTML = selected.map(pos => `
         <div class="modal-position-item">
           <span><span class="modal-position-symbol">${pos.symbol}</span> × ${pos.quantity}</span>
           <span class="modal-position-value">${formatCurrency(pos.quantity * pos.market_price)}</span>
@@ -1485,20 +1527,24 @@
 
       const lang = modalI18n[currentLang] || modalI18n['en'];
       showAlert(lang.success, 'success');
-      currentPositions = [];
-      renderPositions([], 0);
+
+      // Remove only selected positions
+      currentPositions = currentPositions.filter(p => !selectedSymbols.has(p.symbol));
+      selectedSymbols.clear();
+      const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
+      renderPositions(currentPositions, totalValue);
       
-      const btn = document.getElementById('liquidateBtn');
-      btn.innerHTML = `<i data-lucide="check" class="btn-icon" style="width: 16px; height: 16px;"></i><span>${lang.success}</span>`;
-      btn.disabled = true;
-      btn.style.opacity = '0.5';
-      btn.style.cursor = 'not-allowed';
+      if (currentPositions.length === 0) {
+        const btn = document.getElementById('liquidateBtn');
+        btn.innerHTML = `<i data-lucide="check" class="btn-icon" style="width: 16px; height: 16px;"></i><span>${lang.success}</span>`;
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+        animateCheckIcon(btn);
+      }
       
       showLoading(false);
       lucide.createIcons();
-
-      // Animate the check icon drawing
-      animateCheckIcon(btn);
     }
 
     // ── Init: run logo draw animations on page load ──
