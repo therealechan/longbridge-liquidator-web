@@ -10,13 +10,14 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // ── Longbridge SDK (lazy-loaded) ──
-let Config, TradeContext;
+let Config, TradeContext, QuoteContext;
 let sdkAvailable = false;
 
 try {
   const lb = require('longport');
   Config = lb.Config;
   TradeContext = lb.TradeContext;
+  QuoteContext = lb.QuoteContext;
   sdkAvailable = true;
 } catch (e) {
   console.warn('⚠️  longport SDK not installed. Run: npm install');
@@ -63,22 +64,44 @@ app.post('/api/positions', async (req, res) => {
 
     // Flatten channel positions into a single array
     const positions = [];
-    for (const channel of resp) {
+    for (const channel of resp.channels || []) {
       for (const pos of channel.positions || []) {
         positions.push({
           symbol: pos.symbol,
           quantity: Number(pos.quantity),
-          market_price: Number(pos.costPrice || 0),
+          costPrice: Number(pos.costPrice || 0),
         });
       }
     }
 
-    const totalValue = positions.reduce(
+    // Fetch real-time quotes for market prices
+    const priceMap = {};
+    if (positions.length > 0) {
+      try {
+        const symbols = [...new Set(positions.map((p) => p.symbol))];
+        const quoteCtx = await QuoteContext.new(config);
+        const quotes = await quoteCtx.quote(symbols);
+        for (const q of quotes) {
+          priceMap[q.symbol] = Number(q.lastDone);
+        }
+      } catch (quoteErr) {
+        console.warn('quote fetch failed, falling back to costPrice:', quoteErr.message);
+      }
+    }
+
+    // Merge market prices, fall back to costPrice
+    const result = positions.map((p) => ({
+      symbol: p.symbol,
+      quantity: p.quantity,
+      market_price: priceMap[p.symbol] ?? p.costPrice,
+    }));
+
+    const totalValue = result.reduce(
       (sum, p) => sum + p.quantity * p.market_price,
       0
     );
 
-    res.json({ positions, totalValue });
+    res.json({ positions: result, totalValue });
   } catch (err) {
     console.error('positions error:', err.message);
     res.status(500).json({ error: err.message });
