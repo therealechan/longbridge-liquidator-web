@@ -183,6 +183,11 @@
       width: 28px;
       height: 28px;
       color: var(--foreground);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .brand:hover svg {
+      transform: rotate(12deg) scale(1.08);
     }
 
     .brand-text {
@@ -232,9 +237,35 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.2s, transform 0.2s;
     }
 
-    .theme-toggle:hover { background: var(--surface); }
+    .theme-toggle:hover { background: var(--surface); transform: scale(1.05); }
+    .theme-toggle:active { transform: scale(0.95); }
+
+    .theme-toggle .theme-icon {
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    }
+
+    .theme-toggle .theme-icon.entering {
+      animation: themeIconIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .theme-toggle .theme-icon.leaving {
+      animation: themeIconOut 0.3s ease forwards;
+    }
+
+    @keyframes themeIconIn {
+      from { transform: rotate(-90deg) scale(0); opacity: 0; }
+      to { transform: rotate(0deg) scale(1); opacity: 1; }
+    }
+
+    @keyframes themeIconOut {
+      from { transform: rotate(0deg) scale(1); opacity: 1; }
+      to { transform: rotate(90deg) scale(0); opacity: 0; }
+    }
 
     /* Hero */
     .hero { margin-bottom: 40px; }
@@ -271,6 +302,11 @@
       border-radius: var(--radius);
       padding: 28px;
       margin-bottom: 20px;
+      transition: border-color 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--muted);
     }
 
     .card-header {
@@ -309,14 +345,25 @@
       font-weight: 500;
       border: none;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: opacity 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
       font-family: inherit;
     }
 
-    .btn:hover { opacity: 0.9; }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0) scale(0.98); }
+
+    .btn .btn-icon {
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .btn:hover .btn-icon {
+      transform: scale(1.15);
+    }
+
     .btn-primary { background: var(--accent); color: var(--accent-foreground); width: 100%; }
     .btn-danger { background: var(--danger); color: white; width: 100%; padding: 14px; font-weight: 600; }
-    .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-danger:hover { box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25); }
+    .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
     /* Table */
     .table-container { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; }
@@ -333,7 +380,7 @@
 
     /* Alert */
     .alert { padding: 14px; border-radius: var(--radius); margin-bottom: 20px; display: none; font-size: 13px; }
-    .alert.active { display: block; }
+    .alert.active { display: block; animation: fadeSlideIn 0.3s ease-out; }
     .alert-success { background: rgba(22, 163, 74, 0.1); border: 1px solid rgba(22, 163, 74, 0.3); color: var(--success); }
     .alert-warning { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #92400e; }
     .dark .alert-warning { color: #fbbf24; }
@@ -341,12 +388,40 @@
     /* Loading */
     .loading { display: none; text-align: center; padding: 40px; }
     .loading.active { display: block; }
-    .spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--foreground); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading p { font-size: 13px; color: var(--muted); }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      position: relative;
+      margin: 0 auto 12px;
+    }
+    .spinner::before,
+    .spinner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid transparent;
+    }
+    .spinner::before {
+      border-top-color: var(--foreground);
+      animation: spinnerRotate 0.8s linear infinite;
+    }
+    .spinner::after {
+      border-bottom-color: var(--muted);
+      animation: spinnerRotate 1.2s linear infinite reverse;
+      inset: 3px;
+    }
+    @keyframes spinnerRotate { to { transform: rotate(360deg); } }
+    .loading p { font-size: 13px; color: var(--muted); animation: loadingPulse 1.5s ease-in-out infinite; }
+    @keyframes loadingPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
     .positions-section { display: none; }
-    .positions-section.active { display: block; }
+    .positions-section.active { display: block; animation: fadeSlideIn 0.4s ease-out; }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     /* Footer */
     .footer {
@@ -365,11 +440,25 @@
       max-width: 280px;
       margin-left: auto;
       margin-right: auto;
+      cursor: default;
+      transition: opacity 0.3s;
+    }
+
+    .footer-logo:hover svg {
+      animation-play-state: paused;
+      transform: rotate(8deg) scale(1.1);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     .footer-logo svg {
       width: 24px;
       height: 24px;
+      animation: breathe 4s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.06); }
     }
 
     .footer-brand {
@@ -382,11 +471,12 @@
       margin-left: auto;
       display: flex;
       align-items: center;
-      transition: color 0.2s;
+      transition: color 0.2s, transform 0.2s;
     }
 
     .footer-github:hover {
       color: var(--foreground);
+      transform: scale(1.1);
     }
 
     .footer-copy {
@@ -400,10 +490,16 @@
       color: var(--muted);
       text-decoration: none;
       transition: color 0.2s;
+      background-image: linear-gradient(var(--foreground), var(--foreground));
+      background-size: 0% 1px;
+      background-position: 0 100%;
+      background-repeat: no-repeat;
+      transition: color 0.2s, background-size 0.3s ease;
     }
 
     .footer-link:hover {
       color: var(--foreground);
+      background-size: 100% 1px;
     }
 
     .footer-disclaimer {
@@ -433,13 +529,29 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0);
+      backdrop-filter: blur(0px);
       z-index: 1000;
       align-items: center;
       justify-content: center;
+      transition: background 0.3s ease, backdrop-filter 0.3s ease;
     }
-    .modal-overlay.active { display: flex; }
+    .modal-overlay.active {
+      display: flex;
+      animation: overlayIn 0.3s ease forwards;
+    }
+    .modal-overlay.closing {
+      animation: overlayOut 0.2s ease forwards;
+    }
+
+    @keyframes overlayIn {
+      from { background: rgba(0, 0, 0, 0); backdrop-filter: blur(0px); }
+      to { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
+    }
+    @keyframes overlayOut {
+      from { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
+      to { background: rgba(0, 0, 0, 0); backdrop-filter: blur(0px); }
+    }
 
     .modal-card {
       background: var(--surface);
@@ -449,12 +561,21 @@
       width: 100%;
       max-width: 400px;
       margin: 0 16px;
-      animation: modalIn 0.15s ease-out;
+      animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-overlay.closing .modal-card {
+      animation: modalOut 0.2s ease forwards;
     }
 
     @keyframes modalIn {
-      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      from { opacity: 0; transform: scale(0.9) translateY(16px); }
       to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @keyframes modalOut {
+      from { opacity: 1; transform: scale(1) translateY(0); }
+      to { opacity: 0; transform: scale(0.95) translateY(8px); }
     }
 
     .modal-title {
@@ -524,9 +645,11 @@
       font-weight: 500;
       cursor: pointer;
       font-family: inherit;
+      transition: background 0.2s, transform 0.15s;
     }
 
-    .btn-secondary:hover { background: var(--surface-hover); }
+    .btn-secondary:hover { background: var(--surface-hover); transform: translateY(-1px); }
+    .btn-secondary:active { transform: translateY(0); }
 
     .btn-modal-danger {
       flex: 1;
@@ -539,9 +662,11 @@
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
     }
 
-    .btn-modal-danger:hover { background: var(--danger-hover); }
+    .btn-modal-danger:hover { background: var(--danger-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
+    .btn-modal-danger:active { transform: translateY(0); }
   </style>
 </head>
 <body>
@@ -564,8 +689,8 @@
           <option value="en">EN</option>
         </select>
         <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-          <i data-lucide="sun" id="themeIconLight" style="display: block; width: 16px; height: 16px;"></i>
-          <i data-lucide="moon" id="themeIconDark" style="display: none; width: 16px; height: 16px;"></i>
+          <i data-lucide="sun" id="themeIconLight" class="theme-icon" style="display: block; width: 16px; height: 16px;"></i>
+          <i data-lucide="moon" id="themeIconDark" class="theme-icon" style="display: none; width: 16px; height: 16px;"></i>
         </button>
       </div>
     </header>
@@ -604,7 +729,7 @@
       </div>
       
       <button class="btn btn-primary" onclick="fetchPositions()">
-        <i data-lucide="bar-chart-3" style="width: 16px; height: 16px;"></i>
+        <i data-lucide="bar-chart-3" class="btn-icon" style="width: 16px; height: 16px;"></i>
         <span data-i18n="viewPositions">查看持仓</span>
       </button>
     </div>
@@ -643,7 +768,7 @@
       </div>
 
       <button class="btn btn-danger" id="liquidateBtn" onclick="openLiquidateModal()">
-        <i data-lucide="zap" style="width: 16px; height: 16px;"></i>
+        <i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i>
         <span data-i18n="liquidate">一键清仓</span>
       </button>
     </div>
@@ -698,18 +823,31 @@
       const iconLight = document.getElementById('themeIconLight');
       const iconDark = document.getElementById('themeIconDark');
       
-      if (html.classList.contains('dark')) {
-        html.classList.remove('dark');
-        iconLight.style.display = 'block';
-        iconDark.style.display = 'none';
-        localStorage.setItem('theme', 'light');
-      } else {
-        html.classList.add('dark');
-        iconLight.style.display = 'none';
-        iconDark.style.display = 'block';
-        localStorage.setItem('theme', 'dark');
-      }
-      lucide.createIcons();
+      // Animate out current icon, animate in new icon
+      const outgoing = html.classList.contains('dark') ? iconDark : iconLight;
+      const incoming = html.classList.contains('dark') ? iconLight : iconDark;
+      
+      outgoing.classList.add('leaving');
+      
+      setTimeout(() => {
+        if (html.classList.contains('dark')) {
+          html.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+        } else {
+          html.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+        }
+        
+        outgoing.style.display = 'none';
+        outgoing.classList.remove('leaving');
+        
+        incoming.style.display = 'block';
+        incoming.classList.add('entering');
+        
+        lucide.createIcons();
+        
+        setTimeout(() => incoming.classList.remove('entering'), 500);
+      }, 200);
     }
 
     // Load saved theme
@@ -825,7 +963,11 @@
 
     function closeLiquidateModal(event) {
       if (event && event.target !== event.currentTarget) return;
-      document.getElementById('liquidateModal').classList.remove('active');
+      const modal = document.getElementById('liquidateModal');
+      modal.classList.add('closing');
+      setTimeout(() => {
+        modal.classList.remove('active', 'closing');
+      }, 200);
     }
 
     document.addEventListener('keydown', function(e) {
