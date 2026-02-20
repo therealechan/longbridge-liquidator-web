@@ -273,8 +273,12 @@ app.post('/api/buyback', async (req, res) => {
 });
 
 // ── Start ──
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`🚀 Liquidator running at http://127.0.0.1:${PORT}`);
-  console.log(`   SDK: ${sdkAvailable ? '✅ longport' : '❌ not found'}`);
-  console.log('   Local only — safe & secure');
-});
+if (require.main === module) {
+  app.listen(PORT, '127.0.0.1', () => {
+    console.log(`🚀 Liquidator running at http://127.0.0.1:${PORT}`);
+    console.log(`   SDK: ${sdkAvailable ? '✅ longport' : '❌ not found'}`);
+    console.log('   Local only — safe & secure');
+  });
+}
+
+module.exports = app;
