@@ -57,6 +57,17 @@
         totalMarketValue: '总市值',
         partialFailure: '部分股票卖出失败',
         stockUnit: '只',
+        shareUnit: '股',
+        buyback: '一键买入',
+        buybackConfirmTitle: '确认买入？',
+        buybackWarning: '将按照市价买入以下持仓',
+        buybackConfirm: '确认买入',
+        buybackSuccess: '买入完成',
+        buybackSummary: '买入结果摘要',
+        boughtCount: '买入股票',
+        buybackPartialFailure: '部分股票买入失败',
+        buybackPriceNote: '实际成交价以市场价为准',
+        clearSnapshot: '清除记录',
         footer: '© 2026 Built by',
         openSource: '· 开源于',
         disclaimer: '本工具仅供学习交流，投资有风险，操作需谨慎',
@@ -116,6 +127,17 @@
         totalMarketValue: '總市值',
         partialFailure: '部分股票賣出失敗',
         stockUnit: '只',
+        shareUnit: '股',
+        buyback: '一鍵買入',
+        buybackConfirmTitle: '確認買入？',
+        buybackWarning: '將按照市價買入以下持倉',
+        buybackConfirm: '確認買入',
+        buybackSuccess: '買入完成',
+        buybackSummary: '買入結果摘要',
+        boughtCount: '買入股票',
+        buybackPartialFailure: '部分股票買入失敗',
+        buybackPriceNote: '實際成交價以市場價為準',
+        clearSnapshot: '清除記錄',
         footer: '© 2026 Built by',
         openSource: '· 開源於',
         disclaimer: '本工具僅供學習交流，投資有風險，操作需謹慎',
@@ -175,6 +197,17 @@
         totalMarketValue: 'Total Value',
         partialFailure: 'Some stocks failed to sell',
         stockUnit: '',
+        shareUnit: ' shares',
+        buyback: 'Buy Back All',
+        buybackConfirmTitle: 'Confirm Buy Back?',
+        buybackWarning: 'Will buy the following positions at market price',
+        buybackConfirm: 'Confirm Buy',
+        buybackSuccess: 'Buy Back Complete',
+        buybackSummary: 'Buy Back Summary',
+        boughtCount: 'Stocks Bought',
+        buybackPartialFailure: 'Some stocks failed to buy',
+        buybackPriceNote: 'Actual price depends on market conditions',
+        clearSnapshot: 'Clear Record',
         footer: '© 2026 Built by',
         openSource: '· Open source on',
         disclaimer: 'For educational purposes only. Trading involves risk.',
@@ -1181,6 +1214,10 @@
         <i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i>
         <span data-i18n="liquidate">一键清仓</span>
       </button>
+      <button class="btn btn-primary" id="buybackBtn" onclick="openBuybackModal()" style="display: none; width: 100%; padding: 14px; font-weight: 600; margin-top: 8px; background: var(--success); color: white;">
+        <i data-lucide="shopping-cart" class="btn-icon" style="width: 16px; height: 16px;"></i>
+        <span data-i18n="buyback">一键买入</span>
+      </button>
     </div>
 
     <!-- FAQ Card -->
@@ -1284,6 +1321,32 @@
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeLiquidateModal()" id="modalCancelBtn">取消</button>
         <button class="btn-modal-danger" onclick="confirmLiquidate()" id="modalConfirmBtn">确认卖出</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buyback Confirmation Modal -->
+  <div class="modal-overlay" id="buybackModal" onclick="closeBuybackModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-title" style="color: var(--success);">
+        <i data-lucide="shopping-cart" style="width: 18px; height: 18px;"></i>
+        <span id="buybackModalTitle">确认买入？</span>
+      </div>
+      <div class="modal-warning-banner" style="background: rgba(22, 163, 74, 0.1); border-color: rgba(22, 163, 74, 0.3); color: var(--success);">
+        <i data-lucide="info" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+        <span id="buybackModalWarning">将按照市价买入以下持仓</span>
+      </div>
+      <div class="modal-positions" id="buybackModalPositions"></div>
+      <div style="padding: 0 20px 8px; font-size: 12px; color: var(--muted); text-align: center;">
+        <span id="buybackPriceNote">实际成交价以市场价为准</span>
+      </div>
+      <div class="modal-total">
+        <span id="buybackModalTotalLabel">总市值</span>
+        <span class="modal-total-value" id="buybackModalTotalValue">$0.00</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeBuybackModal()" id="buybackModalCancelBtn">取消</button>
+        <button class="btn-modal-danger" onclick="confirmBuyback()" id="buybackModalConfirmBtn" style="background: var(--success);">确认买入</button>
       </div>
     </div>
   </div>
@@ -1614,10 +1677,10 @@
 
     // Mock data
     const mockPositions = [
-      { symbol: "AAPL.US", quantity: 100, market_price: 185.50 },
-      { symbol: "TSLA.US", quantity: 50, market_price: 242.30 },
-      { symbol: "NVDA.US", quantity: 25, market_price: 875.20 },
-      { symbol: "00700.HK", quantity: 200, market_price: 385.60 },
+      { symbol: "AAPL.US", quantity: 100, market_price: 185.50, prev_close: 183.20 },
+      { symbol: "TSLA.US", quantity: 50, market_price: 242.30, prev_close: 248.50 },
+      { symbol: "NVDA.US", quantity: 25, market_price: 875.20, prev_close: 875.20 },
+      { symbol: "00700.HK", quantity: 200, market_price: 385.60, prev_close: 380.00 },
     ];
 
     let currentPositions = [];
@@ -1865,19 +1928,28 @@
       if (selectAllCb) selectAllCb.checked = positions.length > 0;
 
       if (positions.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No positions</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No positions</td></tr>`;
         updateLiquidateBtn();
         return;
       }
 
       tbody.innerHTML = positions.map(pos => {
         const sym = escapeHtml(pos.symbol);
+        const changeVal = (pos.prev_close != null && pos.prev_close > 0) ? pos.market_price - pos.prev_close : null;
+        const changeRate = changeVal != null ? (changeVal / pos.prev_close) * 100 : null;
+        let changeHtml = '<span class="mono" style="color: var(--muted);">—</span>';
+        if (changeVal != null) {
+          const sign = changeVal > 0 ? '+' : '';
+          const color = changeVal > 0 ? 'var(--success)' : changeVal < 0 ? 'var(--danger)' : 'var(--muted)';
+          changeHtml = `<span class="mono" style="color: ${color};">${sign}${changeVal.toFixed(2)}<br><small>${sign}${changeRate.toFixed(2)}%</small></span>`;
+        }
         return `
         <tr>
           <td class="pos-checkbox-td"><input type="checkbox" class="pos-checkbox pos-row-checkbox" checked onchange="togglePositionSelect('${sym}', this.checked)"></td>
           <td class="symbol">${sym}</td>
           <td class="mono">${pos.quantity}</td>
           <td class="mono">${formatCurrency(pos.market_price, pos.symbol)}</td>
+          <td class="mono" style="text-align: right;">${changeHtml}</td>
           <td class="mono" style="text-align: right;">${formatCurrency(pos.quantity * pos.market_price, pos.symbol)}</td>
         </tr>
       `}).join('');
@@ -1934,6 +2006,7 @@
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         closeLiquidateModal();
+        closeBuybackModal();
         closeLiveWarning();
         closeErrorModal();
         closeSuccessModal();
@@ -2012,6 +2085,17 @@
       const soldValue = soldPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
       const soldSymbols = new Set(soldPositions.map(p => p.symbol));
 
+      // Save liquidated positions snapshot for buy-back
+      const snapshot = soldPositions.map(p => ({ symbol: p.symbol, quantity: p.quantity }));
+      const existing = JSON.parse(localStorage.getItem('lastLiquidatedPositions') || '[]');
+      const merged = [...existing];
+      for (const s of snapshot) {
+        const idx = merged.findIndex(m => m.symbol === s.symbol);
+        if (idx >= 0) merged[idx].quantity += s.quantity;
+        else merged.push({ ...s });
+      }
+      localStorage.setItem('lastLiquidatedPositions', JSON.stringify(merged));
+
       // Remove only successfully sold positions
       currentPositions = currentPositions.filter(p => !soldSymbols.has(p.symbol));
       selectedSymbols.clear();
@@ -2031,8 +2115,176 @@
         btn.innerHTML = `<i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="liquidate">${t('liquidate')}</span>`;
       }
 
+      updateBuybackBtn();
       lucide.createIcons();
       showSuccessModal(soldCount, soldValue, soldPositions);
+    }
+
+    // ── Buy Back functions ──
+    function getSavedPositions() {
+      try { return JSON.parse(localStorage.getItem('lastLiquidatedPositions') || '[]'); }
+      catch { return []; }
+    }
+
+    function updateBuybackBtn() {
+      const btn = document.getElementById('buybackBtn');
+      const saved = getSavedPositions();
+      btn.style.display = saved.length > 0 ? 'flex' : 'none';
+      btn.innerHTML = `<i data-lucide="shopping-cart" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="buyback">${t('buyback')}</span>`;
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      lucide.createIcons();
+    }
+
+    function openBuybackModal() {
+      const saved = getSavedPositions();
+      if (saved.length === 0) return;
+
+      document.getElementById('buybackModalTitle').textContent = t('buybackConfirmTitle');
+      document.getElementById('buybackModalWarning').textContent = t('buybackWarning');
+      document.getElementById('buybackPriceNote').textContent = t('buybackPriceNote');
+      document.getElementById('buybackModalTotalLabel').textContent = t('selectedPositions');
+      document.getElementById('buybackModalCancelBtn').textContent = modalI18n[currentLang]?.cancel || 'Cancel';
+      document.getElementById('buybackModalConfirmBtn').textContent = t('buybackConfirm');
+
+      document.getElementById('buybackModalPositions').innerHTML = saved.map(pos => `
+        <div class="modal-position-row">
+          <span class="modal-position-symbol">${escapeHtml(pos.symbol)}</span>
+          <span class="modal-position-qty">${pos.quantity}${t('shareUnit')}</span>
+        </div>
+      `).join('');
+      document.getElementById('buybackModalTotalValue').textContent = `${saved.length} ${t('stockUnit')}`;
+
+      const overlay = document.getElementById('buybackModal');
+      overlay.classList.add('active');
+    }
+
+    function closeBuybackModal(e) {
+      if (e && e.target !== e.currentTarget) return;
+      const overlay = document.getElementById('buybackModal');
+      overlay.classList.remove('active');
+    }
+
+    async function confirmBuyback() {
+      closeBuybackModal();
+      const saved = getSavedPositions();
+      if (saved.length === 0) return;
+
+      const buybackBtn = document.getElementById('buybackBtn');
+      buybackBtn.classList.add('btn-loading');
+      buybackBtn.innerHTML = `<span class="btn-spinner" style="border-top-color: white;"></span><span>${t('loading')}</span>`;
+
+      if (isDemoMode) {
+        await new Promise(r => setTimeout(r, 800));
+        handleBuybackSuccess(saved);
+        return;
+      }
+
+      const appKey = document.getElementById('appKey').value.trim();
+      const appSecret = document.getElementById('appSecret').value.trim();
+      const accessToken = document.getElementById('accessToken').value.trim();
+
+      try {
+        const resp = await fetch('/api/buyback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            app_key: appKey,
+            app_secret: appSecret,
+            access_token: accessToken,
+            positions: saved.map(p => ({ symbol: p.symbol, quantity: p.quantity }))
+          })
+        });
+
+        const text = await resp.text();
+        if (!text) throw new Error('Empty response from server');
+
+        let data;
+        try { data = JSON.parse(text); }
+        catch (e) { throw new Error('Invalid JSON response: ' + text.substring(0, 100)); }
+
+        if (!resp.ok) throw new Error(data.error || 'Buy back request failed');
+
+        const succeededSymbols = new Set(
+          (data.results || []).filter(r => r.success).map(r => r.symbol)
+        );
+        const failedResults = (data.results || []).filter(r => !r.success);
+
+        const successfulPositions = saved.filter(p => succeededSymbols.has(p.symbol));
+        handleBuybackSuccess(successfulPositions);
+
+        if (failedResults.length > 0) {
+          const failedMsg = failedResults.map(r => `${r.symbol}: ${r.error}`).join('\n');
+          showErrorModal(t('buybackPartialFailure') + '\n' + failedMsg);
+        }
+      } catch (err) {
+        buybackBtn.classList.remove('btn-loading');
+        buybackBtn.innerHTML = `<i data-lucide="shopping-cart" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="buyback">${t('buyback')}</span>`;
+        lucide.createIcons();
+        showErrorModal(err.message);
+      }
+    }
+
+    function handleBuybackSuccess(boughtPositions) {
+      const boughtSymbols = new Set(boughtPositions.map(p => p.symbol));
+
+      // Remove bought symbols from snapshot
+      const remaining = getSavedPositions().filter(p => !boughtSymbols.has(p.symbol));
+      if (remaining.length === 0) {
+        localStorage.removeItem('lastLiquidatedPositions');
+      } else {
+        localStorage.setItem('lastLiquidatedPositions', JSON.stringify(remaining));
+      }
+
+      const buybackBtn = document.getElementById('buybackBtn');
+      buybackBtn.classList.remove('btn-loading');
+
+      updateBuybackBtn();
+
+      // Re-enable liquidate button for fresh positions
+      const liqBtn = document.getElementById('liquidateBtn');
+      liqBtn.disabled = false;
+      liqBtn.style.opacity = '1';
+      liqBtn.style.cursor = 'pointer';
+      liqBtn.innerHTML = `<i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="liquidate">${t('liquidate')}</span>`;
+
+      lucide.createIcons();
+
+      // Show success modal
+      const count = boughtPositions.length;
+      const summaryHtml = `
+        <div style="text-align: center; padding: 8px 0;">
+          <div style="font-size: 14px; color: var(--muted); margin-bottom: 4px;">${t('boughtCount')}</div>
+          <div style="font-size: 24px; font-weight: 700; color: var(--success);">${count} ${t('stockUnit')}</div>
+          <div style="margin-top: 12px; font-size: 13px; color: var(--muted);">
+            ${boughtPositions.map(p => `${escapeHtml(p.symbol)} × ${p.quantity}`).join('<br>')}
+          </div>
+        </div>
+      `;
+      document.getElementById('successModalTitle').textContent = t('buybackSuccess');
+      document.getElementById('successModalOkBtn').textContent = t('ok');
+      document.getElementById('successModalSummary').innerHTML = summaryHtml;
+      const overlay = document.getElementById('successModal');
+      overlay.classList.add('active');
+
+      // Refresh positions to show newly bought stocks
+      if (!isDemoMode) {
+        setTimeout(() => refreshPositions(), 1000);
+      } else {
+        // In demo mode, add back mock positions
+        for (const p of boughtPositions) {
+          const mock = mockPositions.find(m => m.symbol === p.symbol);
+          if (mock) currentPositions.push({ ...mock, quantity: p.quantity });
+        }
+        const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
+        renderPositions(currentPositions, totalValue);
+      }
+    }
+
+    function clearBuybackSnapshot() {
+      localStorage.removeItem('lastLiquidatedPositions');
+      updateBuybackBtn();
     }
 
     // ── Init: run logo draw animations on page load ──
@@ -2048,6 +2300,7 @@
         startLogoBreathing(footerLogo, 1600);
       }
       setupButtonHoverAnimations();
+      updateBuybackBtn();
     });
 
     // Self-test on load

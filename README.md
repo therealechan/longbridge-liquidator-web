@@ -33,7 +33,7 @@
 
 ## 功能特性 / Features
 
-- 🔒 **本地运行 / Local-only** — API 密钥仅存储在内存中，不上传任何服务器
+- 🔒 **本地运行 / Local-only** — API 密钥仅存储在浏览器 localStorage，服务仅监听 127.0.0.1
 - 🎨 **精美界面 / Modern UI** — 深色/浅色主题，响应式设计
 - 🌐 **多语言 / i18n** — 简体中文 · 繁體中文 · English
 - ⚡ **一键清仓 / One-click Liquidate** — 市价单快速卖出所有持仓
@@ -129,7 +129,7 @@ The server uses the native Node.js Longbridge SDK — no Python required.
 
 ## 安全说明 / Security
 
-- ✅ API 密钥仅保存在浏览器内存和本地进程中
+- ✅ API 密钥保存在浏览器 localStorage，仅限本机访问
 - ✅ 服务仅监听 `127.0.0.1`，外部无法访问
 - ✅ 开源代码，可自行审计
 - ✅ 支持模拟模式测试

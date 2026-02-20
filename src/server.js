@@ -217,6 +217,61 @@ app.post('/api/liquidate', async (req, res) => {
   }
 });
 
+// ── POST /api/buyback ──
+app.post('/api/buyback', async (req, res) => {
+  if (!sdkAvailable) {
+    return res.status(503).json({
+      error: 'longport SDK not installed. Run: npm install',
+    });
+  }
+
+  const positions = req.body.positions;
+  if (!Array.isArray(positions) || positions.length === 0) {
+    return res.status(400).json({ error: 'positions must be a non-empty array' });
+  }
+  for (const pos of positions) {
+    if (!pos || typeof pos.symbol !== 'string' || !SYMBOL_RE.test(pos.symbol)) {
+      return res.status(400).json({ error: `Invalid symbol: ${String(pos?.symbol).substring(0, 20)}` });
+    }
+    if (!Number.isInteger(pos.quantity) || pos.quantity <= 0) {
+      return res.status(400).json({ error: `Invalid quantity for ${pos.symbol}: must be a positive integer` });
+    }
+  }
+
+  try {
+    const config = createConfig(req.body);
+    const ctx = await getTradeContext(config, req.body);
+
+    const results = [];
+
+    for (const pos of positions) {
+      try {
+        const order = await ctx.submitOrder({
+          symbol: pos.symbol,
+          orderType: OrderType.MO,
+          side: OrderSide.Buy,
+          submittedQuantity: new Decimal(String(pos.quantity)),
+          timeInForce: TimeInForceType.Day,
+        });
+        results.push({
+          symbol: pos.symbol,
+          success: true,
+          orderId: String(order.orderId),
+        });
+      } catch (e) {
+        results.push({ symbol: pos.symbol, success: false, error: sanitizeError(e.message) });
+      }
+    }
+
+    const allSucceeded = results.every(r => r.success);
+    res.json({ success: allSucceeded, results });
+  } catch (err) {
+    console.error('buyback error:', err.message);
+    invalidateCache();
+    res.status(500).json({ error: sanitizeError(err.message) });
+  }
+});
+
 // ── Start ──
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`🚀 Liquidator running at http://127.0.0.1:${PORT}`);
