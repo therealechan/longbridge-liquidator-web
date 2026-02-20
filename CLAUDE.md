@@ -10,17 +10,17 @@ A localhost-only one-click position liquidation tool for Longbridge Securities. 
 
 - `npm start` — Run production server (Express on port 3456)
 - `npm run dev` — Run with nodemon auto-reload
-
-No test, lint, or build scripts are configured.
+- `npm test` — Run API smoke tests (Node.js built-in test runner)
 
 ## Architecture
 
 **Vanilla full-stack app** — no TypeScript, no bundler, no frontend framework.
 
-- **Backend:** `src/server.js` — Express server with 3 endpoints:
+- **Backend:** `src/server.js` — Express server with 4 endpoints:
   - `GET /api/health` — Health check
   - `POST /api/positions` — Fetch positions via Longbridge Node.js SDK (`longport` package)
   - `POST /api/liquidate` — Execute market sell orders
+  - `POST /api/buyback` — Execute market buy orders
   - Server binds to `127.0.0.1` only (not `0.0.0.0`)
 
 - **Frontend:** `public/index.html` — Monolithic single-page app (~1800 lines) containing inline CSS, JS, and i18n translations. No external JS/CSS files.

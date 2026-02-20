@@ -33,11 +33,13 @@
 
 ## 功能特性 / Features
 
-- 🔒 **本地运行 / Local-only** — API 密钥仅存储在浏览器 localStorage，服务仅监听 127.0.0.1
-- 🎨 **精美界面 / Modern UI** — 深色/浅色主题，响应式设计
+- 🔒 **本地运行 / Local-only** — API 凭证仅存储在浏览器 localStorage，服务仅监听 127.0.0.1
+- 🎨 **精美界面 / Modern UI** — Geist 字体，深色/浅色主题，响应式设计
 - 🌐 **多语言 / i18n** — 简体中文 · 繁體中文 · English
-- ⚡ **一键清仓 / One-click Liquidate** — 市价单快速卖出所有持仓
-- 📊 **实时持仓 / Live Positions** — 查看当前持仓和总市值
+- ⚡ **选择性清仓 / Selective Liquidate** — 勾选持仓，市价单卖出选中标的
+- 📊 **实时持仓 / Live Positions** — 实时行情报价，多币种显示（USD / HKD / SGD）
+- 🔄 **一键刷新 / Refresh** — 持仓页面支持刷新按钮，快速更新数据
+- 💾 **凭证记忆 / Credential Persistence** — API 凭证自动保存，刷新页面无需重新输入
 - ✅ **安全确认 / Safe Confirm** — 多重确认弹窗防止误操作
 - 🧪 **演示模式 / Demo Mode** — 无需真实账户即可体验界面
 
@@ -87,15 +89,15 @@ The server uses the native Node.js Longbridge SDK — no Python required.
 
 ### 演示模式与实盘模式 / Demo Mode & Live Mode
 
-- **Demo Mode（演示模式）**：使用模拟数据，无需 API 密钥，适合体验界面。
-- **Live Mode（实盘模式）**：连接真实 Longbridge API，需要本地运行 `npm run dev`。
+- **Demo Mode（演示模式）**：使用模拟数据，无需 API 凭证，适合体验界面。
+- **Live Mode（实盘模式）**：连接真实 Longbridge API，需要本地运行服务器（`npm start` 或 `npm run dev`）。
 
-> ⚠️ Live Mode 仅在本地开发环境可用。线上演示（GitHub Pages / 静态部署）没有后端服务器，只能使用 Demo Mode。
+> ⚠️ Live Mode 需要本地服务器。线上演示（静态部署）没有后端服务器，只能使用 Demo Mode。
 
-- **Demo Mode**: Uses mock data, no API keys needed. Great for exploring the UI.
-- **Live Mode**: Connects to the real Longbridge API. Requires running `npm run dev` locally.
+- **Demo Mode**: Uses mock data, no API credentials needed. Great for exploring the UI.
+- **Live Mode**: Connects to the real Longbridge API. Requires a local server (`npm start` or `npm run dev`).
 
-> ⚠️ Live Mode only works in local development. The online demo (static deployment) has no backend server and only supports Demo Mode.
+> ⚠️ Live Mode requires a local server. The online demo (static deployment) has no backend and only supports Demo Mode.
 
 ## API 配置 / API Configuration
 
@@ -119,13 +121,15 @@ The server uses the native Node.js Longbridge SDK — no Python required.
 
 1. 在网页中输入长桥 API 凭证（App Key / App Secret / Access Token）
 2. 点击「查看持仓」查看当前所有持仓
-3. 确认后点击「一键清仓」以市价单卖出全部持仓
+3. 勾选需要清仓的标的（默认全选）
+4. 点击「一键清仓」以市价单卖出选中持仓
 
 ---
 
 1. Enter your Longbridge API credentials (App Key / App Secret / Access Token)
 2. Click "View Positions" to see current holdings
-3. Confirm and click "Liquidate All" to sell everything at market price
+3. Select positions to liquidate (all selected by default)
+4. Click "Liquidate" to sell selected positions at market price
 
 ## 安全说明 / Security
 
