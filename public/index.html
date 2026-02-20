@@ -38,7 +38,13 @@
         success: '清仓完成',
         footer: '© 2026 Built by',
         openSource: '· 开源于',
-        disclaimer: '本工具仅供学习交流，投资有风险，操作需谨慎'
+        disclaimer: '本工具仅供学习交流，投资有风险，操作需谨慎',
+        faq: '常见问题',
+        faqQ1: '问：如何获取 Longbridge API Key？',
+        faqA1s1: '1. 登录长桥证券 App',
+        faqA1s2: '2. 进入「我的」→「开发者中心」→「开发者账户」',
+        faqA1s3: '3. 创建 API Key，记录 App Key 和 App Secret',
+        faqA1s4: '4. 确保账户已开通交易权限'
       },
       'zh-TW': {
         title: '一鍵清倉',
@@ -61,7 +67,13 @@
         success: '清倉完成',
         footer: '© 2026 Built by',
         openSource: '· 開源於',
-        disclaimer: '本工具僅供學習交流，投資有風險，操作需謹慎'
+        disclaimer: '本工具僅供學習交流，投資有風險，操作需謹慎',
+        faq: '常見問題',
+        faqQ1: '問：如何獲取 Longbridge API Key？',
+        faqA1s1: '1. 登入長橋證券 App',
+        faqA1s2: '2. 進入「我的」→「開發者中心」→「開發者賬戶」',
+        faqA1s3: '3. 創建 API Key，記錄 App Key 和 App Secret',
+        faqA1s4: '4. 確保賬戶已開通交易權限'
       },
       'en': {
         title: 'Liquidate All',
@@ -84,7 +96,13 @@
         success: 'Liquidation Complete',
         footer: '© 2026 Built by',
         openSource: '· Open source on',
-        disclaimer: 'For educational purposes only. Trading involves risk.'
+        disclaimer: 'For educational purposes only. Trading involves risk.',
+        faq: 'FAQ',
+        faqQ1: 'Q: How to get Longbridge API Key?',
+        faqA1s1: '1. Login to Longbridge App',
+        faqA1s2: '2. Go to "Me" → "Developer Center" → "Developer Account"',
+        faqA1s3: '3. Create API Key, save App Key and App Secret',
+        faqA1s4: '4. Ensure trading permission is enabled'
       }
     };
     
@@ -667,6 +685,54 @@
 
     .btn-modal-danger:hover { background: var(--danger-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
     .btn-modal-danger:active { transform: translateY(0); }
+
+    /* FAQ Accordion */
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-item:last-child { border-bottom: none; }
+
+    .faq-question {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 14px 0;
+      background: none;
+      border: none;
+      color: var(--foreground);
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: left;
+      transition: color 0.2s;
+    }
+
+    .faq-question:hover { color: var(--muted); }
+
+    .faq-chevron {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      color: var(--muted);
+      transition: transform 0.25s ease;
+    }
+
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .faq-item.open .faq-answer { max-height: 200px; }
+
+    .faq-answer-inner {
+      padding: 0 0 14px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
   </style>
 </head>
 <body>
@@ -732,6 +798,29 @@
         <i data-lucide="bar-chart-3" class="btn-icon" style="width: 16px; height: 16px;"></i>
         <span data-i18n="viewPositions">查看持仓</span>
       </button>
+    </div>
+
+    <!-- FAQ Card -->
+    <div class="card" id="faqCard">
+      <div class="card-header">
+        <i data-lucide="help-circle" style="width: 18px; height: 18px; color: var(--muted);"></i>
+        <span class="card-title" data-i18n="faq">常见问题</span>
+      </div>
+
+      <div class="faq-item" id="faqItem1">
+        <button class="faq-question" onclick="toggleFaq('faqItem1')">
+          <span data-i18n="faqQ1">问：如何获取 Longbridge API Key？</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            <span data-i18n="faqA1s1">1. 登录长桥证券 App</span><br>
+            <span data-i18n="faqA1s2">2. 进入「我的」→「开发者中心」→「开发者账户」</span><br>
+            <span data-i18n="faqA1s3">3. 创建 API Key，记录 App Key 和 App Secret</span><br>
+            <span data-i18n="faqA1s4">4. 确保账户已开通交易权限</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -812,6 +901,11 @@
   <script>
     // Initialize Lucide icons
     lucide.createIcons();
+
+    // FAQ accordion toggle
+    function toggleFaq(id) {
+      document.getElementById(id).classList.toggle('open');
+    }
 
     // Language select init
     document.getElementById('langSelect').value = currentLang;
