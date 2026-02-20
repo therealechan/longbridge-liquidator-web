@@ -23,6 +23,12 @@
         badge: '本地安全模式',
         demo: '演示模式',
         demoDesc: '展示界面效果，不连接真实账户',
+        demoMode: '演示模式',
+        liveMode: '实盘模式',
+        liveWarning: '切换到实盘模式将连接真实 Longbridge API，请确保你了解交易风险。',
+        liveConfirm: '确认切换',
+        liveCancel: '取消',
+        apiRequired: '请先填写 API Key 和 Secret',
         apiConfig: 'API 配置',
         appKey: 'App Key',
         appSecret: 'App Secret',
@@ -52,6 +58,12 @@
         badge: '本地安全模式',
         demo: '演示模式',
         demoDesc: '展示界面效果，不連接真實帳戶',
+        demoMode: '演示模式',
+        liveMode: '實盤模式',
+        liveWarning: '切換到實盤模式將連接真實 Longbridge API，請確保你了解交易風險。',
+        liveConfirm: '確認切換',
+        liveCancel: '取消',
+        apiRequired: '請先填寫 API Key 和 Secret',
         apiConfig: 'API 配置',
         appKey: 'App Key',
         appSecret: 'App Secret',
@@ -81,6 +93,12 @@
         badge: 'Local Secure Mode',
         demo: 'Demo Mode',
         demoDesc: 'UI preview only, no real trading',
+        demoMode: 'Demo Mode',
+        liveMode: 'Live Mode',
+        liveWarning: 'Switching to Live Mode will connect to the real Longbridge API. Make sure you understand the trading risks.',
+        liveConfirm: 'Confirm Switch',
+        liveCancel: 'Cancel',
+        apiRequired: 'Please enter API Key and Secret first',
         apiConfig: 'API Configuration',
         appKey: 'App Key',
         appSecret: 'App Secret',
@@ -128,6 +146,8 @@
           i18n[lang].openSource +
           ' <a href="' + ghUrl + '" target="_blank" class="footer-link">GitHub</a>';
       }
+      // Update mode toggle label
+      if (typeof updateModeUI === 'function') updateModeUI();
     }
   </script>
   
@@ -733,6 +753,129 @@
       color: var(--muted);
       line-height: 1.8;
     }
+
+    /* Demo Mode Toggle */
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .mode-toggle:hover { border-color: var(--muted); }
+
+    .mode-toggle-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      transition: color 0.2s;
+    }
+
+    .mode-toggle.demo .mode-toggle-label { color: var(--muted); }
+    .mode-toggle.live .mode-toggle-label { color: var(--success); }
+
+    .toggle-switch {
+      position: relative;
+      width: 34px;
+      height: 18px;
+      border-radius: 9px;
+      background: var(--border);
+      transition: background 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.25s;
+    }
+
+    .mode-toggle.live .toggle-switch {
+      background: rgba(22, 163, 74, 0.2);
+    }
+
+    .mode-toggle.live .toggle-switch::after {
+      transform: translateX(16px);
+      background: var(--success);
+    }
+
+    /* Live mode indicator dot in badge */
+    .badge.live-badge .badge-dot {
+      background: var(--success);
+      box-shadow: 0 0 6px rgba(22, 163, 74, 0.5);
+    }
+
+    /* Demo notice visibility */
+    .demo-notice.hidden { display: none; }
+
+    /* Live Warning Modal */
+    .live-warning-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0);
+      backdrop-filter: blur(0px);
+      z-index: 1001;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease, backdrop-filter 0.3s ease;
+    }
+    .live-warning-overlay.active {
+      display: flex;
+      animation: overlayIn 0.3s ease forwards;
+    }
+    .live-warning-overlay.closing {
+      animation: overlayOut 0.2s ease forwards;
+    }
+
+    .live-warning-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 100%;
+      max-width: 380px;
+      margin: 0 16px;
+      animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .live-warning-overlay.closing .live-warning-card {
+      animation: modalOut 0.2s ease forwards;
+    }
+
+    .live-warning-icon {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #f59e0b;
+    }
+
+    .live-warning-text {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .live-warning-actions {
+      display: flex;
+      gap: 10px;
+    }
   </style>
 </head>
 <body>
@@ -749,6 +892,10 @@
         <span class="brand-text">Liquidator</span>
       </div>
       <div class="header-controls">
+        <div class="mode-toggle demo" id="modeToggle" onclick="handleModeToggle()">
+          <span class="mode-toggle-label" id="modeLabel">Demo</span>
+          <div class="toggle-switch"></div>
+        </div>
         <select class="lang-select" id="langSelect" onchange="setLang(this.value)">
           <option value="zh-CN">简中</option>
           <option value="zh-TW">繁中</option>
@@ -898,6 +1045,21 @@
     </div>
   </div>
 
+  <!-- Live Mode Warning Modal -->
+  <div class="live-warning-overlay" id="liveWarningModal" onclick="closeLiveWarning(event)">
+    <div class="live-warning-card" onclick="event.stopPropagation()">
+      <div class="live-warning-icon">
+        <i data-lucide="shield-alert" style="width: 18px; height: 18px;"></i>
+        <span id="liveWarningTitle">Live Mode</span>
+      </div>
+      <div class="live-warning-text" id="liveWarningText"></div>
+      <div class="live-warning-actions">
+        <button class="btn-secondary" onclick="closeLiveWarning()" id="liveWarningCancelBtn">Cancel</button>
+        <button class="btn-modal-danger" onclick="confirmLiveMode()" id="liveWarningConfirmBtn" style="background: #f59e0b;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Initialize Lucide icons
     lucide.createIcons();
@@ -955,6 +1117,77 @@
       document.getElementById('themeIconDark').style.display = 'block';
     }
 
+    // Demo Mode state (default: ON for safety)
+    let isDemoMode = localStorage.getItem('demoMode') !== 'false';
+
+    function updateModeUI() {
+      const toggle = document.getElementById('modeToggle');
+      const label = document.getElementById('modeLabel');
+      const demoNotice = document.querySelector('.demo-notice');
+      const badge = document.querySelector('.badge');
+
+      if (isDemoMode) {
+        toggle.className = 'mode-toggle demo';
+        label.textContent = t('demoMode');
+        if (demoNotice) demoNotice.classList.remove('hidden');
+        if (badge) {
+          badge.classList.remove('live-badge');
+          badge.querySelector('[data-i18n="badge"]').textContent = t('badge');
+        }
+      } else {
+        toggle.className = 'mode-toggle live';
+        label.textContent = t('liveMode');
+        if (demoNotice) demoNotice.classList.add('hidden');
+        if (badge) {
+          badge.classList.add('live-badge');
+          badge.querySelector('[data-i18n="badge"]').textContent = t('liveMode');
+        }
+      }
+    }
+
+    function handleModeToggle() {
+      if (isDemoMode) {
+        // Switching to live mode — show warning
+        const lang = currentLang;
+        document.getElementById('liveWarningTitle').textContent = t('liveMode');
+        document.getElementById('liveWarningText').textContent = t('liveWarning');
+        document.getElementById('liveWarningCancelBtn').textContent = t('liveCancel');
+        document.getElementById('liveWarningConfirmBtn').textContent = t('liveConfirm');
+        document.getElementById('liveWarningModal').classList.add('active');
+        lucide.createIcons();
+      } else {
+        // Switching back to demo mode — no warning needed
+        isDemoMode = true;
+        localStorage.setItem('demoMode', 'true');
+        updateModeUI();
+        // Reset positions view if visible
+        document.getElementById('positionsCard').classList.remove('active');
+        document.getElementById('configCard').style.display = '';
+        currentPositions = [];
+      }
+    }
+
+    function closeLiveWarning(event) {
+      if (event && event.target !== event.currentTarget) return;
+      const modal = document.getElementById('liveWarningModal');
+      modal.classList.add('closing');
+      setTimeout(() => modal.classList.remove('active', 'closing'), 200);
+    }
+
+    function confirmLiveMode() {
+      isDemoMode = false;
+      localStorage.setItem('demoMode', 'false');
+      updateModeUI();
+      closeLiveWarning();
+      // Reset positions view
+      document.getElementById('positionsCard').classList.remove('active');
+      document.getElementById('configCard').style.display = '';
+      currentPositions = [];
+    }
+
+    // Initialize mode UI
+    updateModeUI();
+
     // Mock data
     const mockPositions = [
       { symbol: "AAPL.US", quantity: 100, market_price: 185.50 },
@@ -987,23 +1220,53 @@
       const appKey = document.getElementById('appKey').value.trim();
       const appSecret = document.getElementById('appSecret').value.trim();
 
+      if (isDemoMode) {
+        // Demo mode: use mock data, no credentials needed
+        hideAlert();
+        showLoading(true);
+        await new Promise(r => setTimeout(r, 600));
+
+        currentPositions = mockPositions;
+        const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
+        renderPositions(currentPositions, totalValue);
+
+        document.getElementById('positionsCard').classList.add('active');
+        document.getElementById('configCard').style.display = 'none';
+        showLoading(false);
+        lucide.createIcons();
+        return;
+      }
+
+      // Live mode: require API credentials
       if (!appKey || !appSecret) {
-        showAlert('Please enter API credentials', 'warning');
+        showAlert(t('apiRequired'), 'warning');
         return;
       }
 
       hideAlert();
       showLoading(true);
-      await new Promise(r => setTimeout(r, 600));
 
-      currentPositions = mockPositions;
-      const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
-      renderPositions(currentPositions, totalValue);
-      
-      document.getElementById('positionsCard').classList.add('active');
-      document.getElementById('configCard').style.display = 'none';
-      showLoading(false);
-      lucide.createIcons();
+      try {
+        const resp = await fetch('/api/positions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ app_key: appKey, app_secret: appSecret })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'API request failed');
+
+        currentPositions = data.positions || [];
+        const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
+        renderPositions(currentPositions, totalValue);
+
+        document.getElementById('positionsCard').classList.add('active');
+        document.getElementById('configCard').style.display = 'none';
+      } catch (err) {
+        showAlert(err.message, 'warning');
+      } finally {
+        showLoading(false);
+        lucide.createIcons();
+      }
     }
 
     function renderPositions(positions, totalValue) {
@@ -1065,7 +1328,10 @@
     }
 
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') closeLiquidateModal();
+      if (e.key === 'Escape') {
+        closeLiquidateModal();
+        closeLiveWarning();
+      }
     });
 
     async function confirmLiquidate() {
