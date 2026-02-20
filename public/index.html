@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/motion@10.16.4/dist/motion.min.js"></script>
   
   <!-- i18n -->
   <script>
@@ -284,25 +285,7 @@
     .theme-toggle:active { transform: scale(0.95); }
 
     .theme-toggle .theme-icon {
-      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
-    }
-
-    .theme-toggle .theme-icon.entering {
-      animation: themeIconIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
-
-    .theme-toggle .theme-icon.leaving {
-      animation: themeIconOut 0.3s ease forwards;
-    }
-
-    @keyframes themeIconIn {
-      from { transform: rotate(-90deg) scale(0); opacity: 0; }
-      to { transform: rotate(0deg) scale(1); opacity: 1; }
-    }
-
-    @keyframes themeIconOut {
-      from { transform: rotate(0deg) scale(1); opacity: 1; }
-      to { transform: rotate(90deg) scale(0); opacity: 0; }
+      transition: opacity 0.3s ease;
     }
 
     /* Hero */
@@ -491,12 +474,6 @@
     .footer-logo svg {
       width: 24px;
       height: 24px;
-      animation: breathe 4s ease-in-out infinite;
-    }
-
-    @keyframes breathe {
-      0%, 100% { opacity: 0.7; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.06); }
     }
 
     .footer-brand {
@@ -572,23 +549,9 @@
       z-index: 1000;
       align-items: center;
       justify-content: center;
-      transition: background 0.3s ease, backdrop-filter 0.3s ease;
     }
     .modal-overlay.active {
       display: flex;
-      animation: overlayIn 0.3s ease forwards;
-    }
-    .modal-overlay.closing {
-      animation: overlayOut 0.2s ease forwards;
-    }
-
-    @keyframes overlayIn {
-      from { background: rgba(0, 0, 0, 0); backdrop-filter: blur(0px); }
-      to { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
-    }
-    @keyframes overlayOut {
-      from { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
-      to { background: rgba(0, 0, 0, 0); backdrop-filter: blur(0px); }
     }
 
     .modal-card {
@@ -599,21 +562,6 @@
       width: 100%;
       max-width: 400px;
       margin: 0 16px;
-      animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .modal-overlay.closing .modal-card {
-      animation: modalOut 0.2s ease forwards;
-    }
-
-    @keyframes modalIn {
-      from { opacity: 0; transform: scale(0.9) translateY(16px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    @keyframes modalOut {
-      from { opacity: 1; transform: scale(1) translateY(0); }
-      to { opacity: 0; transform: scale(0.95) translateY(8px); }
     }
 
     .modal-title {
@@ -830,14 +778,9 @@
       z-index: 1001;
       align-items: center;
       justify-content: center;
-      transition: background 0.3s ease, backdrop-filter 0.3s ease;
     }
     .live-warning-overlay.active {
       display: flex;
-      animation: overlayIn 0.3s ease forwards;
-    }
-    .live-warning-overlay.closing {
-      animation: overlayOut 0.2s ease forwards;
     }
 
     .live-warning-card {
@@ -848,11 +791,6 @@
       width: 100%;
       max-width: 380px;
       margin: 0 16px;
-      animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .live-warning-overlay.closing .live-warning-card {
-      animation: modalOut 0.2s ease forwards;
     }
 
     .live-warning-icon {
@@ -876,6 +814,22 @@
       display: flex;
       gap: 10px;
     }
+
+    /* SVG path animation base styles */
+    .logo-animated path {
+      stroke-dasharray: var(--path-length, 100);
+      stroke-dashoffset: var(--path-length, 100);
+    }
+
+    /* Reduced motion: disable all custom animations */
+    @media (prefers-reduced-motion: reduce) {
+      .logo-animated path { stroke-dashoffset: 0 !important; stroke-dasharray: none !important; }
+      .brand svg, .footer-logo svg { animation: none !important; }
+      .theme-toggle .theme-icon { animation: none !important; transition: none !important; }
+      .modal-card, .live-warning-card { animation: none !important; }
+      .modal-overlay, .live-warning-overlay { animation: none !important; }
+      .btn .btn-icon { transition: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -883,7 +837,7 @@
     <!-- Header -->
     <header class="header">
       <div class="brand">
-        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="logo-animated" id="headerLogo" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M16 2L2 9l14 7 14-7-14-7z"/>
           <path d="M2 9v14l14 7 14-7V9"/>
           <path d="M16 16v14"/>
@@ -1012,7 +966,7 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="footer-logo">
-        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="logo-animated" id="footerLogo" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M16 2L2 9l14 7 14-7-14-7z"/>
           <path d="M2 9v14l14 7 14-7V9"/>
           <path d="M16 16v14"/>
@@ -1061,6 +1015,149 @@
   </div>
 
   <script>
+    // ── Motion helpers ──
+    const { animate } = Motion;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function motionAnimate(...args) {
+      if (prefersReducedMotion) return;
+      return animate(...args);
+    }
+
+    // ── SVG path draw animation ──
+    function animateLogoPaths(svgEl, delay = 0) {
+      if (prefersReducedMotion) {
+        svgEl.querySelectorAll('path').forEach(p => {
+          p.style.strokeDasharray = 'none';
+          p.style.strokeDashoffset = '0';
+        });
+        return;
+      }
+      const paths = svgEl.querySelectorAll('path');
+      paths.forEach((path, i) => {
+        const length = path.getTotalLength();
+        path.style.setProperty('--path-length', length);
+        path.style.strokeDasharray = length;
+        path.style.strokeDashoffset = length;
+        animate(
+          path,
+          { strokeDashoffset: [length, 0] },
+          { duration: 0.6, delay: delay + i * 0.12, easing: [0.34, 1.56, 0.64, 1] }
+        );
+      });
+    }
+
+    // ── Logo subtle breathing (after draw completes) ──
+    function startLogoBreathing(svgEl, delay) {
+      if (prefersReducedMotion) return;
+      setTimeout(() => {
+        animate(
+          svgEl,
+          { opacity: [0.85, 1, 0.85] },
+          { duration: 4, repeat: Infinity, easing: 'ease-in-out' }
+        );
+      }, delay);
+    }
+
+    // ── Theme icon morph animation ──
+    function animateThemeSwitch(outgoing, incoming) {
+      if (prefersReducedMotion) {
+        outgoing.style.display = 'none';
+        incoming.style.display = 'block';
+        return;
+      }
+      animate(outgoing, { rotate: 90, scale: 0, opacity: 0 }, { duration: 0.25, easing: 'ease-in' })
+        .finished.then(() => {
+          outgoing.style.display = 'none';
+          outgoing.style.transform = '';
+          outgoing.style.opacity = '';
+          incoming.style.display = 'block';
+          animate(incoming,
+            { rotate: [-90, 0], scale: [0, 1], opacity: [0, 1] },
+            { duration: 0.4, easing: [0.34, 1.56, 0.64, 1] }
+          );
+        });
+    }
+
+    // ── Button icon hover animations ──
+    function setupButtonHoverAnimations() {
+      if (prefersReducedMotion) return;
+
+      // Chart icon on "View Positions" button
+      const viewBtn = document.querySelector('.btn-primary');
+      if (viewBtn) {
+        const icon = viewBtn.querySelector('.btn-icon');
+        if (icon) {
+          viewBtn.addEventListener('mouseenter', () => {
+            animate(icon, { y: [0, -2, 0] }, { duration: 0.35, easing: 'ease-out' });
+          });
+        }
+      }
+
+      // Zap icon on "Liquidate" button
+      const zapBtn = document.getElementById('liquidateBtn');
+      if (zapBtn) {
+        const icon = zapBtn.querySelector('.btn-icon');
+        if (icon) {
+          zapBtn.addEventListener('mouseenter', () => {
+            animate(icon,
+              { opacity: [1, 0.4, 1, 0.6, 1] },
+              { duration: 0.5, easing: 'ease-in-out' }
+            );
+          });
+        }
+      }
+    }
+
+    // ── Modal spring animation with Motion ──
+    function animateModalIn(overlay, card) {
+      if (prefersReducedMotion) {
+        overlay.style.background = 'rgba(0,0,0,0.6)';
+        overlay.style.backdropFilter = 'blur(4px)';
+        return;
+      }
+      animate(overlay,
+        { background: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.6)'] },
+        { duration: 0.3, easing: 'ease-out' }
+      );
+      animate(card,
+        { scale: [0.92, 1], opacity: [0, 1], y: [16, 0] },
+        { duration: 0.45, easing: [0.34, 1.56, 0.64, 1] }
+      );
+    }
+
+    function animateModalOut(overlay, card, callback) {
+      if (prefersReducedMotion) {
+        callback();
+        return;
+      }
+      animate(card,
+        { scale: [1, 0.95], opacity: [1, 0], y: [0, 8] },
+        { duration: 0.18, easing: 'ease-in' }
+      );
+      animate(overlay,
+        { background: ['rgba(0,0,0,0.6)', 'rgba(0,0,0,0)'] },
+        { duration: 0.2, easing: 'ease-in' }
+      ).finished.then(callback);
+    }
+
+    // ── Check icon draw animation (success state) ──
+    function animateCheckIcon(container) {
+      if (prefersReducedMotion) return;
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+      // Wait for lucide to render, then animate the path
+      requestAnimationFrame(() => {
+        const paths = svg.querySelectorAll('path, polyline, line');
+        paths.forEach((p, i) => {
+          const len = p.getTotalLength ? p.getTotalLength() : 20;
+          p.style.strokeDasharray = len;
+          p.style.strokeDashoffset = len;
+          animate(p, { strokeDashoffset: [len, 0] }, { duration: 0.4, delay: i * 0.1, easing: [0.34, 1.56, 0.64, 1] });
+        });
+      });
+    }
+
     // Initialize Lucide icons
     lucide.createIcons();
 
@@ -1073,17 +1170,16 @@
     document.getElementById('langSelect').value = currentLang;
     setLang(currentLang);
 
-    // Theme toggle
+    // Theme toggle (now using Motion)
     function toggleTheme() {
       const html = document.documentElement;
       const iconLight = document.getElementById('themeIconLight');
       const iconDark = document.getElementById('themeIconDark');
       
-      // Animate out current icon, animate in new icon
       const outgoing = html.classList.contains('dark') ? iconDark : iconLight;
       const incoming = html.classList.contains('dark') ? iconLight : iconDark;
       
-      outgoing.classList.add('leaving');
+      animateThemeSwitch(outgoing, incoming);
       
       setTimeout(() => {
         if (html.classList.contains('dark')) {
@@ -1093,17 +1189,8 @@
           html.classList.add('dark');
           localStorage.setItem('theme', 'dark');
         }
-        
-        outgoing.style.display = 'none';
-        outgoing.classList.remove('leaving');
-        
-        incoming.style.display = 'block';
-        incoming.classList.add('entering');
-        
         lucide.createIcons();
-        
-        setTimeout(() => incoming.classList.remove('entering'), 500);
-      }, 200);
+      }, prefersReducedMotion ? 0 : 250);
     }
 
     // Load saved theme
@@ -1148,19 +1235,19 @@
     function handleModeToggle() {
       if (isDemoMode) {
         // Switching to live mode — show warning
-        const lang = currentLang;
         document.getElementById('liveWarningTitle').textContent = t('liveMode');
         document.getElementById('liveWarningText').textContent = t('liveWarning');
         document.getElementById('liveWarningCancelBtn').textContent = t('liveCancel');
         document.getElementById('liveWarningConfirmBtn').textContent = t('liveConfirm');
-        document.getElementById('liveWarningModal').classList.add('active');
+        const overlay = document.getElementById('liveWarningModal');
+        overlay.classList.add('active');
+        overlay.style.display = 'flex';
+        animateModalIn(overlay, overlay.querySelector('.live-warning-card'));
         lucide.createIcons();
       } else {
-        // Switching back to demo mode — no warning needed
         isDemoMode = true;
         localStorage.setItem('demoMode', 'true');
         updateModeUI();
-        // Reset positions view if visible
         document.getElementById('positionsCard').classList.remove('active');
         document.getElementById('configCard').style.display = '';
         currentPositions = [];
@@ -1169,9 +1256,12 @@
 
     function closeLiveWarning(event) {
       if (event && event.target !== event.currentTarget) return;
-      const modal = document.getElementById('liveWarningModal');
-      modal.classList.add('closing');
-      setTimeout(() => modal.classList.remove('active', 'closing'), 200);
+      const overlay = document.getElementById('liveWarningModal');
+      const card = overlay.querySelector('.live-warning-card');
+      animateModalOut(overlay, card, () => {
+        overlay.classList.remove('active');
+        overlay.style.display = '';
+      });
     }
 
     function confirmLiveMode() {
@@ -1179,7 +1269,6 @@
       localStorage.setItem('demoMode', 'false');
       updateModeUI();
       closeLiveWarning();
-      // Reset positions view
       document.getElementById('positionsCard').classList.remove('active');
       document.getElementById('configCard').style.display = '';
       currentPositions = [];
@@ -1221,7 +1310,6 @@
       const appSecret = document.getElementById('appSecret').value.trim();
 
       if (isDemoMode) {
-        // Demo mode: use mock data, no credentials needed
         hideAlert();
         showLoading(true);
         await new Promise(r => setTimeout(r, 600));
@@ -1234,10 +1322,10 @@
         document.getElementById('configCard').style.display = 'none';
         showLoading(false);
         lucide.createIcons();
+        setupButtonHoverAnimations();
         return;
       }
 
-      // Live mode: require API credentials
       if (!appKey || !appSecret) {
         showAlert(t('apiRequired'), 'warning');
         return;
@@ -1266,6 +1354,7 @@
       } finally {
         showLoading(false);
         lucide.createIcons();
+        setupButtonHoverAnimations();
       }
     }
 
@@ -1314,17 +1403,21 @@
         </div>
       `).join('');
 
-      document.getElementById('liquidateModal').classList.add('active');
+      const overlay = document.getElementById('liquidateModal');
+      overlay.classList.add('active');
+      overlay.style.display = 'flex';
+      animateModalIn(overlay, overlay.querySelector('.modal-card'));
       lucide.createIcons();
     }
 
     function closeLiquidateModal(event) {
       if (event && event.target !== event.currentTarget) return;
-      const modal = document.getElementById('liquidateModal');
-      modal.classList.add('closing');
-      setTimeout(() => {
-        modal.classList.remove('active', 'closing');
-      }, 200);
+      const overlay = document.getElementById('liquidateModal');
+      const card = overlay.querySelector('.modal-card');
+      animateModalOut(overlay, card, () => {
+        overlay.classList.remove('active');
+        overlay.style.display = '';
+      });
     }
 
     document.addEventListener('keydown', function(e) {
@@ -1345,14 +1438,32 @@
       renderPositions([], 0);
       
       const btn = document.getElementById('liquidateBtn');
-      btn.innerHTML = `<i data-lucide="check" style="width: 16px; height: 16px;"></i><span>${lang.success}</span>`;
+      btn.innerHTML = `<i data-lucide="check" class="btn-icon" style="width: 16px; height: 16px;"></i><span>${lang.success}</span>`;
       btn.disabled = true;
       btn.style.opacity = '0.5';
       btn.style.cursor = 'not-allowed';
       
       showLoading(false);
       lucide.createIcons();
+
+      // Animate the check icon drawing
+      animateCheckIcon(btn);
     }
+
+    // ── Init: run logo draw animations on page load ──
+    window.addEventListener('DOMContentLoaded', () => {
+      const headerLogo = document.getElementById('headerLogo');
+      const footerLogo = document.getElementById('footerLogo');
+      if (headerLogo) {
+        animateLogoPaths(headerLogo, 0.2);
+        startLogoBreathing(headerLogo, 1200);
+      }
+      if (footerLogo) {
+        animateLogoPaths(footerLogo, 0.6);
+        startLogoBreathing(footerLogo, 1600);
+      }
+      setupButtonHoverAnimations();
+    });
   </script>
 </body>
 </html>
