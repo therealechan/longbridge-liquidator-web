@@ -8,11 +8,15 @@
   <meta name="description" content="Longbridge Liquidator - One-click position liquidation tool" />
   
   <!-- Geist Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5/400.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5/500.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5/600.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5/700.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5/400.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5/500.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5/600.css">
   
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@0.460.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/motion@10.16.4/dist/motion.min.js"></script>
   
   <!-- i18n -->
@@ -41,6 +45,7 @@
         quantity: '数量',
         price: '价格',
         value: '市值',
+        change: '涨跌',
         total: '总计',
         liquidate: '一键清仓',
         selectAll: '全选',
@@ -56,22 +61,23 @@
         openSource: '· 开源于',
         disclaimer: '本工具仅供学习交流，投资有风险，操作需谨慎',
         faq: '常见问题',
-        faqQ1: '问：如何获取 Longbridge API Key？',
-        faqA1s1: '1. 登录长桥证券 App',
-        faqA1s2: '2. 进入「我的」→「开发者中心」→「开发者账户」',
-        faqA1s3: '3. 创建 API Key，记录 App Key 和 App Secret',
-        faqA1s4: '4. 确保账户已开通交易权限',
-        faqQ2: '问：什么是 Demo Mode 和 Live Mode？',
-        faqA2s1: 'Demo Mode（演示模式）：使用模拟数据，无需真实 API 凭证，适合体验界面。',
-        faqA2s2: 'Live Mode（实盘模式）：连接真实 Longbridge API，可查看真实持仓并执行交易。',
-        faqA2s3: '⚠️ Live Mode 仅在本地开发环境可用（需运行 npm run dev）。',
-        faqQ3: '问：为什么线上演示只能用 Demo Mode？',
-        faqA3s1: '线上版本是纯静态部署（如 GitHub Pages），没有后端服务器。',
-        faqA3s2: '真实 API 调用需要后端代理，必须在本地运行 npm run dev 才能使用 Live Mode。',
-        faqQ4: '问：如何获取 Access Token？',
-        faqA4s1: 'Access Token 与 App Key / App Secret 在同一页面获取。',
-        faqA4s2: '登录长桥开发者中心 → 用户中心 → 应用凭证，即可找到所有三个凭证。',
-        faqA4s3: '详见：https://open.longportapp.com/',
+        faqQ1: '问：如何获取 API 凭证？',
+        faqA1s1: '1. 登录长桥开发者中心 open.longportapp.com',
+        faqA1s2: '2. 在应用凭证页面获取 App Key、App Secret、Access Token',
+        faqA1s3: '3. 确保账户已开通交易权限',
+        faqA1s4: '详见：https://open.longportapp.com/',
+        faqQ2: '问：我的凭证安全吗？',
+        faqA2s1: '凭证仅保存在浏览器 localStorage，仅限本机访问。',
+        faqA2s2: '服务器绑定 127.0.0.1，外部网络无法连接。',
+        faqA2s3: 'API 调用直接从本地发往长桥服务器，不经过任何第三方。',
+        faqQ3: '问：什么是演示模式和实盘模式？',
+        faqA3s1: '演示模式：使用模拟数据，无需凭证，适合体验界面。',
+        faqA3s2: '实盘模式：连接真实 Longbridge API，查看持仓并执行市价卖出。',
+        faqA3s3: '使用实盘模式需先启动本地服务器（npm start 或 npm run dev）。',
+        faqQ4: '问：支持哪些市场和订单类型？',
+        faqA4s1: '支持美股 (.US)、港股 (.HK)、新加坡 (.SG)。',
+        faqA4s2: '清仓使用市价单 (Market Order)，按当前市价立即成交。',
+        faqA4s3: '部分失败时，成功的订单正常处理，失败的显示错误信息。',
         error: '错误',
         ok: '确定'
       },
@@ -98,6 +104,7 @@
         quantity: '數量',
         price: '價格',
         value: '市值',
+        change: '漲跌',
         total: '總計',
         liquidate: '一鍵清倉',
         selectAll: '全選',
@@ -113,22 +120,23 @@
         openSource: '· 開源於',
         disclaimer: '本工具僅供學習交流，投資有風險，操作需謹慎',
         faq: '常見問題',
-        faqQ1: '問：如何獲取 Longbridge API Key？',
-        faqA1s1: '1. 登入長橋證券 App',
-        faqA1s2: '2. 進入「我的」→「開發者中心」→「開發者賬戶」',
-        faqA1s3: '3. 創建 API Key，記錄 App Key 和 App Secret',
-        faqA1s4: '4. 確保賬戶已開通交易權限',
-        faqQ2: '問：什麼是 Demo Mode 和 Live Mode？',
-        faqA2s1: 'Demo Mode（演示模式）：使用模擬數據，無需真實 API 憑證，適合體驗介面。',
-        faqA2s2: 'Live Mode（實盤模式）：連接真實 Longbridge API，可查看真實持倉並執行交易。',
-        faqA2s3: '⚠️ Live Mode 僅在本地開發環境可用（需運行 npm run dev）。',
-        faqQ3: '問：為什麼線上演示只能用 Demo Mode？',
-        faqA3s1: '線上版本是純靜態部署（如 GitHub Pages），沒有後端伺服器。',
-        faqA3s2: '真實 API 調用需要後端代理，必須在本地運行 npm run dev 才能使用 Live Mode。',
-        faqQ4: '問：如何獲取 Access Token？',
-        faqA4s1: 'Access Token 與 App Key / App Secret 在同一頁面獲取。',
-        faqA4s2: '登入長橋開發者中心 → 用戶中心 → 應用憑證，即可找到所有三個憑證。',
-        faqA4s3: '詳見：https://open.longportapp.com/',
+        faqQ1: '問：如何獲取 API 憑證？',
+        faqA1s1: '1. 登入長橋開發者中心 open.longportapp.com',
+        faqA1s2: '2. 在應用憑證頁面獲取 App Key、App Secret、Access Token',
+        faqA1s3: '3. 確保賬戶已開通交易權限',
+        faqA1s4: '詳見：https://open.longportapp.com/',
+        faqQ2: '問：我的憑證安全嗎？',
+        faqA2s1: '憑證僅保存在瀏覽器 localStorage，僅限本機訪問。',
+        faqA2s2: '伺服器綁定 127.0.0.1，外部網路無法連接。',
+        faqA2s3: 'API 調用直接從本地發往長橋伺服器，不經過任何第三方。',
+        faqQ3: '問：什麼是演示模式和實盤模式？',
+        faqA3s1: '演示模式：使用模擬數據，無需憑證，適合體驗介面。',
+        faqA3s2: '實盤模式：連接真實 Longbridge API，查看持倉並執行市價賣出。',
+        faqA3s3: '使用實盤模式需先啟動本地伺服器（npm start 或 npm run dev）。',
+        faqQ4: '問：支持哪些市場和訂單類型？',
+        faqA4s1: '支持美股 (.US)、港股 (.HK)、新加坡 (.SG)。',
+        faqA4s2: '清倉使用市價單 (Market Order)，按當前市價立即成交。',
+        faqA4s3: '部分失敗時，成功的訂單正常處理，失敗的顯示錯誤信息。',
         error: '錯誤',
         ok: '確定'
       },
@@ -155,6 +163,7 @@
         quantity: 'Qty',
         price: 'Price',
         value: 'Value',
+        change: 'Change',
         total: 'Total',
         liquidate: 'Liquidate All',
         selectAll: 'Select All',
@@ -170,22 +179,23 @@
         openSource: '· Open source on',
         disclaimer: 'For educational purposes only. Trading involves risk.',
         faq: 'FAQ',
-        faqQ1: 'Q: How to get Longbridge API Key?',
-        faqA1s1: '1. Login to Longbridge App',
-        faqA1s2: '2. Go to "Me" → "Developer Center" → "Developer Account"',
-        faqA1s3: '3. Create API Key, save App Key and App Secret',
-        faqA1s4: '4. Ensure trading permission is enabled',
-        faqQ2: 'Q: What are Demo Mode and Live Mode?',
-        faqA2s1: 'Demo Mode: Uses mock data, no real API credentials needed. Great for exploring the UI.',
-        faqA2s2: 'Live Mode: Connects to the real Longbridge API for live positions and trading.',
-        faqA2s3: '⚠️ Live Mode only works in local development (requires npm run dev).',
-        faqQ3: 'Q: Why can the online demo only use Demo Mode?',
-        faqA3s1: 'The online version is a static deployment (e.g. GitHub Pages) with no backend server.',
-        faqA3s2: 'Real API calls require a backend proxy — you must run npm run dev locally to use Live Mode.',
-        faqQ4: 'Q: How to get an Access Token?',
-        faqA4s1: 'The Access Token is obtained from the same page as App Key / App Secret.',
-        faqA4s2: 'Login to Longbridge Developer Center → User Center → App Credentials to find all three.',
-        faqA4s3: 'See: https://open.longportapp.com/',
+        faqQ1: 'Q: How do I get API credentials?',
+        faqA1s1: '1. Log in to Longbridge Developer Center at open.longportapp.com',
+        faqA1s2: '2. Get your App Key, App Secret, and Access Token from the App Credentials page',
+        faqA1s3: '3. Make sure trading permission is enabled on your account',
+        faqA1s4: 'See: https://open.longportapp.com/',
+        faqQ2: 'Q: Are my credentials safe?',
+        faqA2s1: 'Credentials are stored in your browser\'s localStorage, accessible only on this machine.',
+        faqA2s2: 'The server binds to 127.0.0.1 — external networks cannot connect.',
+        faqA2s3: 'API calls go directly from your machine to Longbridge servers, with no third party involved.',
+        faqQ3: 'Q: What are Demo Mode and Live Mode?',
+        faqA3s1: 'Demo Mode: Uses mock data, no credentials needed. Great for exploring the UI.',
+        faqA3s2: 'Live Mode: Connects to the real Longbridge API to view positions and execute market sells.',
+        faqA3s3: 'Live Mode requires a local server running (npm start or npm run dev).',
+        faqQ4: 'Q: Which markets and order types are supported?',
+        faqA4s1: 'Supports US stocks (.US), Hong Kong stocks (.HK), and Singapore stocks (.SG).',
+        faqA4s2: 'Liquidation uses Market Orders, executing immediately at the current market price.',
+        faqA4s3: 'If some orders fail, successful ones are processed normally and failures show error details.',
         error: 'Error',
         ok: 'OK'
       }
@@ -255,7 +265,7 @@
     html { scroll-behavior: smooth; }
     
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       background-color: var(--background);
       color: var(--foreground);
       line-height: 1.6;
@@ -417,7 +427,7 @@
       padding: 10px 14px;
       color: var(--foreground);
       font-size: 14px;
-      font-family: 'SF Mono', monospace;
+      font-family: 'Geist Mono', monospace;
     }
     .form-input:focus { outline: none; border-color: var(--foreground); }
 
@@ -452,6 +462,17 @@
     .btn-danger:hover { box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25); }
     .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
+    .btn-loading { pointer-events: none; opacity: 0.8; }
+    .btn-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: refreshSpin 0.6s linear infinite;
+    }
+
     /* Table */
     .table-container { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; }
     .positions-table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -459,9 +480,9 @@
     .positions-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); }
     .positions-table tr:last-child td { border-bottom: none; }
     .positions-table tr:hover td { background: var(--surface-hover); }
-    .symbol { font-family: 'SF Mono', monospace; font-weight: 600; }
-    .mono { font-family: 'SF Mono', monospace; }
-    .total-value { font-family: 'SF Mono', monospace; font-size: 18px; font-weight: 600; color: var(--success); }
+    .symbol { font-family: 'Geist Mono', monospace; font-weight: 600; }
+    .mono { font-family: 'Geist Mono', monospace; }
+    .total-value { font-family: 'Geist Mono', monospace; font-size: 18px; font-weight: 600; color: var(--success); }
 
     .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
 
@@ -690,12 +711,12 @@
     .modal-position-item:last-child { border-bottom: none; }
 
     .modal-position-symbol {
-      font-family: 'SF Mono', monospace;
+      font-family: 'Geist Mono', monospace;
       font-weight: 600;
     }
 
     .modal-position-value {
-      font-family: 'SF Mono', monospace;
+      font-family: 'Geist Mono', monospace;
       color: var(--muted);
     }
 
@@ -710,7 +731,7 @@
     }
 
     .modal-total-value {
-      font-family: 'SF Mono', monospace;
+      font-family: 'Geist Mono', monospace;
       color: var(--danger);
     }
 
@@ -813,7 +834,7 @@
     }
 
     .success-summary-value {
-      font-family: 'SF Mono', monospace;
+      font-family: 'Geist Mono', monospace;
       font-weight: 600;
       color: var(--foreground);
     }
@@ -959,6 +980,25 @@
     /* Demo notice visibility */
     .demo-notice.hidden { display: none; }
 
+    /* Refresh button */
+    .refresh-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px;
+      cursor: pointer;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s, border-color 0.2s, transform 0.2s;
+    }
+    .refresh-btn:hover { color: var(--foreground); border-color: var(--muted); transform: scale(1.05); }
+    .refresh-btn:active { transform: scale(0.95); }
+    .refresh-btn.spinning svg,
+    .refresh-btn.spinning i { animation: refreshSpin 0.8s linear infinite; }
+    @keyframes refreshSpin { to { transform: rotate(360deg); } }
+
     /* Live Warning Modal */
     .live-warning-overlay {
       display: none;
@@ -1078,87 +1118,23 @@
       
       <div class="form-group">
         <label class="form-label" data-i18n="appKey">App Key</label>
-        <input type="password" class="form-input" id="appKey" placeholder="Enter App Key">
+        <input type="password" class="form-input" id="appKey" placeholder="Enter App Key" oninput="saveCredential('appKey', this.value)">
       </div>
-      
+
       <div class="form-group">
         <label class="form-label" data-i18n="appSecret">App Secret</label>
-        <input type="password" class="form-input" id="appSecret" placeholder="Enter App Secret">
+        <input type="password" class="form-input" id="appSecret" placeholder="Enter App Secret" oninput="saveCredential('appSecret', this.value)">
       </div>
-      
+
       <div class="form-group">
         <label class="form-label" data-i18n="accessToken">Access Token</label>
-        <input type="password" class="form-input" id="accessToken" placeholder="Enter Access Token">
+        <input type="password" class="form-input" id="accessToken" placeholder="Enter Access Token" oninput="saveCredential('accessToken', this.value)">
       </div>
       
-      <button class="btn btn-primary" onclick="fetchPositions()">
+      <button class="btn btn-primary" id="viewPositionsBtn" onclick="fetchPositions()">
         <i data-lucide="bar-chart-3" class="btn-icon" style="width: 16px; height: 16px;"></i>
         <span data-i18n="viewPositions">查看持仓</span>
       </button>
-    </div>
-
-    <!-- FAQ Card -->
-    <div class="card" id="faqCard">
-      <div class="card-header">
-        <i data-lucide="help-circle" style="width: 18px; height: 18px; color: var(--muted);"></i>
-        <span class="card-title" data-i18n="faq">常见问题</span>
-      </div>
-
-      <div class="faq-item" id="faqItem1">
-        <button class="faq-question" onclick="toggleFaq('faqItem1')">
-          <span data-i18n="faqQ1">问：如何获取 Longbridge API Key？</span>
-          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer">
-          <div class="faq-answer-inner">
-            <span data-i18n="faqA1s1">1. 登录长桥证券 App</span><br>
-            <span data-i18n="faqA1s2">2. 进入「我的」→「开发者中心」→「开发者账户」</span><br>
-            <span data-i18n="faqA1s3">3. 创建 API Key，记录 App Key 和 App Secret</span><br>
-            <span data-i18n="faqA1s4">4. 确保账户已开通交易权限</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="faq-item" id="faqItem2">
-        <button class="faq-question" onclick="toggleFaq('faqItem2')">
-          <span data-i18n="faqQ2">问：什么是 Demo Mode 和 Live Mode？</span>
-          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer">
-          <div class="faq-answer-inner">
-            <span data-i18n="faqA2s1">Demo Mode（演示模式）：使用模拟数据，无需真实 API 凭证，适合体验界面。</span><br>
-            <span data-i18n="faqA2s2">Live Mode（实盘模式）：连接真实 Longbridge API，可查看真实持仓并执行交易。</span><br>
-            <span data-i18n="faqA2s3">⚠️ Live Mode 仅在本地开发环境可用（需运行 npm run dev）。</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="faq-item" id="faqItem3">
-        <button class="faq-question" onclick="toggleFaq('faqItem3')">
-          <span data-i18n="faqQ3">问：为什么线上演示只能用 Demo Mode？</span>
-          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer">
-          <div class="faq-answer-inner">
-            <span data-i18n="faqA3s1">线上版本是纯静态部署（如 GitHub Pages），没有后端服务器。</span><br>
-            <span data-i18n="faqA3s2">真实 API 调用需要后端代理，必须在本地运行 npm run dev 才能使用 Live Mode。</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="faq-item" id="faqItem4">
-        <button class="faq-question" onclick="toggleFaq('faqItem4')">
-          <span data-i18n="faqQ4">问：如何获取 Access Token？</span>
-          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer">
-          <div class="faq-answer-inner">
-            <span data-i18n="faqA4s1">Access Token 与 App Key / App Secret 在同一页面获取。</span><br>
-            <span data-i18n="faqA4s2">登录长桥开发者中心 → 用户中心 → 应用凭证，即可找到所有三个凭证。</span><br>
-            <span data-i18n="faqA4s3">详见：https://open.longportapp.com/</span>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Loading -->
@@ -1177,7 +1153,12 @@
           <i data-lucide="trending-up" style="width: 18px; height: 18px; color: var(--muted);"></i>
           <span class="card-title" data-i18n="positions">持仓明细</span>
         </div>
-        <div class="total-value" id="totalValue">$0.00</div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="total-value" id="totalValue">$0.00</div>
+          <button class="refresh-btn" id="refreshBtn" onclick="refreshPositions()" aria-label="Refresh positions" title="Refresh">
+            <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+          </button>
+        </div>
       </div>
       
       <div class="table-container">
@@ -1188,6 +1169,7 @@
               <th data-i18n="symbol">代码</th>
               <th data-i18n="quantity">数量</th>
               <th data-i18n="price">价格</th>
+              <th style="text-align: right;" data-i18n="change">涨跌</th>
               <th style="text-align: right;" data-i18n="value">市值</th>
             </tr>
           </thead>
@@ -1199,6 +1181,71 @@
         <i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i>
         <span data-i18n="liquidate">一键清仓</span>
       </button>
+    </div>
+
+    <!-- FAQ Card -->
+    <div class="card" id="faqCard">
+      <div class="card-header">
+        <i data-lucide="help-circle" style="width: 18px; height: 18px; color: var(--muted);"></i>
+        <span class="card-title" data-i18n="faq">常见问题</span>
+      </div>
+
+      <div class="faq-item" id="faqItem1">
+        <button class="faq-question" onclick="toggleFaq('faqItem1')">
+          <span data-i18n="faqQ1">问：如何获取 API 凭证？</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            <span data-i18n="faqA1s1">1. 登录长桥开发者中心 open.longportapp.com</span><br>
+            <span data-i18n="faqA1s2">2. 在应用凭证页面获取 App Key、App Secret、Access Token</span><br>
+            <span data-i18n="faqA1s3">3. 确保账户已开通交易权限</span><br>
+            <span data-i18n="faqA1s4">详见：https://open.longportapp.com/</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" id="faqItem2">
+        <button class="faq-question" onclick="toggleFaq('faqItem2')">
+          <span data-i18n="faqQ2">问：我的凭证安全吗？</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            <span data-i18n="faqA2s1">凭证仅保存在浏览器 localStorage，仅限本机访问。</span><br>
+            <span data-i18n="faqA2s2">服务器绑定 127.0.0.1，外部网络无法连接。</span><br>
+            <span data-i18n="faqA2s3">API 调用直接从本地发往长桥服务器，不经过任何第三方。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" id="faqItem3">
+        <button class="faq-question" onclick="toggleFaq('faqItem3')">
+          <span data-i18n="faqQ3">问：什么是演示模式和实盘模式？</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            <span data-i18n="faqA3s1">演示模式：使用模拟数据，无需凭证，适合体验界面。</span><br>
+            <span data-i18n="faqA3s2">实盘模式：连接真实 Longbridge API，查看持仓并执行市价卖出。</span><br>
+            <span data-i18n="faqA3s3">使用实盘模式需先启动本地服务器（npm start 或 npm run dev）。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" id="faqItem4">
+        <button class="faq-question" onclick="toggleFaq('faqItem4')">
+          <span data-i18n="faqQ4">问：支持哪些市场和订单类型？</span>
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            <span data-i18n="faqA4s1">支持美股 (.US)、港股 (.HK)、新加坡 (.SG)。</span><br>
+            <span data-i18n="faqA4s2">清仓使用市价单 (Market Order)，按当前市价立即成交。</span><br>
+            <span data-i18n="faqA4s3">部分失败时，成功的订单正常处理，失败的显示错误信息。</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Footer -->
@@ -1553,6 +1600,18 @@
     // Initialize mode UI
     updateModeUI();
 
+    // Credential persistence (localStorage, localhost only)
+    function saveCredential(key, value) {
+      localStorage.setItem('lb_' + key, value);
+    }
+    function restoreCredentials() {
+      ['appKey', 'appSecret', 'accessToken'].forEach(key => {
+        const saved = localStorage.getItem('lb_' + key);
+        if (saved) document.getElementById(key).value = saved;
+      });
+    }
+    restoreCredentials();
+
     // Mock data
     const mockPositions = [
       { symbol: "AAPL.US", quantity: 100, market_price: 185.50 },
@@ -1624,19 +1683,31 @@
       });
     }
 
-    function showSuccessModal(soldCount, totalValue) {
+    function showSuccessModal(soldCount, totalValue, soldPositions) {
       document.getElementById('successModalTitle').textContent = t('success');
       document.getElementById('successModalOkBtn').textContent = t('ok');
 
       const unit = t('stockUnit');
+      let positionsHtml = '';
+      if (soldPositions && soldPositions.length > 0) {
+        positionsHtml = soldPositions.map(pos => {
+          const sym = escapeHtml(pos.symbol);
+          return `
+          <div class="modal-position-item">
+            <span><span class="modal-position-symbol">${sym}</span> × ${pos.quantity}</span>
+            <span class="modal-position-value">${formatCurrency(pos.quantity * pos.market_price, pos.symbol)}</span>
+          </div>`;
+        }).join('');
+      }
+
+      const totalDisplay = soldPositions && soldPositions.length > 0 ? formatTotalValue(soldPositions) : formatCurrency(totalValue);
       const summaryHtml = `
-        <div class="success-summary-row">
-          <span class="success-summary-label">${t('soldCount')}</span>
-          <span class="success-summary-value">${soldCount}${unit ? ' ' + unit : ''}</span>
+        <div style="max-height: 160px; overflow-y: auto; margin-bottom: 10px;">
+          ${positionsHtml}
         </div>
-        <div class="success-summary-row">
-          <span class="success-summary-label">${t('totalMarketValue')}</span>
-          <span class="success-summary-value highlight">${formatCurrency(totalValue)}</span>
+        <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border); font-size: 14px; font-weight: 600;">
+          <span>${t('soldCount')}: ${soldCount}${unit ? ' ' + unit : ''}</span>
+          <span style="font-family: 'Geist Mono', monospace; color: var(--success);">${totalDisplay}</span>
         </div>
       `;
       document.getElementById('successModalSummary').innerHTML = summaryHtml;
@@ -1664,8 +1735,35 @@
       });
     }
 
-    function formatCurrency(value) {
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+    function formatCurrency(value, symbol) {
+      const currency = symbol ? getCurrencyForSymbol(symbol) : 'USD';
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(value);
+    }
+
+    function getCurrencyForSymbol(symbol) {
+      if (typeof symbol !== 'string') return 'USD';
+      if (symbol.endsWith('.HK')) return 'HKD';
+      if (symbol.endsWith('.SG')) return 'SGD';
+      return 'USD';
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    function setViewBtnLoading(loading) {
+      const btn = document.getElementById('viewPositionsBtn');
+      if (!btn) return;
+      if (loading) {
+        btn.classList.add('btn-loading');
+        btn.innerHTML = `<span class="btn-spinner"></span><span>${t('loading')}</span>`;
+      } else {
+        btn.classList.remove('btn-loading');
+        btn.innerHTML = `<i data-lucide="bar-chart-3" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="viewPositions">${t('viewPositions')}</span>`;
+        lucide.createIcons();
+      }
     }
 
     async function fetchPositions() {
@@ -1676,7 +1774,7 @@
       // Demo mode: use mock data directly, no fetch needed
       if (isDemoMode) {
         hideAlert();
-        showLoading(true);
+        setViewBtnLoading(true);
         await new Promise(r => setTimeout(r, 600));
 
         currentPositions = mockPositions;
@@ -1685,7 +1783,7 @@
 
         document.getElementById('positionsCard').classList.add('active');
         document.getElementById('configCard').style.display = 'none';
-        showLoading(false);
+        setViewBtnLoading(false);
         lucide.createIcons();
         setupButtonHoverAnimations();
         return;
@@ -1697,7 +1795,7 @@
       }
 
       hideAlert();
-      showLoading(true);
+      setViewBtnLoading(true);
 
       try {
         const resp = await fetch('/api/positions', {
@@ -1731,15 +1829,35 @@
       } catch (err) {
         showErrorModal(err.message);
       } finally {
-        showLoading(false);
+        setViewBtnLoading(false);
         lucide.createIcons();
         setupButtonHoverAnimations();
       }
     }
 
+    async function refreshPositions() {
+      const btn = document.getElementById('refreshBtn');
+      if (btn.classList.contains('spinning')) return;
+      btn.classList.add('spinning');
+      try {
+        await fetchPositions();
+      } finally {
+        btn.classList.remove('spinning');
+      }
+    }
+
+    function formatTotalValue(positions) {
+      const currencies = new Set(positions.map(p => getCurrencyForSymbol(p.symbol)));
+      const total = positions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
+      if (currencies.size === 1) {
+        return formatCurrency(total, positions[0].symbol);
+      }
+      return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(total);
+    }
+
     function renderPositions(positions, totalValue) {
       const tbody = document.querySelector('#positionsTable tbody');
-      document.getElementById('totalValue').textContent = formatCurrency(totalValue);
+      document.getElementById('totalValue').textContent = positions.length > 0 ? formatTotalValue(positions) : formatCurrency(0);
 
       // Default: select all
       selectedSymbols = new Set(positions.map(p => p.symbol));
@@ -1752,15 +1870,17 @@
         return;
       }
 
-      tbody.innerHTML = positions.map(pos => `
+      tbody.innerHTML = positions.map(pos => {
+        const sym = escapeHtml(pos.symbol);
+        return `
         <tr>
-          <td class="pos-checkbox-td"><input type="checkbox" class="pos-checkbox pos-row-checkbox" checked onchange="togglePositionSelect('${pos.symbol}', this.checked)"></td>
-          <td class="symbol">${pos.symbol}</td>
+          <td class="pos-checkbox-td"><input type="checkbox" class="pos-checkbox pos-row-checkbox" checked onchange="togglePositionSelect('${sym}', this.checked)"></td>
+          <td class="symbol">${sym}</td>
           <td class="mono">${pos.quantity}</td>
-          <td class="mono">${formatCurrency(pos.market_price)}</td>
-          <td class="mono" style="text-align: right;">${formatCurrency(pos.quantity * pos.market_price)}</td>
+          <td class="mono">${formatCurrency(pos.market_price, pos.symbol)}</td>
+          <td class="mono" style="text-align: right;">${formatCurrency(pos.quantity * pos.market_price, pos.symbol)}</td>
         </tr>
-      `).join('');
+      `}).join('');
       updateLiquidateBtn();
     }
 
@@ -1783,14 +1903,16 @@
       document.getElementById('modalConfirmBtn').textContent = lang.confirm;
 
       const totalValue = selected.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
-      document.getElementById('modalTotalValue').textContent = formatCurrency(totalValue);
+      document.getElementById('modalTotalValue').textContent = selected.length > 0 ? formatTotalValue(selected) : formatCurrency(0);
 
-      document.getElementById('modalPositions').innerHTML = selected.map(pos => `
+      document.getElementById('modalPositions').innerHTML = selected.map(pos => {
+        const sym = escapeHtml(pos.symbol);
+        return `
         <div class="modal-position-item">
-          <span><span class="modal-position-symbol">${pos.symbol}</span> × ${pos.quantity}</span>
-          <span class="modal-position-value">${formatCurrency(pos.quantity * pos.market_price)}</span>
+          <span><span class="modal-position-symbol">${sym}</span> × ${pos.quantity}</span>
+          <span class="modal-position-value">${formatCurrency(pos.quantity * pos.market_price, pos.symbol)}</span>
         </div>
-      `).join('');
+      `}).join('');
 
       const overlay = document.getElementById('liquidateModal');
       overlay.classList.add('active');
@@ -1820,36 +1942,97 @@
 
     async function confirmLiquidate() {
       closeLiquidateModal();
-      showLoading(true);
-      await new Promise(r => setTimeout(r, 800));
+
+      const liquidateBtn = document.getElementById('liquidateBtn');
+      liquidateBtn.classList.add('btn-loading');
+      liquidateBtn.innerHTML = `<span class="btn-spinner" style="border-top-color: white;"></span><span>${t('loading')}</span>`;
 
       const lang = modalI18n[currentLang] || modalI18n['en'];
-
-      // Calculate summary before removing positions
       const soldPositions = currentPositions.filter(p => selectedSymbols.has(p.symbol));
+
+      if (isDemoMode) {
+        // Demo mode: simulate delay, no real API call
+        await new Promise(r => setTimeout(r, 800));
+        handleLiquidateSuccess(soldPositions, lang);
+        return;
+      }
+
+      // Live mode: call /api/liquidate
+      const appKey = document.getElementById('appKey').value.trim();
+      const appSecret = document.getElementById('appSecret').value.trim();
+      const accessToken = document.getElementById('accessToken').value.trim();
+
+      try {
+        const resp = await fetch('/api/liquidate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            app_key: appKey,
+            app_secret: appSecret,
+            access_token: accessToken,
+            positions: soldPositions.map(p => ({ symbol: p.symbol, quantity: p.quantity }))
+          })
+        });
+
+        const text = await resp.text();
+        if (!text) throw new Error('Empty response from server');
+
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Invalid JSON response: ' + text.substring(0, 100));
+        }
+
+        if (!resp.ok) throw new Error(data.error || 'Liquidation request failed');
+
+        // Handle partial failures: only remove successfully sold positions
+        const succeededSymbols = new Set(
+          (data.results || []).filter(r => r.success).map(r => r.symbol)
+        );
+        const failedResults = (data.results || []).filter(r => !r.success);
+
+        const successfulPositions = soldPositions.filter(p => succeededSymbols.has(p.symbol));
+        handleLiquidateSuccess(successfulPositions, lang);
+
+        if (failedResults.length > 0) {
+          const failedMsg = failedResults.map(r => `${r.symbol}: ${r.error}`).join('\n');
+          showErrorModal(t('partialFailure') + '\n' + failedMsg);
+        }
+      } catch (err) {
+        liquidateBtn.classList.remove('btn-loading');
+        liquidateBtn.innerHTML = `<i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="liquidate">${t('liquidate')}</span>`;
+        lucide.createIcons();
+        showErrorModal(err.message);
+      }
+    }
+
+    function handleLiquidateSuccess(soldPositions, lang) {
       const soldCount = soldPositions.length;
       const soldValue = soldPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
+      const soldSymbols = new Set(soldPositions.map(p => p.symbol));
 
-      // Remove only selected positions
-      currentPositions = currentPositions.filter(p => !selectedSymbols.has(p.symbol));
+      // Remove only successfully sold positions
+      currentPositions = currentPositions.filter(p => !soldSymbols.has(p.symbol));
       selectedSymbols.clear();
       const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
       renderPositions(currentPositions, totalValue);
-      
+
+      const btn = document.getElementById('liquidateBtn');
+      btn.classList.remove('btn-loading');
+
       if (currentPositions.length === 0) {
-        const btn = document.getElementById('liquidateBtn');
         btn.innerHTML = `<i data-lucide="check" class="btn-icon" style="width: 16px; height: 16px;"></i><span>${lang.success}</span>`;
         btn.disabled = true;
         btn.style.opacity = '0.5';
         btn.style.cursor = 'not-allowed';
         animateCheckIcon(btn);
+      } else {
+        btn.innerHTML = `<i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="liquidate">${t('liquidate')}</span>`;
       }
-      
-      showLoading(false);
-      lucide.createIcons();
 
-      // Show success modal with summary
-      showSuccessModal(soldCount, soldValue);
+      lucide.createIcons();
+      showSuccessModal(soldCount, soldValue, soldPositions);
     }
 
     // ── Init: run logo draw animations on page load ──
