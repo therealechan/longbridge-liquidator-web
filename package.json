@@ -15,7 +15,9 @@
   "author": "0xechan",
   "license": "MIT",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.22.1",
+    "longport": "^3.0.22",
     "ws": "^8.16.0"
   },
   "devDependencies": {

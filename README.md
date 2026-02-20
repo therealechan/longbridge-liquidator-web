@@ -44,10 +44,10 @@
 ## 技术栈 / Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
+|-------|------------|
 | Backend | Node.js + Express |
 | Frontend | Vanilla HTML / CSS / JS |
-| Trading | Python + [Longbridge OpenAPI SDK](https://open.longportapp.com/) |
+| Trading | [Longbridge OpenAPI Node.js SDK](https://www.npmjs.com/package/longport) |
 | Icons | [Lucide](https://lucide.dev/) |
 | Security | localhost-only, no external data transfer |
 
@@ -60,7 +60,6 @@ cd longbridge-liquidator-web
 
 # 安装依赖 / Install
 npm install
-pip install longport
 
 # 启动 / Start
 npm start
@@ -70,11 +69,27 @@ npm start
 
 The server runs at `http://127.0.0.1:3456` (localhost only).
 
-### 演示模式 / Demo Mode
+### 本地开发 / Local Development
 
 ```bash
-MOCK_MODE=true npm start
+# 安装依赖（含 longport SDK）
+npm install
+
+# 开发模式（自动重启）
+npm run dev
+
+# 访问 http://127.0.0.1:3456
 ```
+
+服务器使用 Node.js 原生 [Longbridge OpenAPI SDK](https://www.npmjs.com/package/longport)，无需额外安装 Python。
+
+The server uses the native Node.js Longbridge SDK — no Python required.
+
+### 演示模式 / Demo Mode
+
+在网页中切换 Demo/Live 模式即可。Demo 模式使用模拟数据，无需 API 密钥。
+
+Toggle Demo/Live mode in the web UI. Demo mode uses mock data, no API keys needed.
 
 ## 使用说明 / Usage
 
