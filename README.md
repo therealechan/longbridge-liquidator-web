@@ -36,7 +36,7 @@
 - 🔒 **本地运行 / Local-only** — API 凭证仅存储在浏览器 localStorage，服务仅监听 127.0.0.1
 - 🎨 **精美界面 / Modern UI** — Geist 字体，深色/浅色主题，响应式设计
 - 🌐 **多语言 / i18n** — 简体中文 · 繁體中文 · English
-- ⚡ **选择性清仓 / Selective Liquidate** — 勾选持仓，市价单卖出选中标的
+- ⚡ **选择性清仓 / Selective Liquidate** — 勾选持仓，支持全部/1/2/1/3/1/4 比例卖出
 - 📊 **实时持仓 / Live Positions** — 实时行情报价，多币种显示（USD / HKD / SGD）
 - 🔄 **一键刷新 / Refresh** — 持仓页面支持刷新按钮，快速更新数据
 - 💾 **凭证记忆 / Credential Persistence** — API 凭证自动保存，刷新页面无需重新输入
