@@ -1,32 +1,49 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Liquidator | 长桥一键清仓</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔥%3C/text%3E%3C/svg%3E" />
+  <meta name="description" content="长桥一键清仓工具 - 本地安全运行" />
+  
+  <!-- Geist Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
   <style>
     :root {
-      --bg-primary: #0a0a0f;
-      --bg-secondary: #12121a;
-      --bg-card: #1a1a25;
-      --bg-hover: #252538;
-      --text-primary: #ffffff;
-      --text-secondary: #a0a0b0;
-      --text-muted: #606070;
-      --accent: #6366f1;
-      --accent-hover: #4f46e5;
-      --accent-glow: rgba(99, 102, 241, 0.3);
-      --danger: #ef4444;
-      --danger-hover: #dc2626;
-      --danger-glow: rgba(239, 68, 68, 0.3);
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --border: #2a2a3a;
-      --radius: 12px;
-      --radius-sm: 8px;
+      --background: #ffffff;
+      --surface: #f4f4f5;
+      --surface-hover: #e4e4e7;
+      --border: #e4e4e7;
+      --foreground: #18181b;
+      --foreground-secondary: #3f3f46;
+      --muted: #71717a;
+      --muted-foreground: #a1a1aa;
+      --accent: #18181b;
+      --accent-foreground: #fafafa;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #16a34a;
+      --radius: 6px;
+      --radius-sm: 4px;
+    }
+
+    .dark {
+      --background: #0a0a0a;
+      --surface: #171717;
+      --surface-hover: #262626;
+      --border: #262626;
+      --foreground: #ededed;
+      --foreground-secondary: #d4d4d4;
+      --muted: #737373;
+      --muted-foreground: #a3a3a3;
+      --accent: #fafafa;
+      --accent-foreground: #171717;
     }
 
     * {
@@ -35,81 +52,117 @@
       box-sizing: border-box;
     }
 
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      min-height: 100vh;
-      line-height: 1.6;
+    html {
+      scroll-behavior: smooth;
     }
 
-    /* Background gradient */
-    .bg-gradient {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: 
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
-        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(239, 68, 68, 0.08), transparent);
-      pointer-events: none;
-      z-index: 0;
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      line-height: 1.6;
+      min-height: 100vh;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--background);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
     }
 
     /* Container */
     .container {
-      position: relative;
-      z-index: 1;
-      max-width: 900px;
+      max-width: 640px;
       margin: 0 auto;
-      padding: 40px 20px;
+      padding: 80px 24px 120px;
     }
 
     /* Header */
     .header {
-      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 64px;
+    }
+
+    .brand {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--foreground);
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      cursor: pointer;
+      color: var(--foreground);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .theme-toggle:hover {
+      background: var(--surface);
+      border-color: var(--muted);
+    }
+
+    /* Hero */
+    .hero {
       margin-bottom: 48px;
     }
 
-    .header h1 {
-      font-size: 42px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+    .hero h1 {
+      font-size: 40px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
       margin-bottom: 12px;
-      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--foreground);
     }
 
-    .header p {
-      color: var(--text-secondary);
+    .hero p {
       font-size: 16px;
+      color: var(--muted);
+      line-height: 1.6;
     }
 
-    /* Security Badge */
-    .security-badge {
+    /* Badge */
+    .badge {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      background: rgba(34, 197, 94, 0.1);
-      color: var(--success);
-      padding: 8px 16px;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 100px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
+      color: var(--muted);
       margin-top: 16px;
-      border: 1px solid rgba(34, 197, 94, 0.2);
     }
 
-    .security-badge::before {
-      content: '';
-      width: 8px;
-      height: 8px;
+    .badge-dot {
+      width: 6px;
+      height: 6px;
       background: var(--success);
       border-radius: 50%;
-      box-shadow: 0 0 8px var(--success);
       animation: pulse 2s infinite;
     }
 
@@ -118,42 +171,44 @@
       50% { opacity: 0.5; }
     }
 
-    /* Cards */
+    /* Card */
     .card {
-      background: var(--bg-card);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 32px;
       margin-bottom: 24px;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
     }
 
     .card:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent);
+      border-color: var(--muted-foreground);
     }
 
-    .card-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 24px;
+    .card-header {
       display: flex;
       align-items: center;
       gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
     }
 
-    .card-title .icon {
-      width: 36px;
-      height: 36px;
-      background: var(--bg-hover);
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--foreground-secondary);
     }
 
-    /* Form Elements */
+    .card-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--muted);
+    }
+
+    /* Form */
     .form-group {
       margin-bottom: 20px;
     }
@@ -162,84 +217,81 @@
       display: block;
       font-size: 13px;
       font-weight: 500;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      color: var(--foreground-secondary);
       margin-bottom: 8px;
     }
 
     .form-input {
       width: 100%;
-      background: var(--bg-secondary);
+      background: var(--background);
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 14px 16px;
-      color: var(--text-primary);
-      font-size: 15px;
-      font-family: 'JetBrains Mono', monospace;
-      transition: all 0.2s;
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      color: var(--foreground);
+      font-size: 14px;
+      font-family: 'SF Mono', 'Monaco', monospace;
+      transition: all 0.2s ease;
     }
 
     .form-input:focus {
       outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-glow);
+      border-color: var(--foreground);
+      box-shadow: 0 0 0 2px var(--surface-hover);
     }
 
     .form-input::placeholder {
-      color: var(--text-muted);
+      color: var(--muted-foreground);
     }
 
-    /* Buttons */
+    /* Button */
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      padding: 14px 28px;
-      border-radius: var(--radius-sm);
-      font-size: 15px;
-      font-weight: 600;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
       border: none;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
       font-family: inherit;
     }
 
     .btn-primary {
       background: var(--accent);
-      color: white;
+      color: var(--accent-foreground);
     }
 
-    .btn-primary:hover {
-      background: var(--accent-hover);
-      box-shadow: 0 0 20px var(--accent-glow);
+    .btn-primary:hover:not(:disabled) {
+      opacity: 0.9;
       transform: translateY(-1px);
     }
 
     .btn-danger {
       background: var(--danger);
       color: white;
-      font-size: 16px;
-      padding: 18px 36px;
+      width: 100%;
+      padding: 16px;
+      font-size: 14px;
+      font-weight: 600;
     }
 
-    .btn-danger:hover {
+    .btn-danger:hover:not(:disabled) {
       background: var(--danger-hover);
-      box-shadow: 0 0 30px var(--danger-glow);
     }
 
     .btn-danger:disabled {
-      background: var(--text-muted);
+      opacity: 0.5;
       cursor: not-allowed;
-      box-shadow: none;
     }
 
     .btn-full {
       width: 100%;
     }
 
-    /* Positions Table */
+    /* Positions */
     .positions-section {
       display: none;
     }
@@ -252,57 +304,109 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .total-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 24px;
+      font-family: 'SF Mono', monospace;
+      font-size: 20px;
       font-weight: 600;
       color: var(--success);
+    }
+
+    /* Table */
+    .table-container {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 24px;
     }
 
     .positions-table {
       width: 100%;
       border-collapse: collapse;
+      font-size: 14px;
     }
 
     .positions-table th {
       text-align: left;
-      padding: 16px;
-      font-size: 12px;
+      padding: 12px 16px;
+      font-size: 11px;
       font-weight: 600;
-      color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      color: var(--muted);
+      background: var(--background);
       border-bottom: 1px solid var(--border);
     }
 
     .positions-table td {
-      padding: 20px 16px;
+      padding: 16px;
       border-bottom: 1px solid var(--border);
-      font-size: 14px;
+      color: var(--foreground);
+    }
+
+    .positions-table tr:last-child td {
+      border-bottom: none;
     }
 
     .positions-table tr:hover td {
-      background: var(--bg-hover);
+      background: var(--surface-hover);
     }
 
     .symbol {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'SF Mono', monospace;
       font-weight: 600;
-      color: var(--accent);
+      color: var(--foreground);
     }
 
-    .price {
-      font-family: 'JetBrains Mono', monospace;
+    .mono {
+      font-family: 'SF Mono', monospace;
+    }
+
+    /* Checkbox */
+    .checkbox-wrapper {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: rgba(220, 38, 38, 0.05);
+      border: 1px solid rgba(220, 38, 38, 0.2);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .checkbox-wrapper:hover {
+      background: rgba(220, 38, 38, 0.08);
+    }
+
+    .checkbox-wrapper input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--danger);
+      cursor: pointer;
+      margin-top: 2px;
+    }
+
+    .checkbox-wrapper label {
+      font-size: 13px;
+      color: var(--foreground-secondary);
+      cursor: pointer;
+      line-height: 1.5;
+    }
+
+    .checkbox-wrapper strong {
+      color: var(--danger);
+      font-weight: 600;
     }
 
     /* Loading */
     .loading {
       display: none;
       text-align: center;
-      padding: 40px;
+      padding: 48px;
     }
 
     .loading.active {
@@ -310,25 +414,32 @@
     }
 
     .spinner {
-      width: 48px;
-      height: 48px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--foreground);
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin: 0 auto 20px;
+      margin: 0 auto 16px;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
 
+    .loading p {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
     /* Alert */
     .alert {
-      padding: 16px 20px;
-      border-radius: var(--radius-sm);
+      padding: 16px;
+      border-radius: var(--radius);
       margin-bottom: 24px;
       display: none;
+      font-size: 13px;
+      line-height: 1.5;
     }
 
     .alert.active {
@@ -338,167 +449,249 @@
     .alert-warning {
       background: rgba(245, 158, 11, 0.1);
       border: 1px solid rgba(245, 158, 11, 0.3);
-      color: var(--warning);
+      color: #92400e;
+    }
+
+    .dark .alert-warning {
+      color: #fbbf24;
     }
 
     .alert-error {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: var(--danger);
+      background: rgba(220, 38, 38, 0.1);
+      border: 1px solid rgba(220, 38, 38, 0.3);
+      color: #991b1b;
+    }
+
+    .dark .alert-error {
+      color: #f87171;
+    }
+
+    .alert-success {
+      background: rgba(22, 163, 74, 0.1);
+      border: 1px solid rgba(22, 163, 74, 0.3);
+      color: #166534;
+    }
+
+    .dark .alert-success {
+      color: #4ade80;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+
+    .empty-state-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      opacity: 0.5;
     }
 
     /* Footer */
     .footer {
       text-align: center;
-      padding: 40px 0;
-      color: var(--text-muted);
+      padding: 48px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 48px;
+    }
+
+    .footer p {
       font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
     }
 
     .footer a {
-      color: var(--accent);
+      color: var(--foreground);
       text-decoration: none;
+      border-bottom: 1px solid var(--border);
+      transition: border-color 0.2s;
     }
 
-    /* Empty State */
-    .empty-state {
+    .footer a:hover {
+      border-color: var(--foreground);
+    }
+
+    .github-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--foreground);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .github-link:hover {
+      background: var(--surface-hover);
+      border-color: var(--muted);
+    }
+
+    /* Demo mode notice */
+    .demo-notice {
       text-align: center;
-      padding: 60px 20px;
-      color: var(--text-secondary);
-    }
-
-    .empty-state-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-      opacity: 0.5;
-    }
-
-    /* Checkbox */
-    .checkbox-wrapper {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 16px;
-      background: rgba(239, 68, 68, 0.05);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       margin-bottom: 24px;
-      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
     }
 
-    .checkbox-wrapper input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      accent-color: var(--danger);
-      cursor: pointer;
-      margin-top: 2px;
-    }
-
-    .checkbox-wrapper label {
-      font-size: 14px;
-      color: var(--text-secondary);
-      cursor: pointer;
-    }
-
-    .checkbox-wrapper strong {
-      color: var(--danger);
+    .demo-notice strong {
+      color: var(--foreground);
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
-  <div class="bg-gradient"></div>
-  
   <div class="container">
     <!-- Header -->
     <header class="header">
-      <h1>Liquidator</h1>
-      <p>长桥一键清仓工具</p>
-      <div class="security-badge">
-        🔒 本地运行，密钥不上传服务器
-      </div>
+      <div class="brand">Liquidator</div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span id="theme-icon">🌙</span>
+      </button>
     </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <h1>一键清仓</h1>
+      <p>长桥证券交易工具。本地运行，数据不上传服务器。</p>
+      <div class="badge">
+        <span class="badge-dot"></span>
+        本地安全模式
+      </div>
+    </section>
+
+    <!-- Demo Notice -->
+    <div class="demo-notice">
+      🎨 <strong>演示模式</strong> — 展示界面效果，不连接真实账户
+    </div>
 
     <!-- API Config -->
     <div class="card" id="configCard">
-      <div class="card-title">
-        <span class="icon">🔑</span>
-        API 配置
+      <div class="card-header">
+        <i data-lucide="key" class="card-icon"></i>
+        <span class="card-title">API 配置</span>
       </div>
       
       <div class="form-group">
         <label class="form-label">App Key</label>
-        <input type="password" class="form-input" id="appKey" placeholder="输入你的 Longbridge App Key">
+        <input type="password" class="form-input" id="appKey" placeholder="输入演示内容">
       </div>
       
       <div class="form-group">
         <label class="form-label">App Secret</label>
-        <input type="password" class="form-input" id="appSecret" placeholder="输入你的 Longbridge App Secret">
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">Access Token (可选)</label>
-        <input type="password" class="form-input" id="accessToken" placeholder="如需行情权限，输入 Access Token">
+        <input type="password" class="form-input" id="appSecret" placeholder="输入演示内容">
       </div>
       
       <button class="btn btn-primary btn-full" onclick="fetchPositions()">
-        📊 查看持仓
+        <i data-lucide="bar-chart-3" style="width: 16px; height: 16px;"></i>
+        查看持仓
       </button>
     </div>
 
     <!-- Loading -->
     <div class="loading" id="loading">
       <div class="spinner"></div>
-      <p>正在获取持仓信息...</p>
+      <p>加载中...</p>
     </div>
 
     <!-- Alert -->
-    <div class="alert" id="alert"></divu003e
+    <div class="alert" id="alert"></div>
 
     <!-- Positions -->
     <div class="card positions-section" id="positionsCard">
       <div class="positions-header">
-        <div class="card-title" style="margin: 0;">
-          <span class="icon">📈</span>
-          当前持仓
+        <div class="card-header" style="margin: 0; padding: 0; border: none;">
+          <i data-lucide="trending-up" class="card-icon"></i>
+          <span class="card-title">持仓明细</span>
         </div>
         <div class="total-value" id="totalValue">$0.00</div>
       </div>
       
-      <table class="positions-table" id="positionsTable">
-        <thead>
-          <tr>
-            <th>股票代码</th>
-            <th>持仓数量</th>
-            <th>当前价格</th>
-            <th>市值</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="table-container">
+        <table class="positions-table" id="positionsTable">
+          <thead>
+            <tr>
+              <th>代码</th>
+              <th>数量</th>
+              <th>价格</th>
+              <th style="text-align: right;">市值</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
 
       <div class="checkbox-wrapper" onclick="document.getElementById('confirmCheck').click()">
         <input type="checkbox" id="confirmCheck" onchange="toggleLiquidateButton()">
         <label>
-          我理解并确认要<strong>一键清仓</strong>所有持仓股票。
-          这是一个<strong>不可撤销</strong>的操作。
+          我确认以<strong>市价单</strong>卖出全部持仓
         </label>
       </div>
 
-      <button class="btn btn-danger btn-full" id="liquidateBtn" disabled onclick="liquidateAll()">
-        🔥 一键清仓 (市价单)
+      <button class="btn btn-danger" id="liquidateBtn" disabled onclick="liquidateAll()">
+        <i data-lucide="flame" style="width: 16px; height: 16px;"></i>
+        一键清仓
       </button>
     </div>
 
     <!-- Footer -->
     <footer class="footer">
-      <p>开源工具 · 本地运行 · <a href="#" onclick="window.open('https://github.com', '_blank')">GitHub</a></p>
-      <p>⚠️ 投资有风险，操作需谨慎</p>
+      <p>本地运行 · 开源工具 · 仅供演示</p>
+      <a href="https://github.com/therealechan/longbridge-liquidator-web" class="github-link" target="_blank">
+        <i data-lucide="github" style="width: 14px; height: 14px;"></i>
+        GitHub
+      </a>
     </footer>
   </div>
 
   <script>
-    let currentPositions = [];
-    let isLiquidating = false;
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Theme toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const icon = document.getElementById('theme-icon');
+      
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        icon.textContent = '☀️';
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        icon.textContent = '🌙';
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.getElementById('theme-icon').textContent = '☀️';
+    }
+
+    // Mock data
+    const mockPositions = [
+      { symbol: "AAPL.US", quantity: 100, market_price: 185.50 },
+      { symbol: "TSLA.US", quantity: 50, market_price: 242.30 },
+      { symbol: "NVDA.US", quantity: 25, market_price: 875.20 },
+      { symbol: "MSFT.US", quantity: 30, market_price: 415.80 },
+      { symbol: "00700.HK", quantity: 200, market_price: 385.60 },
+      { symbol: "BABA.US", quantity: 80, market_price: 78.45 },
+    ];
 
     function showLoading(show) {
       document.getElementById('loading').classList.toggle('active', show);
@@ -524,40 +717,26 @@
     async function fetchPositions() {
       const appKey = document.getElementById('appKey').value.trim();
       const appSecret = document.getElementById('appSecret').value.trim();
-      const accessToken = document.getElementById('accessToken').value.trim();
 
       if (!appKey || !appSecret) {
-        showAlert('请填写 App Key 和 App Secret', 'error');
+        showAlert('请填写 API 配置', 'warning');
         return;
       }
 
       hideAlert();
       showLoading(true);
 
-      try {
-        const response = await fetch('/api/positions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ appKey, appSecret, accessToken })
-        });
+      await new Promise(r => setTimeout(r, 800));
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || '获取持仓失败');
-        }
-
-        currentPositions = data.positions || [];
-        renderPositions(currentPositions, data.totalValue || 0);
-        
-        document.getElementById('positionsCard').classList.add('active');
-        document.getElementById('configCard').style.display = 'none';
-
-      } catch (error) {
-        showAlert(error.message, 'error');
-      } finally {
-        showLoading(false);
-      }
+      const totalValue = mockPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
+      renderPositions(mockPositions, totalValue);
+      
+      document.getElementById('positionsCard').classList.add('active');
+      document.getElementById('configCard').style.display = 'none';
+      showLoading(false);
+      
+      // Re-init icons for new content
+      lucide.createIcons();
     }
 
     function renderPositions(positions, totalValue) {
@@ -569,7 +748,7 @@
           <tr>
             <td colspan="4" class="empty-state">
               <div class="empty-state-icon">📭</div>
-              <p>暂无持仓</p>
+              暂无持仓
             </td>
           </tr>
         `;
@@ -579,63 +758,30 @@
       tbody.innerHTML = positions.map(pos => `
         <tr>
           <td class="symbol">${pos.symbol}</td>
-          <td class="price">${pos.quantity}</td>
-          <td class="price">${formatCurrency(pos.market_price)}</td>
-          <td class="price">${formatCurrency(pos.quantity * pos.market_price)}</td>
+          <td class="mono">${pos.quantity}</td>
+          <td class="mono">${formatCurrency(pos.market_price)}</td>
+          <td class="mono" style="text-align: right;">${formatCurrency(pos.quantity * pos.market_price)}</td>
         </tr>
       `).join('');
     }
 
     function toggleLiquidateButton() {
       const checked = document.getElementById('confirmCheck').checked;
-      const btn = document.getElementById('liquidateBtn');
-      btn.disabled = !checked || isLiquidating;
+      document.getElementById('liquidateBtn').disabled = !checked;
     }
 
     async function liquidateAll() {
-      if (!confirm('⚠️ 确定要清仓所有持仓吗？这将使用市价单立即卖出所有股票。')) {
-        return;
-      }
+      if (!confirm('确认模拟清仓？')) return;
 
-      isLiquidating = true;
-      toggleLiquidateButton();
       showLoading(true);
-
-      const appKey = document.getElementById('appKey').value.trim();
-      const appSecret = document.getElementById('appSecret').value.trim();
-      const accessToken = document.getElementById('accessToken').value.trim();
-
-      try {
-        const response = await fetch('/api/liquidate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            appKey, 
-            appSecret, 
-            accessToken,
-            positions: currentPositions.map(p => p.symbol)
-          })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || '清仓失败');
-        }
-
-        showAlert('✅ 清仓完成！请检查长桥 App 确认订单状态。', 'warning');
-        
-        // 清空持仓显示
-        renderPositions([], 0);
-        document.getElementById('liquidateBtn').textContent = '✅ 清仓完成';
-
-      } catch (error) {
-        showAlert(error.message, 'error');
-        isLiquidating = false;
-        toggleLiquidateButton();
-      } finally {
-        showLoading(false);
-      }
+      await new Promise(r => setTimeout(r, 1000));
+      
+      showAlert('✓ 演示清仓完成', 'success');
+      renderPositions([], 0);
+      document.getElementById('liquidateBtn').textContent = '✓ 已完成';
+      document.getElementById('liquidateBtn').disabled = true;
+      
+      showLoading(false);
     }
   </script>
 </body>
