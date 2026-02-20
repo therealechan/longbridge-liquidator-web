@@ -38,6 +38,8 @@ function createConfig(body) {
     appKey,
     appSecret,
     accessToken,
+    enablePrintQuotePackages: false,
+    enableOvernight: false,
   });
 }
 
