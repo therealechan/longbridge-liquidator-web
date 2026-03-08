@@ -148,7 +148,7 @@ pub fn run() {
 
 /// Silent background update check on launch — prompts user if an update is found.
 async fn check_for_updates(app: tauri::AppHandle) {
-    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
+    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogResult};
     use tauri_plugin_updater::UpdaterExt;
 
     match app.updater() {
@@ -157,19 +157,19 @@ async fn check_for_updates(app: tauri::AppHandle) {
                 let version = update.version.clone();
                 eprintln!("[lb-liquidator] update available: v{}", version);
 
-                let confirmed = app
+                let result = app
                     .dialog()
                     .message(format!(
                         "LB Liquidator v{version} is available.\n\nWould you like to download and install it now? The app will restart automatically.",
                     ))
                     .title("Update Available")
                     .buttons(MessageDialogButtons::OkCancelCustom(
-                        "Install Update",
-                        "Later",
+                        "Install Update".to_string(),
+                        "Later".to_string(),
                     ))
                     .blocking_show();
 
-                if confirmed {
+                if result != MessageDialogResult::Cancel {
                     app.dialog()
                         .message(format!("Downloading v{version}…\n\nThe app will restart when the update is ready."))
                         .title("Updating LB Liquidator")
@@ -193,7 +193,7 @@ async fn check_for_updates(app: tauri::AppHandle) {
 
 /// Manual update check triggered from the menu — always shows feedback to the user.
 async fn check_for_updates_manual(app: tauri::AppHandle) {
-    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
+    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogResult};
     use tauri_plugin_updater::UpdaterExt;
 
     match app.updater() {
@@ -202,19 +202,19 @@ async fn check_for_updates_manual(app: tauri::AppHandle) {
                 let version = update.version.clone();
                 eprintln!("[lb-liquidator] update available: v{}", version);
 
-                let confirmed = app
+                let result = app
                     .dialog()
                     .message(format!(
                         "LB Liquidator v{version} is available.\n\nWould you like to download and install it now? The app will restart automatically.",
                     ))
                     .title("Update Available")
                     .buttons(MessageDialogButtons::OkCancelCustom(
-                        "Install Update",
-                        "Later",
+                        "Install Update".to_string(),
+                        "Later".to_string(),
                     ))
                     .blocking_show();
 
-                if confirmed {
+                if result != MessageDialogResult::Cancel {
                     app.dialog()
                         .message(format!("Downloading v{version}…\n\nThe app will restart when the update is ready."))
                         .title("Updating LB Liquidator")
