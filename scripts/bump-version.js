@@ -47,6 +47,15 @@ console.log(`\nBumping version: ${oldVersion} → ${newVersion}\n`);
 console.log('🔍 Running pre-flight checks before release...\n');
 
 try {
+  console.log('  node scripts/prepare-server.js (server-bundle required by build.rs)');
+  execSync('node scripts/prepare-server.js', { cwd: ROOT, stdio: 'inherit' });
+  console.log('');
+} catch {
+  console.error('\n❌ prepare-server.js failed — cannot continue.');
+  process.exit(1);
+}
+
+try {
   console.log('  cargo check --locked');
   execSync('cargo check --locked --manifest-path src-tauri/Cargo.toml', {
     cwd: ROOT,
