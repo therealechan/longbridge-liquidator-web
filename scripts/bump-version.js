@@ -43,6 +43,30 @@ const today      = new Date().toISOString().split('T')[0];
 
 console.log(`\nBumping version: ${oldVersion} → ${newVersion}\n`);
 
+// ── Pre-flight checks ─────────────────────────────────────────────────────────
+console.log('🔍 Running pre-flight checks before release...\n');
+
+try {
+  console.log('  cargo check --locked');
+  execSync('cargo check --locked --manifest-path src-tauri/Cargo.toml', {
+    cwd: ROOT,
+    stdio: 'inherit',
+  });
+  console.log('\n✅ Rust compiles cleanly\n');
+} catch {
+  console.error('\n❌ cargo check failed — fix compilation errors before releasing.');
+  process.exit(1);
+}
+
+try {
+  console.log('  npm test');
+  execSync('npm test', { cwd: ROOT, stdio: 'inherit' });
+  console.log('\n✅ Tests passed\n');
+} catch {
+  console.error('\n❌ Tests failed — fix failing tests before releasing.');
+  process.exit(1);
+}
+
 // ── Update package.json ───────────────────────────────────────────────────────
 pkg.version = newVersion;
 fs.writeFileSync(PKG, JSON.stringify(pkg, null, 2) + '\n');
