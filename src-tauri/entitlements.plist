@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Required for hardened runtime notarization -->
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  <!-- Allow loading unsigned native addons (longport SDK) -->
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+  <!-- Allow outbound network connections (Longbridge API) -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+</dict>
+</plist>
