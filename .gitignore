@@ -1,4 +1,10 @@
 node_modules/
+
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/server-bundle/
+src-tauri/gen/
+src-tauri/WixTools/
 *.log
 .DS_Store
 .env
