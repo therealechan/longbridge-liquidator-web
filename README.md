@@ -1,11 +1,12 @@
 # Liquidator
 
-> 长桥一键清仓工具 — 本地安全运行的 Web 界面
+> 长桥一键清仓工具 — 本地安全运行，支持 Web 与 Mac 原生应用
 >
-> One-click position liquidation tool for Longbridge — local-only, secure web UI
+> One-click position liquidation tool for Longbridge — local-only, secure. Runs as a web app or native Mac app.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Security](https://img.shields.io/badge/security-local%20only-success.svg)
+![Tauri](https://img.shields.io/badge/mac%20app-Tauri%20v2-blue.svg)
 
 ---
 
@@ -43,6 +44,7 @@
 - 💾 **凭证记忆 / Credential Persistence** — API 凭证自动保存，刷新页面无需重新输入
 - ✅ **安全确认 / Safe Confirm** — 多重确认弹窗防止误操作
 - 🧪 **演示模式 / Demo Mode** — 无需真实账户即可体验界面
+- 🖥️ **Mac 原生应用 / Mac App** — 基于 Tauri v2 封装，双击即用，无需开终端
 
 ## 技术栈 / Tech Stack
 
@@ -50,21 +52,69 @@
 |-------|------------|
 | Backend | Node.js + Express |
 | Frontend | Vanilla HTML / CSS / JS |
+| Mac App | [Tauri v2](https://tauri.app/) (Rust + WKWebView) |
 | Trading | [Longbridge OpenAPI Node.js SDK](https://www.npmjs.com/package/longport) |
 | Icons | [Lucide](https://lucide.dev/) |
 | Security | localhost-only, no external data transfer |
 
-## 快速开始 / Quick Start
+---
+
+## 运行方式 / How to Run
+
+### 方式一：Mac 原生应用（推荐）/ Option 1: Mac App (Recommended)
+
+双击打开，无需终端，服务器自动启动。/ Double-click to open — no terminal needed, server starts automatically.
+
+**前置要求 / Prerequisites:**
+
+- [Node.js](https://nodejs.org/) v18+
+- [Rust](https://rustup.rs/) (首次需要安装 / required for first build)
 
 ```bash
-# 克隆仓库 / Clone
+# Install Rust (one-time)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+```
+
+**构建 / Build:**
+
+```bash
 git clone https://github.com/therealechan/longbridge-liquidator-web.git
 cd longbridge-liquidator-web
 
-# 安装依赖 / Install
 npm install
+npx tauri build
+```
 
-# 启动 / Start
+构建完成后，`.app` 文件位于：/ The `.app` and `.dmg` will be at:
+
+```
+src-tauri/target/release/bundle/macos/Liquidator.app
+src-tauri/target/release/bundle/dmg/Liquidator_1.0.0_aarch64.dmg
+```
+
+> 首次构建 Rust 依赖需要 2–3 分钟，后续增量构建很快。
+> First build takes 2–3 min (Rust compiling deps). Incremental builds are fast after that.
+
+**开发模式 / Dev mode:**
+
+```bash
+# Terminal 1
+npm run dev
+
+# Terminal 2
+npx tauri dev
+```
+
+---
+
+### 方式二：Web 模式 / Option 2: Web Mode
+
+```bash
+git clone https://github.com/therealechan/longbridge-liquidator-web.git
+cd longbridge-liquidator-web
+
+npm install
 npm start
 ```
 
@@ -72,33 +122,13 @@ npm start
 
 The server runs at `http://127.0.0.1:3456` (localhost only).
 
-### 本地开发 / Local Development
+**本地开发 / Local Development:**
 
 ```bash
-# 安装依赖（含 longport SDK）
-npm install
-
-# 开发模式（自动重启）
-npm run dev
-
-# 访问 http://127.0.0.1:3456
+npm run dev   # auto-restart on file changes
 ```
 
-服务器使用 Node.js 原生 [Longbridge OpenAPI SDK](https://www.npmjs.com/package/longport)，无需额外安装 Python。
-
-The server uses the native Node.js Longbridge SDK — no Python required.
-
-### 演示模式与实盘模式 / Demo Mode & Live Mode
-
-- **Demo Mode（演示模式）**：使用模拟数据，无需 API 凭证，适合体验界面。
-- **Live Mode（实盘模式）**：连接真实 Longbridge API，需要本地运行服务器（`npm start` 或 `npm run dev`）。
-
-> ⚠️ Live Mode 需要本地服务器。线上演示（静态部署）没有后端服务器，只能使用 Demo Mode。
-
-- **Demo Mode**: Uses mock data, no API credentials needed. Great for exploring the UI.
-- **Live Mode**: Connects to the real Longbridge API. Requires a local server (`npm start` or `npm run dev`).
-
-> ⚠️ Live Mode requires a local server. The online demo (static deployment) has no backend and only supports Demo Mode.
+---
 
 ## API 配置 / API Configuration
 
@@ -114,13 +144,15 @@ The server uses the native Node.js Longbridge SDK — no Python required.
 
 1. 登录 [长桥开发者中心](https://open.longportapp.com/) / Login to Longbridge Developer Center
 2. 进入「用户中心」→「应用凭证」/ Go to "User Center" → "App Credentials"
-3. 获取 App Key、App Secret 和 Access Token / Get all three credentials from the same page
+3. 获取 App Key、App Secret 和 Access Token / Get all three credentials
 
 > 📖 详细文档 / Docs: https://open.longportapp.com/docs
 
+---
+
 ## 使用说明 / Usage
 
-1. 在网页中输入长桥 API 凭证（App Key / App Secret / Access Token）
+1. 在界面中输入长桥 API 凭证（App Key / App Secret / Access Token）
 2. 点击「查看持仓」查看当前所有持仓
 3. 勾选需要操作的标的（默认全选）
 4. 点击「一键清仓」以市价单卖出选中持仓
@@ -134,13 +166,18 @@ The server uses the native Node.js Longbridge SDK — no Python required.
 4. Click "Liquidate" to sell selected positions at market price
 5. Click "Conditional Sell" to batch set take-profit / stop-loss / trailing stop orders
 
+---
+
 ## 安全说明 / Security
 
 - ✅ API 密钥保存在浏览器 localStorage，仅限本机访问
 - ✅ 服务仅监听 `127.0.0.1`，外部无法访问
+- ✅ Mac App 内嵌服务器，无网络暴露
 - ✅ 开源代码，可自行审计
 - ✅ 支持模拟模式测试
 
+---
+
 ## License
 
-[MIT](LICENSE) © [0xechan](https://0xechan.xyz)
+[MIT](LICENSE) © [Ed](https://github.com/therealechan)
