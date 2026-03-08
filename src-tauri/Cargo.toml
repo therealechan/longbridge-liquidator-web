@@ -1,6 +1,6 @@
 [package]
 name = "lb-liquidator"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 
 [lib]
@@ -11,7 +11,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2" }
+tauri = { version = "2", features = [] }
 tauri-plugin-updater = "2"
 tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
