@@ -3,7 +3,7 @@
  * bump-version.js
  *
  * Bumps the version in package.json, tauri.conf.json, and Cargo.toml,
- * then commits and tags for release.
+ * prepends a CHANGELOG.md entry, then commits and tags for release.
  *
  * Usage:
  *   npm run release:patch   → 1.0.0 → 1.0.1
@@ -19,6 +19,7 @@ const ROOT        = path.resolve(__dirname, '..');
 const PKG         = path.join(ROOT, 'package.json');
 const TAURI_CONF  = path.join(ROOT, 'src-tauri', 'tauri.conf.json');
 const CARGO_TOML  = path.join(ROOT, 'src-tauri', 'Cargo.toml');
+const CHANGELOG   = path.join(ROOT, 'CHANGELOG.md');
 
 const bumpType = process.argv[2];
 if (!['patch', 'minor', 'major'].includes(bumpType)) {
@@ -38,6 +39,7 @@ if (bumpType === 'patch') { nextPatch++; }
 const oldVersion = `${major}.${minor}.${patch}`;
 const newVersion = `${nextMajor}.${nextMinor}.${nextPatch}`;
 const tag        = `v${newVersion}`;
+const today      = new Date().toISOString().split('T')[0];
 
 console.log(`\nBumping version: ${oldVersion} → ${newVersion}\n`);
 
@@ -61,13 +63,42 @@ cargo = cargo.replace(
 fs.writeFileSync(CARGO_TOML, cargo);
 console.log(`✅ Cargo.toml         → ${newVersion}`);
 
+// ── Update CHANGELOG.md ───────────────────────────────────────────────────────
+const newEntry = [
+  `## [${newVersion}] — ${today}`,
+  ``,
+  `### Changes`,
+  `- <!-- describe what changed -->`,
+  ``,
+  `### Download`,
+  `[LB Liquidator ${tag}](https://github.com/therealechan/longbridge-liquidator-web/releases/tag/${tag})`,
+  ``,
+].join('\n');
+
+const existingChangelog = fs.existsSync(CHANGELOG)
+  ? fs.readFileSync(CHANGELOG, 'utf8')
+  : '# Changelog\n\nAll notable changes to LB Liquidator are documented here.\n\n';
+
+// Insert new entry after the header (first two lines)
+const lines = existingChangelog.split('\n');
+const headerEnd = lines.findIndex((l, i) => i > 0 && l.startsWith('## '));
+const insertAt = headerEnd === -1 ? lines.length : headerEnd;
+
+lines.splice(insertAt, 0, newEntry);
+fs.writeFileSync(CHANGELOG, lines.join('\n'));
+console.log(`✅ CHANGELOG.md       → added ${tag} entry`);
+
 // ── Commit + tag ──────────────────────────────────────────────────────────────
 console.log('\nCommitting and tagging…');
-execSync(`git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml`, { cwd: ROOT, stdio: 'inherit' });
+execSync(
+  `git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml CHANGELOG.md`,
+  { cwd: ROOT, stdio: 'inherit' }
+);
 execSync(`git commit -m "chore: release ${tag}"`, { cwd: ROOT, stdio: 'inherit' });
 execSync(`git tag ${tag}`, { cwd: ROOT, stdio: 'inherit' });
 execSync(`git push origin master`, { cwd: ROOT, stdio: 'inherit' });
 execSync(`git push origin ${tag}`, { cwd: ROOT, stdio: 'inherit' });
 
 console.log(`\n🚀 Released ${tag} — GitHub Actions is now building the .dmg`);
-console.log(`   https://github.com/therealechan/longbridge-liquidator-web/releases\n`);
+console.log(`   Watch the build: https://github.com/therealechan/longbridge-liquidator-web/actions`);
+console.log(`   Release page:    https://github.com/therealechan/longbridge-liquidator-web/releases\n`);
