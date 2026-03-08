@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Import Apple certificate
+      - name: Import Apple certificate into temporary keychain
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -40,23 +40,36 @@ jobs:
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
           KEYCHAIN_PASSWORD=$(openssl rand -hex 16)
 
-          # Create a temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-          # Import certificate
           echo "$APPLE_CERTIFICATE" | base64 --decode > /tmp/certificate.p12
           security import /tmp/certificate.p12 \
             -k "$KEYCHAIN_PATH" \
             -P "$APPLE_CERTIFICATE_PASSWORD" \
             -T /usr/bin/codesign
           security list-keychain -d user -s "$KEYCHAIN_PATH"
-
-          # Allow codesign to access the key without UI prompt
           security set-key-partition-list \
             -S apple-tool:,apple: \
             -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      # Sign .node native addons BEFORE tauri build copies them into the bundle.
+      # If they are unsigned, Apple's notarization will reject the whole app.
+      - name: Codesign native Node.js addons
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          echo "Signing .node files in node_modules..."
+          find node_modules -name "*.node" -print | while read f; do
+            echo "  → $f"
+            codesign --force \
+                     --sign "$APPLE_SIGNING_IDENTITY" \
+                     --options runtime \
+                     --timestamp \
+                     "$f"
+          done
+          echo "Done signing native addons."
 
       - name: Build, sign, notarize and release
         uses: tauri-apps/tauri-action@v0
@@ -87,3 +100,4 @@ jobs:
         if: always()
         run: |
           security delete-keychain $RUNNER_TEMP/app-signing.keychain-db 2>/dev/null || true
+          rm -f /tmp/certificate.p12
