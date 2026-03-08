@@ -2,6 +2,14 @@
 
 All notable changes to LB Liquidator are documented here.
 
+## [1.0.5] — 2026-03-08
+
+### Changes
+- <!-- describe what changed -->
+
+### Download
+[LB Liquidator v1.0.5](https://github.com/therealechan/longbridge-liquidator-web/releases/tag/v1.0.5)
+
 ## [1.0.4] — 2026-03-08
 
 ### Changes
