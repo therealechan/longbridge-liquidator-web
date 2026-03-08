@@ -148,7 +148,7 @@ pub fn run() {
 
 /// Silent background update check on launch — prompts user if an update is found.
 async fn check_for_updates(app: tauri::AppHandle) {
-    use tauri_plugin_dialog::DialogExt;
+    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
     use tauri_plugin_updater::UpdaterExt;
 
     match app.updater() {
@@ -163,8 +163,10 @@ async fn check_for_updates(app: tauri::AppHandle) {
                         "LB Liquidator v{version} is available.\n\nWould you like to download and install it now? The app will restart automatically.",
                     ))
                     .title("Update Available")
-                    .ok_button_label("Install Update")
-                    .cancel_button_label("Later")
+                    .buttons(MessageDialogButtons::OkCancelCustom(
+                        "Install Update",
+                        "Later",
+                    ))
                     .blocking_show();
 
                 if confirmed {
@@ -191,7 +193,7 @@ async fn check_for_updates(app: tauri::AppHandle) {
 
 /// Manual update check triggered from the menu — always shows feedback to the user.
 async fn check_for_updates_manual(app: tauri::AppHandle) {
-    use tauri_plugin_dialog::DialogExt;
+    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
     use tauri_plugin_updater::UpdaterExt;
 
     match app.updater() {
@@ -206,8 +208,10 @@ async fn check_for_updates_manual(app: tauri::AppHandle) {
                         "LB Liquidator v{version} is available.\n\nWould you like to download and install it now? The app will restart automatically.",
                     ))
                     .title("Update Available")
-                    .ok_button_label("Install Update")
-                    .cancel_button_label("Later")
+                    .buttons(MessageDialogButtons::OkCancelCustom(
+                        "Install Update",
+                        "Later",
+                    ))
                     .blocking_show();
 
                 if confirmed {
