@@ -19,6 +19,8 @@ pub fn run() {
                 .build(app)?;
 
             let app_submenu = SubmenuBuilder::new(app, "LB Liquidator")
+                .about(None)
+                .separator()
                 .item(&check_update_item)
                 .separator()
                 .hide()
@@ -144,15 +146,40 @@ pub fn run() {
         .expect("error while running lb-liquidator");
 }
 
-/// Silent background update check on launch — only installs if update is found.
+/// Silent background update check on launch — prompts user if an update is found.
 async fn check_for_updates(app: tauri::AppHandle) {
+    use tauri_plugin_dialog::DialogExt;
     use tauri_plugin_updater::UpdaterExt;
+
     match app.updater() {
         Ok(updater) => match updater.check().await {
             Ok(Some(update)) => {
-                eprintln!("[lb-liquidator] update available: v{}", update.version);
-                if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
-                    eprintln!("[lb-liquidator] update install error: {e}");
+                let version = update.version.clone();
+                eprintln!("[lb-liquidator] update available: v{}", version);
+
+                let confirmed = app
+                    .dialog()
+                    .message(format!(
+                        "LB Liquidator v{version} is available.\n\nWould you like to download and install it now? The app will restart automatically.",
+                    ))
+                    .title("Update Available")
+                    .ok_button_label("Install Update")
+                    .cancel_button_label("Later")
+                    .blocking_show();
+
+                if confirmed {
+                    app.dialog()
+                        .message(format!("Downloading v{version}…\n\nThe app will restart when the update is ready."))
+                        .title("Updating LB Liquidator")
+                        .blocking_show();
+
+                    if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+                        eprintln!("[lb-liquidator] update install error: {e}");
+                        app.dialog()
+                            .message(format!("Update failed: {e}\n\nPlease download the latest version from GitHub manually."))
+                            .title("Update Error")
+                            .blocking_show();
+                    }
                 }
             }
             Ok(None) => eprintln!("[lb-liquidator] app is up to date"),
@@ -162,7 +189,7 @@ async fn check_for_updates(app: tauri::AppHandle) {
     }
 }
 
-/// Manual update check triggered from the menu — shows "up to date" feedback.
+/// Manual update check triggered from the menu — always shows feedback to the user.
 async fn check_for_updates_manual(app: tauri::AppHandle) {
     use tauri_plugin_dialog::DialogExt;
     use tauri_plugin_updater::UpdaterExt;
@@ -170,9 +197,32 @@ async fn check_for_updates_manual(app: tauri::AppHandle) {
     match app.updater() {
         Ok(updater) => match updater.check().await {
             Ok(Some(update)) => {
-                eprintln!("[lb-liquidator] update available: v{}", update.version);
-                if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
-                    eprintln!("[lb-liquidator] update install error: {e}");
+                let version = update.version.clone();
+                eprintln!("[lb-liquidator] update available: v{}", version);
+
+                let confirmed = app
+                    .dialog()
+                    .message(format!(
+                        "LB Liquidator v{version} is available.\n\nWould you like to download and install it now? The app will restart automatically.",
+                    ))
+                    .title("Update Available")
+                    .ok_button_label("Install Update")
+                    .cancel_button_label("Later")
+                    .blocking_show();
+
+                if confirmed {
+                    app.dialog()
+                        .message(format!("Downloading v{version}…\n\nThe app will restart when the update is ready."))
+                        .title("Updating LB Liquidator")
+                        .blocking_show();
+
+                    if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+                        eprintln!("[lb-liquidator] update install error: {e}");
+                        app.dialog()
+                            .message(format!("Update failed: {e}\n\nPlease download the latest version from GitHub manually."))
+                            .title("Update Error")
+                            .blocking_show();
+                    }
                 }
             }
             Ok(None) => {
@@ -184,7 +234,7 @@ async fn check_for_updates_manual(app: tauri::AppHandle) {
             Err(e) => {
                 eprintln!("[lb-liquidator] update check failed: {e}");
                 app.dialog()
-                    .message(format!("Update check failed: {e}"))
+                    .message(format!("Update check failed: {e}\n\nPlease check your internet connection and try again."))
                     .title("Update Error")
                     .blocking_show();
             }
