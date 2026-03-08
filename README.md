@@ -23,11 +23,9 @@
 
 ---
 
-## Live Demo
+## Website
 
-**Online Demo:** https://lp-liquidator.echan.work
-
-> ⚠️ Demo Mode only (mock data) — no real trading. The online version is a static deployment with no backend server.
+**Landing page:** https://liquidator.nowornever.work
 
 ---
 

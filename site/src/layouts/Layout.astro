@@ -1,0 +1,158 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'LB Liquidator — One-click position liquidation for Longbridge',
+  description = 'Local-only, secure Mac app for Longbridge position management. Selective liquidation, conditional sell orders, auto-updates.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Geist Sans -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap');
+    </style>
+
+    <!-- Design tokens & global styles -->
+    <style is:global>
+      :root {
+        --background: #ffffff;
+        --surface: #f4f4f5;
+        --surface-hover: #e4e4e7;
+        --border: #e4e4e7;
+        --foreground: #18181b;
+        --foreground-secondary: #3f3f46;
+        --muted: #71717a;
+        --muted-foreground: #a1a1aa;
+        --accent: #18181b;
+        --accent-foreground: #fafafa;
+        --danger: #dc2626;
+        --danger-hover: #b91c1c;
+        --success: #16a34a;
+        --radius: 6px;
+        --radius-sm: 4px;
+      }
+
+      .dark {
+        --background: #0a0a0a;
+        --surface: #171717;
+        --surface-hover: #262626;
+        --border: #262626;
+        --foreground: #ededed;
+        --foreground-secondary: #d4d4d4;
+        --muted: #737373;
+        --muted-foreground: #a3a3a3;
+        --accent: #fafafa;
+        --accent-foreground: #171717;
+      }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        font-family: 'Geist', 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 15px;
+        line-height: 1.6;
+        background: var(--background);
+        color: var(--foreground);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--background);
+        color: var(--foreground);
+        transition: background 0.2s ease, color 0.2s ease;
+        min-height: 100vh;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      button {
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-family: inherit;
+      }
+
+      .font-mono {
+        font-family: 'Geist Mono', 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: var(--background); }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+      /* Animations */
+      @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      @keyframes pulse-dot {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      .animate-fade-up {
+        animation: fadeSlideIn 0.5s ease-out forwards;
+      }
+
+      .animate-fade-up-delay-1 { animation-delay: 0.1s; opacity: 0; }
+      .animate-fade-up-delay-2 { animation-delay: 0.2s; opacity: 0; }
+      .animate-fade-up-delay-3 { animation-delay: 0.3s; opacity: 0; }
+      .animate-fade-up-delay-4 { animation-delay: 0.4s; opacity: 0; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .animate-fade-up,
+        .animate-fade-up-delay-1,
+        .animate-fade-up-delay-2,
+        .animate-fade-up-delay-3,
+        .animate-fade-up-delay-4 {
+          animation: none;
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <slot />
+
+    <!-- Lucide icons CDN -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" is:inline></script>
+    <script is:inline>
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    </script>
+  </body>
+</html>

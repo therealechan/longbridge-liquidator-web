@@ -1,0 +1,1005 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout>
+  <!-- ═══════════════════════════════════════════════════════════
+       HEADER / NAV
+  ═══════════════════════════════════════════════════════════ -->
+  <header id="site-header">
+    <div class="header-inner">
+      <!-- Logo -->
+      <a href="/" class="logo" aria-label="LB Liquidator">
+        <span class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 3L20 7V13C20 17.4183 16.4183 21 12 21C7.58172 21 4 17.4183 4 13V7L12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M9.5 12.5L11.5 14.5L15.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="logo-text">LB Liquidator</span>
+      </a>
+
+      <!-- Right controls -->
+      <div class="header-controls">
+        <!-- Language switcher -->
+        <div class="lang-switcher" role="group" aria-label="Language">
+          <button class="lang-btn active" data-lang="en" onclick="switchLang('en')">EN</button>
+          <button class="lang-btn" data-lang="zh-hans" onclick="switchLang('zh-hans')">中文</button>
+          <button class="lang-btn" data-lang="zh-hant" onclick="switchLang('zh-hant')">繁中</button>
+        </div>
+
+        <!-- Theme toggle -->
+        <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme">
+          <i data-lucide="sun" class="theme-icon-light" style="display:none"></i>
+          <i data-lucide="moon" class="theme-icon-dark"></i>
+        </button>
+
+        <!-- GitHub -->
+        <a href="https://github.com/therealechan/longbridge-liquidator-web" target="_blank" rel="noopener" class="icon-btn" aria-label="View on GitHub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017C2 16.442 4.865 20.197 8.839 21.521C9.339 21.613 9.521 21.304 9.521 21.04C9.521 20.802 9.512 20.17 9.508 19.351C6.726 19.959 6.139 18.016 6.139 18.016C5.685 16.859 5.029 16.554 5.029 16.554C4.121 15.937 5.098 15.951 5.098 15.951C6.101 16.018 6.629 16.979 6.629 16.979C7.521 18.498 8.97 18.054 9.539 17.799C9.631 17.155 9.889 16.713 10.175 16.464C7.954 16.211 5.62 15.36 5.62 11.538C5.62 10.445 6.009 9.549 6.649 8.851C6.546 8.599 6.203 7.575 6.747 6.196C6.747 6.196 7.587 5.928 9.497 7.222C10.308 6.999 11.15 6.888 12 6.884C12.85 6.888 13.693 6.999 14.507 7.222C16.413 5.928 17.251 6.196 17.251 6.196C17.797 7.575 17.454 8.599 17.351 8.851C17.994 9.549 18.38 10.445 18.38 11.538C18.38 15.369 16.043 16.208 13.814 16.455C14.172 16.764 14.491 17.372 14.491 18.302C14.491 19.638 14.479 20.716 14.479 21.04C14.479 21.307 14.659 21.618 15.167 21.52C19.137 20.194 22 16.44 22 12.017C22 6.484 17.522 2 12 2Z" fill="currentColor"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge animate-fade-up">
+        <span class="status-dot"></span>
+        <span data-i18n="hero_badge">Mac App · Open Source</span>
+      </div>
+
+      <h1 class="hero-title animate-fade-up animate-fade-up-delay-1" data-i18n="hero_title">
+        LB Liquidator
+      </h1>
+
+      <p class="hero-tagline animate-fade-up animate-fade-up-delay-2" data-i18n="hero_tagline">
+        One-click position liquidation for Longbridge.<br />
+        Local-only. Secure.
+      </p>
+
+      <div class="hero-actions animate-fade-up animate-fade-up-delay-3">
+        <!-- Download button — filled by JS -->
+        <a id="download-btn" href="https://github.com/therealechan/longbridge-liquidator-web/releases" class="btn btn-primary" target="_blank" rel="noopener">
+          <span id="download-btn-icon">
+            <i data-lucide="download" style="width:16px;height:16px"></i>
+          </span>
+          <span id="download-btn-text" data-i18n="download_mac">Download for Mac</span>
+          <span id="download-version" class="version-badge" style="display:none"></span>
+        </a>
+
+        <a href="https://github.com/therealechan/longbridge-liquidator-web" target="_blank" rel="noopener" class="btn btn-secondary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2C6.477 2 2 6.484 2 12.017C2 16.442 4.865 20.197 8.839 21.521C9.339 21.613 9.521 21.304 9.521 21.04C9.521 20.802 9.512 20.17 9.508 19.351C6.726 19.959 6.139 18.016 6.139 18.016C5.685 16.859 5.029 16.554 5.029 16.554C4.121 15.937 5.098 15.951 5.098 15.951C6.101 16.018 6.629 16.979 6.629 16.979C7.521 18.498 8.97 18.054 9.539 17.799C9.631 17.155 9.889 16.713 10.175 16.464C7.954 16.211 5.62 15.36 5.62 11.538C5.62 10.445 6.009 9.549 6.649 8.851C6.546 8.599 6.203 7.575 6.747 6.196C6.747 6.196 7.587 5.928 9.497 7.222C10.308 6.999 11.15 6.888 12 6.884C12.85 6.888 13.693 6.999 14.507 7.222C16.413 5.928 17.251 6.196 17.251 6.196C17.797 7.575 17.454 8.599 17.351 8.851C17.994 9.549 18.38 10.445 18.38 11.538C18.38 15.369 16.043 16.208 13.814 16.455C14.172 16.764 14.491 17.372 14.491 18.302C14.491 19.638 14.479 20.716 14.479 21.04C14.479 21.307 14.659 21.618 15.167 21.52C19.137 20.194 22 16.44 22 12.017C22 6.484 17.522 2 12 2Z" fill="currentColor"/></svg>
+          <span data-i18n="view_github">View on GitHub</span>
+        </a>
+      </div>
+
+      <p class="hero-note animate-fade-up animate-fade-up-delay-4" data-i18n="hero_note">
+        macOS 12+ · Apple Silicon &amp; Intel · Free &amp; Open Source
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FEATURES GRID
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="features" id="features">
+    <div class="container">
+      <h2 class="section-label" data-i18n="features_label">FEATURES</h2>
+
+      <div class="features-grid">
+        <!-- Security -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i data-lucide="shield" style="width:18px;height:18px"></i>
+          </div>
+          <h3 class="feature-title" data-i18n="feat_security_title">Local-only Security</h3>
+          <p class="feature-desc" data-i18n="feat_security_desc">
+            API keys stored in your browser's localStorage — never transmitted. Server binds to 127.0.0.1 only.
+          </p>
+        </div>
+
+        <!-- Native App -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i data-lucide="monitor" style="width:18px;height:18px"></i>
+          </div>
+          <h3 class="feature-title" data-i18n="feat_native_title">Native Mac App</h3>
+          <p class="feature-desc" data-i18n="feat_native_desc">
+            Built with Tauri v2. Double-click to launch — no terminal, no Node.js, no setup required.
+          </p>
+        </div>
+
+        <!-- Auto-updates -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i data-lucide="refresh-cw" style="width:18px;height:18px"></i>
+          </div>
+          <h3 class="feature-title" data-i18n="feat_updates_title">Auto-updates</h3>
+          <p class="feature-desc" data-i18n="feat_updates_desc">
+            Sparkle-powered update system checks for new releases on launch and installs them silently.
+          </p>
+        </div>
+
+        <!-- Selective Liquidation -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i data-lucide="sliders" style="width:18px;height:18px"></i>
+          </div>
+          <h3 class="feature-title" data-i18n="feat_selective_title">Selective Liquidation</h3>
+          <p class="feature-desc" data-i18n="feat_selective_desc">
+            Choose individual positions and sell at full, 1/2, 1/3, or 1/4 of your holding.
+          </p>
+        </div>
+
+        <!-- Conditional Sell -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i data-lucide="trending-up" style="width:18px;height:18px"></i>
+          </div>
+          <h3 class="feature-title" data-i18n="feat_conditional_title">Conditional Sell</h3>
+          <p class="feature-desc" data-i18n="feat_conditional_desc">
+            Batch set take-profit, stop-loss, and trailing stop orders across multiple positions at once.
+          </p>
+        </div>
+
+        <!-- Multi-language -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i data-lucide="globe" style="width:18px;height:18px"></i>
+          </div>
+          <h3 class="feature-title" data-i18n="feat_i18n_title">Multi-language</h3>
+          <p class="feature-desc" data-i18n="feat_i18n_desc">
+            Full support for Simplified Chinese, Traditional Chinese, and English — switch instantly.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SCREENSHOTS
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="screenshots" id="screenshots">
+    <div class="container">
+      <h2 class="section-label" data-i18n="screenshots_label">SCREENSHOTS</h2>
+
+      <div class="screenshot-tabs">
+        <button class="tab-btn active" data-tab="dark" onclick="switchTab('dark')" data-i18n="tab_dark">Dark Mode</button>
+        <button class="tab-btn" data-tab="light" onclick="switchTab('light')" data-i18n="tab_light">Light Mode</button>
+        <button class="tab-btn" data-tab="conditional" onclick="switchTab('conditional')" data-i18n="tab_conditional">Conditional Sell</button>
+        <button class="tab-btn" data-tab="apiconfig" onclick="switchTab('apiconfig')" data-i18n="tab_api">API Setup</button>
+      </div>
+
+      <div class="screenshot-frame">
+        <div class="tab-panel active" id="tab-dark">
+          <img src="/screenshots/dark-positions.png" alt="Dark mode — positions view" class="screenshot-img" loading="lazy" />
+        </div>
+        <div class="tab-panel" id="tab-light">
+          <img src="/screenshots/light-positions.png" alt="Light mode — positions view" class="screenshot-img" loading="lazy" />
+        </div>
+        <div class="tab-panel" id="tab-conditional">
+          <img src="/screenshots/conditional-sell.png" alt="Conditional sell dialog" class="screenshot-img" loading="lazy" />
+        </div>
+        <div class="tab-panel" id="tab-apiconfig">
+          <img src="/screenshots/api-config.png" alt="API configuration" class="screenshot-img" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       DOWNLOAD CTA
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="download-cta" id="download">
+    <div class="container">
+      <div class="cta-card">
+        <div class="cta-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 3L20 7V13C20 17.4183 16.4183 21 12 21C7.58172 21 4 17.4183 4 13V7L12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M9.5 12.5L11.5 14.5L15.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="cta-title" data-i18n="cta_title">Ready to take control?</h2>
+        <p class="cta-subtitle" data-i18n="cta_subtitle">
+          Download LB Liquidator for Mac and manage your Longbridge positions with confidence.
+        </p>
+        <div class="cta-actions">
+          <a id="download-btn-2" href="https://github.com/therealechan/longbridge-liquidator-web/releases" class="btn btn-primary btn-large" target="_blank" rel="noopener">
+            <i data-lucide="download" style="width:16px;height:16px"></i>
+            <span data-i18n="download_mac">Download for Mac</span>
+            <span id="download-version-2" class="version-badge" style="display:none"></span>
+          </a>
+          <a href="https://github.com/therealechan/longbridge-liquidator-web/releases" target="_blank" rel="noopener" class="release-link" data-i18n="all_releases">
+            All releases
+            <i data-lucide="arrow-right" style="width:13px;height:13px"></i>
+          </a>
+        </div>
+        <p class="cta-note" data-i18n="cta_note">macOS 12 Monterey or later · Apple Silicon &amp; Intel</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <a href="/" class="logo" aria-label="LB Liquidator">
+          <span class="logo-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 3L20 7V13C20 17.4183 16.4183 21 12 21C7.58172 21 4 17.4183 4 13V7L12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M9.5 12.5L11.5 14.5L15.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="logo-text" style="font-size:14px">LB Liquidator</span>
+        </a>
+
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="https://github.com/therealechan/longbridge-liquidator-web" target="_blank" rel="noopener" data-i18n="footer_github">GitHub</a>
+          <a href="https://github.com/therealechan/longbridge-liquidator-web/releases" target="_blank" rel="noopener" data-i18n="footer_releases">Releases</a>
+          <a href="https://github.com/therealechan/longbridge-liquidator-web/issues" target="_blank" rel="noopener" data-i18n="footer_issues">Issues</a>
+        </nav>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copy">
+          &copy; 2026 LB Liquidator &middot;
+          <a href="https://github.com/therealechan/longbridge-liquidator-web" target="_blank" rel="noopener" data-i18n="footer_open_source">Open source on GitHub</a>
+        </p>
+        <p class="footer-disclaimer" data-i18n="footer_disclaimer">
+          For educational purposes only. Trading involves risk.
+        </p>
+      </div>
+    </div>
+  </footer>
+</Layout>
+
+<!-- ═══════════════════════════════════════════════════════════
+     STYLES
+═══════════════════════════════════════════════════════════ -->
+<style>
+  /* ── Layout ── */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── Header ── */
+  #site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--background);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .header-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--foreground);
+    transition: opacity 0.2s;
+  }
+  .logo:hover { opacity: 0.75; }
+
+  .logo-icon {
+    display: flex;
+    align-items: center;
+    color: var(--foreground);
+  }
+
+  .logo-text {
+    letter-spacing: -0.02em;
+  }
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Language switcher */
+  .lang-switcher {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 3px;
+  }
+
+  .lang-btn {
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    padding: 3px 8px;
+    border-radius: 4px;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .lang-btn:hover { color: var(--foreground); }
+  .lang-btn.active {
+    background: var(--background);
+    color: var(--foreground);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  }
+
+  .dark .lang-btn.active {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  /* Icon buttons */
+  .icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius);
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .icon-btn:hover {
+    color: var(--foreground);
+    background: var(--surface);
+    border-color: var(--border);
+  }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 96px 0 80px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 28px;
+    letter-spacing: 0.01em;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse-dot 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  .hero-title {
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    color: var(--foreground);
+    margin-bottom: 20px;
+  }
+
+  .hero-tagline {
+    font-size: clamp(16px, 2.5vw, 19px);
+    line-height: 1.6;
+    color: var(--foreground-secondary);
+    max-width: 520px;
+    margin: 0 auto 36px;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .hero-note {
+    font-size: 12px;
+    color: var(--muted-foreground);
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0) scale(0.98); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-foreground);
+    border-color: var(--accent);
+  }
+
+  .btn-secondary {
+    background: var(--background);
+    color: var(--foreground);
+    border-color: var(--border);
+  }
+
+  .btn-secondary:hover { background: var(--surface); }
+
+  .btn-large {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+
+  .version-badge {
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.7;
+    font-family: 'Geist Mono', monospace;
+  }
+
+  /* Download spinner */
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .download-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  /* ── Section labels ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    text-align: center;
+  }
+
+  /* ── Features ── */
+  .features {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .feature-card {
+    background: var(--background);
+    padding: 28px;
+    transition: background 0.15s;
+  }
+
+  .feature-card:hover { background: var(--surface); }
+
+  .feature-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    margin-bottom: 16px;
+    transition: all 0.15s;
+  }
+
+  .feature-card:hover .feature-icon {
+    color: var(--foreground);
+    border-color: var(--muted);
+  }
+
+  .feature-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--foreground);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .feature-desc {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  /* ── Screenshots ── */
+  .screenshots {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .screenshot-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-btn {
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    padding: 6px 14px;
+    border-radius: var(--radius);
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover {
+    color: var(--foreground);
+    background: var(--surface);
+    border-color: var(--border);
+  }
+
+  .tab-btn.active {
+    color: var(--foreground);
+    background: var(--surface);
+    border-color: var(--border);
+  }
+
+  .screenshot-frame {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .tab-panel {
+    display: none;
+  }
+
+  .tab-panel.active {
+    display: block;
+  }
+
+  .screenshot-img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* ── Download CTA ── */
+  .download-cta {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cta-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 56px 40px;
+    text-align: center;
+  }
+
+  .cta-icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--foreground);
+    margin: 0 auto 24px;
+  }
+
+  .cta-title {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--foreground);
+    margin-bottom: 12px;
+  }
+
+  .cta-subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 440px;
+    margin: 0 auto 32px;
+    line-height: 1.65;
+  }
+
+  .cta-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .release-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+
+  .release-link:hover { color: var(--foreground); }
+
+  .cta-note {
+    font-size: 12px;
+    color: var(--muted-foreground);
+  }
+
+  /* ── Footer ── */
+  .site-footer {
+    padding: 40px 0 48px;
+  }
+
+  .footer-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .footer-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .footer-links a {
+    font-size: 13px;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+
+  .footer-links a:hover { color: var(--foreground); }
+
+  .footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .footer-copy {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .footer-copy a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .footer-copy a:hover { color: var(--foreground); }
+
+  .footer-disclaimer {
+    font-size: 11px;
+    color: var(--muted-foreground);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .hero { padding: 64px 0 56px; }
+    .features { padding: 56px 0; }
+    .screenshots { padding: 56px 0; }
+    .download-cta { padding: 56px 0; }
+    .cta-card { padding: 40px 24px; }
+    .footer-top { flex-direction: column; align-items: flex-start; }
+    .footer-bottom { flex-direction: column; align-items: flex-start; }
+    .header-controls { gap: 4px; }
+  }
+</style>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CLIENT SCRIPTS
+═══════════════════════════════════════════════════════════ -->
+<script is:inline>
+/* ── Translations ── */
+const i18n = {
+  en: {
+    hero_badge: 'Mac App · Open Source',
+    hero_title: 'LB Liquidator',
+    hero_tagline: 'One-click position liquidation for Longbridge.\nLocal-only. Secure.',
+    download_mac: 'Download for Mac',
+    view_github: 'View on GitHub',
+    hero_note: 'macOS 12+ · Apple Silicon & Intel · Free & Open Source',
+    features_label: 'FEATURES',
+    feat_security_title: 'Local-only Security',
+    feat_security_desc: 'API keys stored in your browser\'s localStorage — never transmitted. Server binds to 127.0.0.1 only.',
+    feat_native_title: 'Native Mac App',
+    feat_native_desc: 'Built with Tauri v2. Double-click to launch — no terminal, no Node.js, no setup required.',
+    feat_updates_title: 'Auto-updates',
+    feat_updates_desc: 'Sparkle-powered update system checks for new releases on launch and installs them silently.',
+    feat_selective_title: 'Selective Liquidation',
+    feat_selective_desc: 'Choose individual positions and sell at full, 1/2, 1/3, or 1/4 of your holding.',
+    feat_conditional_title: 'Conditional Sell',
+    feat_conditional_desc: 'Batch set take-profit, stop-loss, and trailing stop orders across multiple positions at once.',
+    feat_i18n_title: 'Multi-language',
+    feat_i18n_desc: 'Full support for Simplified Chinese, Traditional Chinese, and English — switch instantly.',
+    screenshots_label: 'SCREENSHOTS',
+    tab_dark: 'Dark Mode',
+    tab_light: 'Light Mode',
+    tab_conditional: 'Conditional Sell',
+    tab_api: 'API Setup',
+    cta_title: 'Ready to take control?',
+    cta_subtitle: 'Download LB Liquidator for Mac and manage your Longbridge positions with confidence.',
+    all_releases: 'All releases',
+    cta_note: 'macOS 12 Monterey or later · Apple Silicon & Intel',
+    footer_github: 'GitHub',
+    footer_releases: 'Releases',
+    footer_issues: 'Issues',
+    footer_open_source: 'Open source on GitHub',
+    footer_disclaimer: 'For educational purposes only. Trading involves risk.',
+  },
+  'zh-hans': {
+    hero_badge: 'Mac 应用 · 开源',
+    hero_title: 'LB Liquidator',
+    hero_tagline: '长桥一键清仓工具\n本地运行，安全可靠',
+    download_mac: '下载 Mac 版',
+    view_github: '查看 GitHub',
+    hero_note: 'macOS 12+ · Apple Silicon & Intel · 免费开源',
+    features_label: '功能特性',
+    feat_security_title: '本地安全运行',
+    feat_security_desc: 'API 密钥仅存储在浏览器 localStorage 中，从不上传。服务器仅绑定 127.0.0.1。',
+    feat_native_title: '原生 Mac 应用',
+    feat_native_desc: '基于 Tauri v2 构建，双击启动，无需终端、无需 Node.js，开箱即用。',
+    feat_updates_title: '自动更新',
+    feat_updates_desc: '集成 Sparkle 更新框架，启动时自动检测新版本并静默安装。',
+    feat_selective_title: '灵活清仓',
+    feat_selective_desc: '自由选择持仓，按全仓、1/2、1/3 或 1/4 比例卖出。',
+    feat_conditional_title: '条件卖出',
+    feat_conditional_desc: '批量为多个持仓设置止盈、止损、追踪止损委托。',
+    feat_i18n_title: '多语言支持',
+    feat_i18n_desc: '完整支持简体中文、繁体中文和英文，即时切换。',
+    screenshots_label: '截图展示',
+    tab_dark: '深色模式',
+    tab_light: '浅色模式',
+    tab_conditional: '条件卖出',
+    tab_api: 'API 设置',
+    cta_title: '准备好了吗？',
+    cta_subtitle: '下载 LB Liquidator Mac 版，轻松管理您的长桥持仓。',
+    all_releases: '所有版本',
+    cta_note: 'macOS 12 Monterey 及以上 · Apple Silicon & Intel',
+    footer_github: 'GitHub',
+    footer_releases: '版本发布',
+    footer_issues: '问题反馈',
+    footer_open_source: '在 GitHub 上开源',
+    footer_disclaimer: '仅供学习交流使用，投资有风险，操作需谨慎。',
+  },
+  'zh-hant': {
+    hero_badge: 'Mac 應用 · 開源',
+    hero_title: 'LB Liquidator',
+    hero_tagline: '長橋一鍵清倉工具\n本地運行，安全可靠',
+    download_mac: '下載 Mac 版',
+    view_github: '查看 GitHub',
+    hero_note: 'macOS 12+ · Apple Silicon & Intel · 免費開源',
+    features_label: '功能特性',
+    feat_security_title: '本地安全運行',
+    feat_security_desc: 'API 金鑰僅儲存在瀏覽器 localStorage 中，從不上傳。伺服器僅綁定 127.0.0.1。',
+    feat_native_title: '原生 Mac 應用',
+    feat_native_desc: '基於 Tauri v2 構建，雙擊啟動，無需終端機、無需 Node.js，開箱即用。',
+    feat_updates_title: '自動更新',
+    feat_updates_desc: '整合 Sparkle 更新框架，啟動時自動檢測新版本並靜默安裝。',
+    feat_selective_title: '靈活清倉',
+    feat_selective_desc: '自由選擇持倉，按全倉、1/2、1/3 或 1/4 比例賣出。',
+    feat_conditional_title: '條件賣出',
+    feat_conditional_desc: '批次為多個持倉設定停利、停損、追蹤停損委託。',
+    feat_i18n_title: '多語言支援',
+    feat_i18n_desc: '完整支援簡體中文、繁體中文和英文，即時切換。',
+    screenshots_label: '截圖展示',
+    tab_dark: '深色模式',
+    tab_light: '淺色模式',
+    tab_conditional: '條件賣出',
+    tab_api: 'API 設定',
+    cta_title: '準備好了嗎？',
+    cta_subtitle: '下載 LB Liquidator Mac 版，輕鬆管理您的長橋持倉。',
+    all_releases: '所有版本',
+    cta_note: 'macOS 12 Monterey 及以上 · Apple Silicon & Intel',
+    footer_github: 'GitHub',
+    footer_releases: '版本發布',
+    footer_issues: '問題回報',
+    footer_open_source: '在 GitHub 上開源',
+    footer_disclaimer: '僅供學習交流使用，投資有風險，操作需謹慎。',
+  },
+};
+
+let currentLang = localStorage.getItem('lb-lang') || 'en';
+
+function applyLang(lang) {
+  const t = i18n[lang] || i18n.en;
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    const key = el.getAttribute('data-i18n');
+    if (t[key] !== undefined) {
+      // Preserve children (like version badge in download btn)
+      const badge = el.querySelector('.version-badge');
+      if (badge) {
+        el.childNodes.forEach(function(node) {
+          if (node.nodeType === Node.TEXT_NODE) node.remove();
+        });
+        el.insertBefore(document.createTextNode(t[key]), el.firstChild);
+      } else if (key === 'hero_tagline') {
+        el.innerHTML = t[key].replace(/\n/g, '<br />');
+      } else {
+        el.textContent = t[key];
+      }
+    }
+  });
+
+  // Update lang buttons
+  document.querySelectorAll('.lang-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+  });
+
+  // Update html lang
+  document.documentElement.lang = lang === 'zh-hans' ? 'zh-Hans' : lang === 'zh-hant' ? 'zh-Hant' : 'en';
+}
+
+function switchLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('lb-lang', lang);
+  applyLang(lang);
+}
+
+/* ── Theme toggle ── */
+function getTheme() {
+  return localStorage.getItem('lb-theme') || 'dark';
+}
+
+function applyTheme(theme) {
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  var lightIcon = document.querySelector('.theme-icon-light');
+  var darkIcon = document.querySelector('.theme-icon-dark');
+  if (lightIcon) lightIcon.style.display = theme === 'dark' ? 'block' : 'none';
+  if (darkIcon) darkIcon.style.display = theme === 'dark' ? 'none' : 'block';
+}
+
+document.getElementById('theme-toggle').addEventListener('click', function() {
+  var next = getTheme() === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('lb-theme', next);
+  applyTheme(next);
+});
+
+/* ── Screenshot tabs ── */
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  var panel = document.getElementById('tab-' + name);
+  if (panel) panel.classList.add('active');
+  var btn = document.querySelector('[data-tab="' + name + '"]');
+  if (btn) btn.classList.add('active');
+}
+
+/* ── Dynamic download button ── */
+function setDownloadLoading(loading) {
+  var icon1 = document.getElementById('download-btn-icon');
+  if (loading) {
+    icon1.innerHTML = '<div class="download-spinner"></div>';
+  } else {
+    icon1.innerHTML = '<i data-lucide="download" style="width:16px;height:16px"></i>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+}
+
+function setDownloadUrl(url, version) {
+  var btn1 = document.getElementById('download-btn');
+  var btn2 = document.getElementById('download-btn-2');
+  var v1 = document.getElementById('download-version');
+  var v2 = document.getElementById('download-version-2');
+
+  if (btn1) btn1.href = url;
+  if (btn2) btn2.href = url;
+
+  if (version) {
+    if (v1) { v1.textContent = version; v1.style.display = 'inline'; }
+    if (v2) { v2.textContent = version; v2.style.display = 'inline'; }
+  }
+}
+
+async function fetchRelease() {
+  setDownloadLoading(true);
+  try {
+    var res = await fetch('https://api.github.com/repos/therealechan/longbridge-liquidator-web/releases/latest');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    var version = data.tag_name || '';
+    var asset = (data.assets || []).find(function(a) { return a.name && a.name.endsWith('.dmg'); });
+    if (asset && asset.browser_download_url) {
+      setDownloadUrl(asset.browser_download_url, version);
+    } else {
+      setDownloadUrl('https://github.com/therealechan/longbridge-liquidator-web/releases', version);
+    }
+  } catch (e) {
+    // Keep fallback URL already set
+    console.warn('Release fetch failed:', e);
+  } finally {
+    setDownloadLoading(false);
+  }
+}
+
+/* ── Init ── */
+(function init() {
+  applyTheme(getTheme());
+  applyLang(currentLang);
+  fetchRelease();
+})();
+</script>
