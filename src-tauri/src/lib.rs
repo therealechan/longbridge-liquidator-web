@@ -3,6 +3,7 @@ use std::process::{Child, Command};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::Manager;
+use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 
 /// Holds the handle to the spawned Node.js server process.
 struct NodeProcess(Arc<Mutex<Option<Child>>>);
@@ -13,33 +14,77 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let app_handle = app.handle().clone();
+            // ── Build app menu ────────────────────────────────────────────────
+            let check_update_item = MenuItemBuilder::with_id("check_update", "Check for Updates…")
+                .build(app)?;
 
-            // ── Check for updates in background after a short delay ──
-            let update_handle = app_handle.clone();
+            let app_submenu = SubmenuBuilder::new(app, "LB Liquidator")
+                .item(&check_update_item)
+                .separator()
+                .hide()
+                .hide_others()
+                .separator()
+                .quit()
+                .build()?;
+
+            let edit_submenu = SubmenuBuilder::new(app, "Edit")
+                .undo()
+                .redo()
+                .separator()
+                .cut()
+                .copy()
+                .paste()
+                .select_all()
+                .build()?;
+
+            let window_submenu = SubmenuBuilder::new(app, "Window")
+                .minimize()
+                .maximize()
+                .separator()
+                .close_window()
+                .build()?;
+
+            let menu = MenuBuilder::new(app)
+                .item(&app_submenu)
+                .item(&edit_submenu)
+                .item(&window_submenu)
+                .build()?;
+
+            app.set_menu(menu)?;
+
+            // ── Handle menu events ────────────────────────────────────────────
+            app.on_menu_event(|app, event| {
+                if event.id() == "check_update" {
+                    let handle = app.clone();
+                    tauri::async_runtime::spawn(async move {
+                        check_for_updates_manual(handle).await;
+                    });
+                }
+            });
+
+            // ── Auto-check for updates in background on launch ────────────────
+            let update_handle = app.handle().clone();
             std::thread::spawn(move || {
-                // Wait for the app window to load before showing update dialog
                 std::thread::sleep(Duration::from_secs(5));
                 tauri::async_runtime::block_on(check_for_updates(update_handle));
             });
 
+            // ── Start Node.js server ──────────────────────────────────────────
+            let app_handle = app.handle().clone();
             let resource_dir = app_handle
                 .path()
                 .resource_dir()
                 .expect("cannot resolve resource dir");
 
-            // The server bundle is at {resource_dir}/server-bundle/
             let server_dir = resource_dir.join("server-bundle");
             let server_script = server_dir.join("src").join("server.js");
 
             eprintln!("[lb-liquidator] resource_dir: {:?}", resource_dir);
             eprintln!("[lb-liquidator] server_script: {:?}", server_script);
 
-            // Locate the `node` binary
             let node_bin = find_node();
             eprintln!("[lb-liquidator] using node: {}", node_bin);
 
-            // Spawn the Express server
             let child = Command::new(&node_bin)
                 .arg(&server_script)
                 .current_dir(&server_dir)
@@ -50,13 +95,11 @@ pub fn run() {
             let child_arc = Arc::new(Mutex::new(Some(child)));
             app.manage(NodeProcess(child_arc.clone()));
 
-            // Clone window handle for the background thread
             let window = app_handle
                 .get_webview_window("main")
                 .expect("main window not found");
 
             std::thread::spawn(move || {
-                // Poll TCP port 3456 for up to 30 seconds (60 × 500 ms)
                 let mut ready = false;
                 for _ in 0..60 {
                     std::thread::sleep(Duration::from_millis(500));
@@ -85,7 +128,6 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
-                // Kill the node server when the window is closed
                 if let Some(state) = window.try_state::<NodeProcess>() {
                     if let Ok(mut guard) = state.0.lock() {
                         if let Some(mut child) = guard.take() {
@@ -102,23 +144,50 @@ pub fn run() {
         .expect("error while running lb-liquidator");
 }
 
-/// Check for updates and show a native dialog if one is available.
+/// Silent background update check on launch — only installs if update is found.
 async fn check_for_updates(app: tauri::AppHandle) {
     use tauri_plugin_updater::UpdaterExt;
-
     match app.updater() {
         Ok(updater) => match updater.check().await {
             Ok(Some(update)) => {
-                let version = update.version.clone();
-                eprintln!("[lb-liquidator] update available: v{}", version);
-
-                // Download and install; the plugin shows a native dialog via dialog = true
+                eprintln!("[lb-liquidator] update available: v{}", update.version);
                 if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
                     eprintln!("[lb-liquidator] update install error: {e}");
                 }
             }
             Ok(None) => eprintln!("[lb-liquidator] app is up to date"),
             Err(e) => eprintln!("[lb-liquidator] update check failed: {e}"),
+        },
+        Err(e) => eprintln!("[lb-liquidator] updater init error: {e}"),
+    }
+}
+
+/// Manual update check triggered from the menu — shows "up to date" feedback.
+async fn check_for_updates_manual(app: tauri::AppHandle) {
+    use tauri_plugin_dialog::DialogExt;
+    use tauri_plugin_updater::UpdaterExt;
+
+    match app.updater() {
+        Ok(updater) => match updater.check().await {
+            Ok(Some(update)) => {
+                eprintln!("[lb-liquidator] update available: v{}", update.version);
+                if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+                    eprintln!("[lb-liquidator] update install error: {e}");
+                }
+            }
+            Ok(None) => {
+                app.dialog()
+                    .message("LB Liquidator is up to date.")
+                    .title("No Updates Available")
+                    .blocking_show();
+            }
+            Err(e) => {
+                eprintln!("[lb-liquidator] update check failed: {e}");
+                app.dialog()
+                    .message(format!("Update check failed: {e}"))
+                    .title("Update Error")
+                    .blocking_show();
+            }
         },
         Err(e) => eprintln!("[lb-liquidator] updater init error: {e}"),
     }
@@ -152,7 +221,6 @@ fn find_node() -> String {
         }
     }
 
-    // Scan nvm installations — pick lexicographically latest
     if let Ok(home) = std::env::var("HOME") {
         let nvm_dir = std::path::Path::new(&home)
             .join(".nvm")
