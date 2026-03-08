@@ -42,7 +42,9 @@
       "server-bundle/**/*"
     ],
     "macOS": {
-      "minimumSystemVersion": "10.15"
+      "minimumSystemVersion": "10.15",
+      "entitlements": "entitlements.plist",
+      "hardenedRuntime": true
     },
     "createUpdaterArtifacts": true
   },
