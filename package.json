@@ -1,6 +1,6 @@
 {
   "name": "liquidator-web",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "长桥一键清仓工具 - 本地安全运行",
   "main": "src/server.js",
   "scripts": {
