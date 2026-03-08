@@ -10,20 +10,34 @@ struct NodeProcess(Arc<Mutex<Option<Child>>>);
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let resource_dir = app.handle().path().resource_dir()
+            let app_handle = app.handle().clone();
+
+            // ── Check for updates in background after a short delay ──
+            let update_handle = app_handle.clone();
+            std::thread::spawn(move || {
+                // Wait for the app window to load before showing update dialog
+                std::thread::sleep(Duration::from_secs(5));
+                tauri::async_runtime::block_on(check_for_updates(update_handle));
+            });
+
+            let resource_dir = app_handle
+                .path()
+                .resource_dir()
                 .expect("cannot resolve resource dir");
 
             // The server bundle is at {resource_dir}/server-bundle/
             let server_dir = resource_dir.join("server-bundle");
             let server_script = server_dir.join("src").join("server.js");
 
-            eprintln!("[liquidator] resource_dir: {:?}", resource_dir);
-            eprintln!("[liquidator] server_script: {:?}", server_script);
+            eprintln!("[lb-liquidator] resource_dir: {:?}", resource_dir);
+            eprintln!("[lb-liquidator] server_script: {:?}", server_script);
 
             // Locate the `node` binary
             let node_bin = find_node();
-            eprintln!("[liquidator] using node: {}", node_bin);
+            eprintln!("[lb-liquidator] using node: {}", node_bin);
 
             // Spawn the Express server
             let child = Command::new(&node_bin)
@@ -37,7 +51,7 @@ pub fn run() {
             app.manage(NodeProcess(child_arc.clone()));
 
             // Clone window handle for the background thread
-            let window = app.handle()
+            let window = app_handle
                 .get_webview_window("main")
                 .expect("main window not found");
 
@@ -53,14 +67,13 @@ pub fn run() {
                 }
 
                 if ready {
-                    eprintln!("[liquidator] server ready — navigating webview");
+                    eprintln!("[lb-liquidator] server ready — navigating webview");
                     let url: tauri::Url = "http://127.0.0.1:3456"
                         .parse()
                         .expect("invalid app URL");
                     let _ = window.navigate(url);
                 } else {
-                    eprintln!("[liquidator] ERROR: server did not start within 30 seconds");
-                    // Show error in the loading page
+                    eprintln!("[lb-liquidator] ERROR: server did not start within 30 seconds");
                     let _ = window.eval(
                         "document.getElementById('status').textContent = \
                          '❌ Failed to start server. Please ensure Node.js is installed.';"
@@ -76,34 +89,50 @@ pub fn run() {
                 if let Some(state) = window.try_state::<NodeProcess>() {
                     if let Ok(mut guard) = state.0.lock() {
                         if let Some(mut child) = guard.take() {
-                            eprintln!("[liquidator] killing node server (pid {})", child.id());
+                            eprintln!("[lb-liquidator] killing node server (pid {})", child.id());
                             let _ = child.kill();
                             let _ = child.wait();
                         }
                     }
                 }
-                // On macOS, closing the last window doesn't quit by default — force quit
                 std::process::exit(0);
             }
         })
         .run(tauri::generate_context!())
-        .expect("error while running liquidator");
+        .expect("error while running lb-liquidator");
+}
+
+/// Check for updates and show a native dialog if one is available.
+async fn check_for_updates(app: tauri::AppHandle) {
+    use tauri_plugin_updater::UpdaterExt;
+
+    match app.updater() {
+        Ok(updater) => match updater.check().await {
+            Ok(Some(update)) => {
+                let version = update.version.clone();
+                eprintln!("[lb-liquidator] update available: v{}", version);
+
+                // Download and install; the plugin shows a native dialog via dialog = true
+                if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+                    eprintln!("[lb-liquidator] update install error: {e}");
+                }
+            }
+            Ok(None) => eprintln!("[lb-liquidator] app is up to date"),
+            Err(e) => eprintln!("[lb-liquidator] update check failed: {e}"),
+        },
+        Err(e) => eprintln!("[lb-liquidator] updater init error: {e}"),
+    }
 }
 
 /// Find a suitable `node` binary. Checks common macOS paths and nvm installations.
 fn find_node() -> String {
-    // 1. Honour explicit override
     if let Ok(val) = std::env::var("NODE_BIN") {
         if std::path::Path::new(&val).exists() {
             return val;
         }
     }
 
-    // 2. `which node` via shell (works when PATH is set correctly)
-    if let Ok(out) = Command::new("sh")
-        .args(["-c", "which node"])
-        .output()
-    {
+    if let Ok(out) = Command::new("sh").args(["-c", "which node"]).output() {
         if out.status.success() {
             let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
             if !path.is_empty() && std::path::Path::new(&path).exists() {
@@ -112,10 +141,9 @@ fn find_node() -> String {
         }
     }
 
-    // 3. Common hardcoded locations (Apple Silicon Homebrew first, then Intel)
     let candidates = [
-        "/opt/homebrew/bin/node",   // Apple Silicon Homebrew
-        "/usr/local/bin/node",       // Intel Homebrew / Volta / pkgman
+        "/opt/homebrew/bin/node",
+        "/usr/local/bin/node",
         "/usr/bin/node",
     ];
     for c in &candidates {
@@ -124,19 +152,18 @@ fn find_node() -> String {
         }
     }
 
-    // 4. Scan nvm installations, pick lexicographically latest version
+    // Scan nvm installations — pick lexicographically latest
     if let Ok(home) = std::env::var("HOME") {
-        let nvm_node_dir = std::path::Path::new(&home)
+        let nvm_dir = std::path::Path::new(&home)
             .join(".nvm")
             .join("versions")
             .join("node");
-        if nvm_node_dir.exists() {
-            if let Ok(entries) = std::fs::read_dir(&nvm_node_dir) {
+        if nvm_dir.exists() {
+            if let Ok(entries) = std::fs::read_dir(&nvm_dir) {
                 let mut versions: Vec<_> = entries
                     .filter_map(|e| e.ok())
                     .filter(|e| e.path().is_dir())
                     .collect();
-                // Sort descending so the latest version is first
                 versions.sort_by(|a, b| b.file_name().cmp(&a.file_name()));
                 for entry in versions {
                     let node_bin = entry.path().join("bin").join("node");
@@ -148,6 +175,5 @@ fn find_node() -> String {
         }
     }
 
-    // 5. Fallback — rely on PATH at runtime
     "node".to_string()
 }
