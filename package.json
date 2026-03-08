@@ -6,7 +6,11 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node --test 'test/**/*.test.js'"
+    "test": "node --test 'test/**/*.test.js'",
+    "tauri": "tauri",
+    "tauri:build": "tauri build",
+    "tauri:dev": "tauri dev",
+    "prepare-bundle": "node scripts/prepare-server.js"
   },
   "keywords": [
     "longbridge",
@@ -20,6 +24,7 @@
     "longport": "^3.0.22"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.10.1",
     "nodemon": "^3.0.2",
     "supertest": "^7.2.2"
   }
