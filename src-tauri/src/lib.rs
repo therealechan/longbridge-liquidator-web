@@ -446,9 +446,21 @@ async fn check_for_updates_manual(app: tauri::AppHandle) {
             }
             Err(e) => {
                 eprintln!("[lb-liquidator] update check failed: {e}");
+                // A 404 on latest.json while a release is still being published
+                // surfaces as ReleaseNotFound; retrying a bit later works.
+                let (title, message) = match e {
+                    tauri_plugin_updater::Error::ReleaseNotFound => (
+                        "Update Server Busy",
+                        "The update server did not return a release right now. A new version may still be publishing \u{2014} please try again in a few minutes.\n\nIf it keeps failing, download the latest version from GitHub.".to_string(),
+                    ),
+                    _ => (
+                        "Update Error",
+                        format!("Update check failed: {e}\n\nPlease check your internet connection and try again."),
+                    ),
+                };
                 app.dialog()
-                    .message(format!("Update check failed: {e}\n\nPlease check your internet connection and try again."))
-                    .title("Update Error")
+                    .message(message)
+                    .title(title)
                     .kind(MessageDialogKind::Error)
                     .blocking_show();
             }

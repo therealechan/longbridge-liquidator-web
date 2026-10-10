@@ -122,9 +122,47 @@ jobs:
 
             ### Auto-update
             If you already have LB Liquidator installed, it will prompt you to update automatically on next launch.
-          releaseDraft: false
+          # Keep the release a draft until every asset (incl. latest.json) is
+          # uploaded; the "Publish release" step below flips it public. Otherwise
+          # the updater 404s on releases/latest/download/latest.json mid-upload.
+          releaseDraft: true
           prerelease: false
           includeUpdaterJson: true
+
+      - name: Publish release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          assets=$(gh release view "$TAG" --json assets -q '.assets[].name')
+          echo "Draft assets:"
+          echo "$assets"
+          missing=0
+          for pattern in '^latest\.json$' '\.dmg$' '\.app\.tar\.gz$' '\.app\.tar\.gz\.sig$'; do
+            if ! echo "$assets" | grep -Eq "$pattern"; then
+              echo "::error::Draft release $TAG is missing an asset matching $pattern"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+
+          # Draft releases may report asset URLs under an "untagged-<hash>" tag,
+          # which would 404 once published. Make latest.json point at the real tag.
+          mkdir -p "$RUNNER_TEMP/updater"
+          gh release download "$TAG" --pattern latest.json --dir "$RUNNER_TEMP/updater" --clobber
+          if grep -q '/releases/download/untagged-' "$RUNNER_TEMP/updater/latest.json"; then
+            echo "Rewriting untagged URLs in latest.json to $TAG"
+            sed -i '' -E "s#/releases/download/untagged-[^/]+/#/releases/download/$TAG/#g" "$RUNNER_TEMP/updater/latest.json"
+            gh release upload "$TAG" "$RUNNER_TEMP/updater/latest.json" --clobber
+          fi
+          if ! grep -q "/releases/download/$TAG/" "$RUNNER_TEMP/updater/latest.json"; then
+            echo "::error::latest.json does not reference /releases/download/$TAG/"
+            exit 1
+          fi
+
+          gh release edit "$TAG" --draft=false --latest
 
       - name: Cleanup keychain
         if: always()
