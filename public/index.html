@@ -1,2883 +1,534 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Liquidator</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 2L2 9l14 7 14-7-14-7z'/%3E%3Cpath d='M2 9v14l14 7 14-7V9'/%3E%3Cpath d='M16 16v14'/%3E%3Cpath d='M16 16L2 9'/%3E%3C/svg%3E" />
-  <meta name="description" content="Longbridge Liquidator - One-click position liquidation tool" />
-  
-  <!-- Geist Fonts -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5/400.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5/500.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5/600.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5/700.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5/400.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5/500.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5/600.css">
-  
-  <script src="https://unpkg.com/lucide@0.460.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/motion@10.16.4/dist/motion.min.js"></script>
-  
-  <!-- i18n -->
-  <script>
-    const i18n = {
-      'zh-CN': {
-        title: '一键清仓',
-        subtitle: '长桥证券交易工具，本地运行，安全可靠',
-        badge: '本地安全模式',
-        demo: '演示模式',
-        demoDesc: '展示界面效果，不连接真实账户',
-        demoMode: '演示模式',
-        liveMode: '实盘模式',
-        liveWarning: '切换到实盘模式将连接真实 Longbridge API，请确保你了解交易风险。',
-        liveConfirm: '确认切换',
-        liveCancel: '取消',
-        apiRequired: '请先填写 API Key 和 Secret',
-        apiConfig: 'API 配置',
-        appKey: 'App Key',
-        appSecret: 'App Secret',
-        accessToken: '访问令牌',
-        viewPositions: '查看持仓',
-        loading: '加载中...',
-        positions: '持仓明细',
-        symbol: '代码',
-        quantity: '数量',
-        price: '价格',
-        value: '市值',
-        change: '涨跌',
-        total: '总计',
-        liquidate: '一键清仓',
-        selectAll: '全选',
-        marketOrderWarning: '将按照市价卖出以下持仓',
-        selectedPositions: '选中持仓',
-        success: '清仓完成',
-        liquidationSummary: '清仓结果摘要',
-        soldCount: '卖出股票',
-        totalMarketValue: '总市值',
-        partialFailure: '部分股票卖出失败',
-        stockUnit: '只',
-        shareUnit: '股',
-        buyback: '一键买入',
-        buybackConfirmTitle: '确认买入？',
-        buybackWarning: '将按照市价买入以下持仓',
-        buybackConfirm: '确认买入',
-        buybackSuccess: '买入完成',
-        buybackSummary: '买入结果摘要',
-        boughtCount: '买入股票',
-        buybackPartialFailure: '部分股票买入失败',
-        buybackPriceNote: '实际成交价以市场价为准',
-        clearSnapshot: '清除记录',
-        footer: '© 2026 Built by',
-        openSource: '· 开源于',
-        disclaimer: '本工具仅供学习交流，投资有风险，操作需谨慎',
-        faq: '常见问题',
-        faqQ1: '问：如何获取 API 凭证？',
-        faqA1s1: '1. 登录长桥开发者中心 open.longportapp.com',
-        faqA1s2: '2. 在应用凭证页面获取 App Key、App Secret、Access Token',
-        faqA1s3: '3. 确保账户已开通交易权限',
-        faqA1s4: '详见：https://open.longportapp.com/',
-        faqQ2: '问：我的凭证安全吗？',
-        faqA2s1: '凭证仅保存在浏览器 localStorage，仅限本机访问。',
-        faqA2s2: '服务器绑定 127.0.0.1，外部网络无法连接。',
-        faqA2s3: 'API 调用直接从本地发往长桥服务器，不经过任何第三方。',
-        faqQ3: '问：什么是演示模式和实盘模式？',
-        faqA3s1: '演示模式：使用模拟数据，无需凭证，适合体验界面。',
-        faqA3s2: '实盘模式：连接真实 Longbridge API，查看持仓并执行市价卖出。',
-        faqA3s3: '使用实盘模式需先启动本地服务器（npm start 或 npm run dev）。',
-        faqQ4: '问：支持哪些市场和订单类型？',
-        faqA4s1: '支持美股 (.US)、港股 (.HK)、新加坡 (.SG)。',
-        faqA4s2: '清仓使用市价单 (Market Order)，按当前市价立即成交。',
-        faqA4s3: '部分失败时，成功的订单正常处理，失败的显示错误信息。',
-        ratioAll: '全部',
-        ratioHalf: '1/2',
-        ratioThird: '1/3',
-        ratioQuarter: '1/4',
-        error: '错误',
-        ok: '确定',
-        dailyPnl: '当日盈亏',
-        conditionalOrder: '条件卖出',
-        stopLoss: '止损',
-        takeProfit: '止盈',
-        trailingStop: '追踪止损',
-        condPercentage: '百分比',
-        condTimeInForce: '有效期',
-        condTifDay: '当日有效',
-        condTifGtc: '撤单前有效',
-        condPreview: '预览',
-        condTriggerPrice: '触发价',
-        condTrailingPct: '追踪幅度',
-        condCurrentPrice: '现价',
-        condSubmit: '提交条件单',
-        condConfirmTitle: '确认提交条件单？',
-        condWarning: '将为以下持仓设置条件卖出单',
-        condSuccess: '条件单提交完成',
-        condPartialFailure: '部分条件单提交失败',
-        condOrderCount: '提交订单'
-      },
-      'zh-TW': {
-        title: '一鍵清倉',
-        subtitle: '長橋證券交易工具，本地運行，安全可靠',
-        badge: '本地安全模式',
-        demo: '演示模式',
-        demoDesc: '展示界面效果，不連接真實帳戶',
-        demoMode: '演示模式',
-        liveMode: '實盤模式',
-        liveWarning: '切換到實盤模式將連接真實 Longbridge API，請確保你了解交易風險。',
-        liveConfirm: '確認切換',
-        liveCancel: '取消',
-        apiRequired: '請先填寫 API Key 和 Secret',
-        apiConfig: 'API 配置',
-        appKey: 'App Key',
-        appSecret: 'App Secret',
-        accessToken: '訪問令牌',
-        viewPositions: '查看持倉',
-        loading: '載入中...',
-        positions: '持倉明細',
-        symbol: '代碼',
-        quantity: '數量',
-        price: '價格',
-        value: '市值',
-        change: '漲跌',
-        total: '總計',
-        liquidate: '一鍵清倉',
-        selectAll: '全選',
-        marketOrderWarning: '將按照市價賣出以下持倉',
-        selectedPositions: '選中持倉',
-        success: '清倉完成',
-        liquidationSummary: '清倉結果摘要',
-        soldCount: '賣出股票',
-        totalMarketValue: '總市值',
-        partialFailure: '部分股票賣出失敗',
-        stockUnit: '隻',
-        shareUnit: '股',
-        buyback: '一鍵買入',
-        buybackConfirmTitle: '確認買入？',
-        buybackWarning: '將按照市價買入以下持倉',
-        buybackConfirm: '確認買入',
-        buybackSuccess: '買入完成',
-        buybackSummary: '買入結果摘要',
-        boughtCount: '買入股票',
-        buybackPartialFailure: '部分股票買入失敗',
-        buybackPriceNote: '實際成交價以市場價為準',
-        clearSnapshot: '清除記錄',
-        footer: '© 2026 Built by',
-        openSource: '· 開源於',
-        disclaimer: '本工具僅供學習交流，投資有風險，操作需謹慎',
-        faq: '常見問題',
-        faqQ1: '問：如何獲取 API 憑證？',
-        faqA1s1: '1. 登入長橋開發者中心 open.longportapp.com',
-        faqA1s2: '2. 在應用憑證頁面獲取 App Key、App Secret、Access Token',
-        faqA1s3: '3. 確保賬戶已開通交易權限',
-        faqA1s4: '詳見：https://open.longportapp.com/',
-        faqQ2: '問：我的憑證安全嗎？',
-        faqA2s1: '憑證僅保存在瀏覽器 localStorage，僅限本機訪問。',
-        faqA2s2: '伺服器綁定 127.0.0.1，外部網路無法連接。',
-        faqA2s3: 'API 調用直接從本地發往長橋伺服器，不經過任何第三方。',
-        faqQ3: '問：什麼是演示模式和實盤模式？',
-        faqA3s1: '演示模式：使用模擬數據，無需憑證，適合體驗介面。',
-        faqA3s2: '實盤模式：連接真實 Longbridge API，查看持倉並執行市價賣出。',
-        faqA3s3: '使用實盤模式需先啟動本地伺服器（npm start 或 npm run dev）。',
-        faqQ4: '問：支持哪些市場和訂單類型？',
-        faqA4s1: '支持美股 (.US)、港股 (.HK)、新加坡 (.SG)。',
-        faqA4s2: '清倉使用市價單 (Market Order)，按當前市價立即成交。',
-        faqA4s3: '部分失敗時，成功的訂單正常處理，失敗的顯示錯誤信息。',
-        ratioAll: '全部',
-        ratioHalf: '1/2',
-        ratioThird: '1/3',
-        ratioQuarter: '1/4',
-        error: '錯誤',
-        ok: '確定',
-        dailyPnl: '當日盈虧',
-        conditionalOrder: '條件賣出',
-        stopLoss: '止損',
-        takeProfit: '止盈',
-        trailingStop: '追蹤止損',
-        condPercentage: '百分比',
-        condTimeInForce: '有效期',
-        condTifDay: '當日有效',
-        condTifGtc: '撤單前有效',
-        condPreview: '預覽',
-        condTriggerPrice: '觸發價',
-        condTrailingPct: '追蹤幅度',
-        condCurrentPrice: '現價',
-        condSubmit: '提交條件單',
-        condConfirmTitle: '確認提交條件單？',
-        condWarning: '將為以下持倉設置條件賣出單',
-        condSuccess: '條件單提交完成',
-        condPartialFailure: '部分條件單提交失敗',
-        condOrderCount: '提交訂單'
-      },
-      'en': {
-        title: 'Liquidate All',
-        subtitle: 'Longbridge trading tool, local-only, secure & reliable',
-        badge: 'Local Secure Mode',
-        demo: 'Demo Mode',
-        demoDesc: 'UI preview only, no real trading',
-        demoMode: 'Demo Mode',
-        liveMode: 'Live Mode',
-        liveWarning: 'Switching to Live Mode will connect to the real Longbridge API. Make sure you understand the trading risks.',
-        liveConfirm: 'Confirm Switch',
-        liveCancel: 'Cancel',
-        apiRequired: 'Please enter API Key and Secret first',
-        apiConfig: 'API Configuration',
-        appKey: 'App Key',
-        appSecret: 'App Secret',
-        accessToken: 'Access Token',
-        viewPositions: 'View Positions',
-        loading: 'Loading...',
-        positions: 'Positions',
-        symbol: 'Symbol',
-        quantity: 'Qty',
-        price: 'Price',
-        value: 'Value',
-        change: 'Change',
-        total: 'Total',
-        liquidate: 'Liquidate All',
-        selectAll: 'Select All',
-        marketOrderWarning: 'Will be sold at market price',
-        selectedPositions: 'Selected Positions',
-        success: 'Liquidation Complete',
-        liquidationSummary: 'Liquidation Summary',
-        soldCount: 'Stocks Sold',
-        totalMarketValue: 'Total Value',
-        partialFailure: 'Some stocks failed to sell',
-        stockUnit: '',
-        shareUnit: ' shares',
-        buyback: 'Buy Back All',
-        buybackConfirmTitle: 'Confirm Buy Back?',
-        buybackWarning: 'Will buy the following positions at market price',
-        buybackConfirm: 'Confirm Buy',
-        buybackSuccess: 'Buy Back Complete',
-        buybackSummary: 'Buy Back Summary',
-        boughtCount: 'Stocks Bought',
-        buybackPartialFailure: 'Some stocks failed to buy',
-        buybackPriceNote: 'Actual price depends on market conditions',
-        clearSnapshot: 'Clear Record',
-        footer: '© 2026 Built by',
-        openSource: '· Open source on',
-        disclaimer: 'For educational purposes only. Trading involves risk.',
-        faq: 'FAQ',
-        faqQ1: 'Q: How do I get API credentials?',
-        faqA1s1: '1. Log in to Longbridge Developer Center at open.longportapp.com',
-        faqA1s2: '2. Get your App Key, App Secret, and Access Token from the App Credentials page',
-        faqA1s3: '3. Make sure trading permission is enabled on your account',
-        faqA1s4: 'See: https://open.longportapp.com/',
-        faqQ2: 'Q: Are my credentials safe?',
-        faqA2s1: 'Credentials are stored in your browser\'s localStorage, accessible only on this machine.',
-        faqA2s2: 'The server binds to 127.0.0.1 — external networks cannot connect.',
-        faqA2s3: 'API calls go directly from your machine to Longbridge servers, with no third party involved.',
-        faqQ3: 'Q: What are Demo Mode and Live Mode?',
-        faqA3s1: 'Demo Mode: Uses mock data, no credentials needed. Great for exploring the UI.',
-        faqA3s2: 'Live Mode: Connects to the real Longbridge API to view positions and execute market sells.',
-        faqA3s3: 'Live Mode requires a local server running (npm start or npm run dev).',
-        faqQ4: 'Q: Which markets and order types are supported?',
-        faqA4s1: 'Supports US stocks (.US), Hong Kong stocks (.HK), and Singapore stocks (.SG).',
-        faqA4s2: 'Liquidation uses Market Orders, executing immediately at the current market price.',
-        faqA4s3: 'If some orders fail, successful ones are processed normally and failures show error details.',
-        ratioAll: 'All',
-        ratioHalf: '1/2',
-        ratioThird: '1/3',
-        ratioQuarter: '1/4',
-        error: 'Error',
-        ok: 'OK',
-        dailyPnl: 'Daily P/L',
-        conditionalOrder: 'Conditional Sell',
-        stopLoss: 'Stop Loss',
-        takeProfit: 'Take Profit',
-        trailingStop: 'Trailing Stop',
-        condPercentage: 'Percentage',
-        condTimeInForce: 'Time in Force',
-        condTifDay: 'Day',
-        condTifGtc: 'Good Til Canceled',
-        condPreview: 'Preview',
-        condTriggerPrice: 'Trigger Price',
-        condTrailingPct: 'Trailing %',
-        condCurrentPrice: 'Current',
-        condSubmit: 'Submit Orders',
-        condConfirmTitle: 'Confirm Conditional Orders?',
-        condWarning: 'Will set conditional sell orders for the following positions',
-        condSuccess: 'Conditional Orders Submitted',
-        condPartialFailure: 'Some conditional orders failed',
-        condOrderCount: 'Orders Submitted'
-      }
-    };
-    
-    let currentLang = localStorage.getItem('lang') || 'en';
-    
-    function t(key) {
-      return i18n[currentLang][key] || key;
-    }
-    
-    function setLang(lang) {
-      currentLang = lang;
-      localStorage.setItem('lang', lang);
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (i18n[lang][key]) el.textContent = i18n[lang][key];
-      });
-      // Update footer copy line
-      const footerCopy = document.querySelector('.footer-copy');
-      if (footerCopy && i18n[lang]) {
-        const ghUrl = 'https://github.com/therealechan/longbridge-liquidator-web';
-        footerCopy.innerHTML = i18n[lang].footer +
-          ' <a href="https://0xechan.xyz" target="_blank" class="footer-link">0xechan</a> ' +
-          i18n[lang].openSource +
-          ' <a href="' + ghUrl + '" target="_blank" class="footer-link">GitHub</a>';
-      }
-      // Update daily P/L label
-      try {
-        const pnlEl = document.getElementById('dailyPnl');
-        if (pnlEl && currentPositions && currentPositions.length > 0) {
-          pnlEl.innerHTML = formatDailyPnl(currentPositions);
-        }
-      } catch(e) {}
-      // Update mode toggle label
-      if (typeof updateModeUI === 'function') updateModeUI();
-    }
-  </script>
-  
-  <style>
-    :root {
-      --background: #ffffff;
-      --surface: #f4f4f5;
-      --surface-hover: #e4e4e7;
-      --border: #e4e4e7;
-      --foreground: #18181b;
-      --foreground-secondary: #3f3f46;
-      --muted: #71717a;
-      --muted-foreground: #a1a1aa;
-      --accent: #18181b;
-      --accent-foreground: #fafafa;
-      --danger: #dc2626;
-      --danger-hover: #b91c1c;
-      --success: #16a34a;
-      --radius: 6px;
-      --radius-sm: 4px;
-    }
-
-    .dark {
-      --background: #0a0a0a;
-      --surface: #171717;
-      --surface-hover: #262626;
-      --border: #262626;
-      --foreground: #ededed;
-      --foreground-secondary: #d4d4d4;
-      --muted: #737373;
-      --muted-foreground: #a3a3a3;
-      --accent: #fafafa;
-      --accent-foreground: #171717;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    html { scroll-behavior: smooth; }
-    
-    body {
-      font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: var(--background);
-      color: var(--foreground);
-      line-height: 1.6;
-      min-height: 100vh;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
-
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: var(--background); }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
-    .container { max-width: 640px; margin: 0 auto; padding: 60px 24px 40px; }
-
-    /* Header */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 48px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .brand svg {
-      width: 28px;
-      height: 28px;
-      color: var(--foreground);
-      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .brand:hover svg {
-      transform: rotate(12deg) scale(1.08);
-    }
-
-    .brand-text {
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-    }
-
-    .header-controls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .lang-select {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 6px 10px;
-      font-size: 13px;
-      color: var(--foreground);
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .lang-select:focus { outline: none; border-color: var(--foreground); }
-
-    .lang-selector {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 6px 10px;
-      font-size: 13px;
-      color: var(--foreground);
-      cursor: pointer;
-      font-family: inherit;
-    }
-
-    .lang-selector:focus { outline: none; border-color: var(--foreground); }
-
-    .theme-toggle {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 8px;
-      cursor: pointer;
-      color: var(--foreground);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-      transition: background 0.2s, transform 0.2s;
-    }
-
-    .theme-toggle:hover { background: var(--surface); transform: scale(1.05); }
-    .theme-toggle:active { transform: scale(0.95); }
-
-    .theme-toggle .theme-icon {
-      transition: opacity 0.3s ease;
-    }
-
-    /* Hero */
-    .hero { margin-bottom: 40px; }
-    .hero h1 { font-size: 36px; font-weight: 600; letter-spacing: -0.03em; margin-bottom: 10px; }
-    .hero p { font-size: 15px; color: var(--muted); }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 14px;
-    }
-
-    .badge-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--success);
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-    /* Card */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      margin-bottom: 20px;
-      transition: border-color 0.3s ease;
-    }
-
-    .card:hover {
-      border-color: var(--muted);
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--foreground-secondary); }
-
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--foreground-secondary); margin-bottom: 6px; }
-    .form-input {
-      width: 100%;
-      background: var(--background);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 10px 14px;
-      color: var(--foreground);
-      font-size: 14px;
-      font-family: 'Geist Mono', monospace;
-    }
-    .form-input:focus { outline: none; border-color: var(--foreground); }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: var(--radius);
-      font-size: 14px;
-      font-weight: 500;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
-      font-family: inherit;
-    }
-
-    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn:active { transform: translateY(0) scale(0.98); }
-
-    .btn .btn-icon {
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .btn:hover .btn-icon {
-      transform: scale(1.15);
-    }
-
-    .btn-primary { background: var(--accent); color: var(--accent-foreground); width: 100%; }
-    .btn-danger { background: var(--danger); color: white; width: 100%; padding: 14px; font-weight: 600; }
-    .btn-danger:hover { box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25); }
-    .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-
-    .btn-loading { pointer-events: none; opacity: 0.8; }
-    .btn-spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid transparent;
-      border-top-color: currentColor;
-      border-radius: 50%;
-      animation: refreshSpin 0.6s linear infinite;
-    }
-
-    /* Table */
-    .table-container { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; }
-    .positions-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    .positions-table th { text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--background); border-bottom: 1px solid var(--border); }
-    .positions-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); }
-    .positions-table tr:last-child td { border-bottom: none; }
-    .positions-table tr:hover td { background: var(--surface-hover); }
-    .symbol { font-family: 'Geist Mono', monospace; font-weight: 600; }
-    .mono { font-family: 'Geist Mono', monospace; }
-    .total-value { font-family: 'Geist Mono', monospace; font-size: 18px; font-weight: 600; color: var(--success); }
-    .daily-pnl { font-family: 'Geist Mono', monospace; font-size: 13px; font-weight: 500; margin-top: 2px; }
-
-    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
-
-    /* Checkbox */
-    .pos-checkbox {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--foreground);
-      cursor: pointer;
-      vertical-align: middle;
-    }
-    .pos-checkbox-th {
-      width: 36px;
-    }
-    .positions-table th.pos-checkbox-th,
-    .positions-table td.pos-checkbox-td {
-      padding-left: 14px;
-      padding-right: 4px;
-      width: 36px;
-    }
-
-    /* Modal warning banner */
-    .modal-warning-banner {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      background: rgba(220, 38, 38, 0.08);
-      border: 1px solid rgba(220, 38, 38, 0.2);
-      border-radius: var(--radius);
-      margin-bottom: 16px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--danger);
-    }
-
-    /* Alert */
-    .alert { padding: 14px; border-radius: var(--radius); margin-bottom: 20px; display: none; font-size: 13px; }
-    .alert.active { display: block; animation: fadeSlideIn 0.3s ease-out; }
-    .alert-success { background: rgba(22, 163, 74, 0.1); border: 1px solid rgba(22, 163, 74, 0.3); color: var(--success); }
-    .alert-warning { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #92400e; }
-    .dark .alert-warning { color: #fbbf24; }
-
-    /* Loading */
-    .loading { display: none; text-align: center; padding: 40px; }
-    .loading.active { display: block; }
-    .spinner {
-      width: 32px;
-      height: 32px;
-      position: relative;
-      margin: 0 auto 12px;
-    }
-    .spinner::before,
-    .spinner::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      border: 2px solid transparent;
-    }
-    .spinner::before {
-      border-top-color: var(--foreground);
-      animation: spinnerRotate 0.8s linear infinite;
-    }
-    .spinner::after {
-      border-bottom-color: var(--muted);
-      animation: spinnerRotate 1.2s linear infinite reverse;
-      inset: 3px;
-    }
-    @keyframes spinnerRotate { to { transform: rotate(360deg); } }
-    .loading p { font-size: 13px; color: var(--muted); animation: loadingPulse 1.5s ease-in-out infinite; }
-    @keyframes loadingPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-    .positions-section { display: none; }
-    .positions-section.active { display: block; animation: fadeSlideIn 0.4s ease-out; }
-
-    @keyframes fadeSlideIn {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Footer */
-    .footer {
-      margin-top: 60px;
-      padding-top: 32px;
-      border-top: 1px solid var(--border);
-      text-align: center;
-    }
-
-    .footer-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-      color: var(--foreground);
-      max-width: 280px;
-      margin-left: auto;
-      margin-right: auto;
-      cursor: default;
-      transition: opacity 0.3s;
-    }
-
-    .footer-logo:hover svg {
-      animation-play-state: paused;
-      transform: rotate(8deg) scale(1.1);
-      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .footer-logo svg {
-      width: 24px;
-      height: 24px;
-    }
-
-    .footer-brand {
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .footer-github {
-      color: var(--muted);
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      transition: color 0.2s, transform 0.2s;
-    }
-
-    .footer-github:hover {
-      color: var(--foreground);
-      transform: scale(1.1);
-    }
-
-    .footer-copy {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 8px;
-      letter-spacing: 0.01em;
-    }
-
-    .footer-link {
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.2s;
-      background-image: linear-gradient(var(--foreground), var(--foreground));
-      background-size: 0% 1px;
-      background-position: 0 100%;
-      background-repeat: no-repeat;
-      transition: color 0.2s, background-size 0.3s ease;
-    }
-
-    .footer-link:hover {
-      color: var(--foreground);
-      background-size: 100% 1px;
-    }
-
-    .footer-disclaimer {
-      font-size: 11px;
-      color: var(--muted-foreground);
-    }
-
-    /* Demo Notice */
-    .demo-notice {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 20px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .demo-notice strong { color: var(--foreground); font-weight: 600; }
-
-    /* Modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0);
-      backdrop-filter: blur(0px);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      width: 100%;
-      max-width: 400px;
-      margin: 0 16px;
-    }
-
-    .modal-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--danger);
-    }
-
-    .modal-positions {
-      max-height: 200px;
-      overflow-y: auto;
-      margin-bottom: 16px;
-    }
-
-    .modal-position-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
-    }
-
-    .modal-position-item:last-child { border-bottom: none; }
-
-    .modal-position-symbol {
-      font-family: 'Geist Mono', monospace;
-      font-weight: 600;
-    }
-
-    .modal-position-value {
-      font-family: 'Geist Mono', monospace;
-      color: var(--muted);
-    }
-
-    .modal-total {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-top: 1px solid var(--border);
-      margin-bottom: 20px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .modal-total-value {
-      font-family: 'Geist Mono', monospace;
-      color: var(--danger);
-    }
-
-    .ratio-selector {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-
-    .ratio-btn {
-      flex: 1;
-      padding: 6px 0;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: transparent;
-      color: var(--foreground);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .ratio-btn:hover { border-color: var(--muted); }
-
-    .ratio-btn.active {
-      background: var(--danger);
-      border-color: var(--danger);
-      color: white;
-    }
-
-    .ratio-btn.active-success {
-      background: var(--success);
-      border-color: var(--success);
-      color: white;
-    }
-
-    .ratio-btn.active-warning {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: var(--accent-foreground);
-    }
-
-    .cond-form-group {
-      margin-bottom: 12px;
-    }
-
-    .cond-form-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-
-    .cond-input {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--background);
-      color: var(--foreground);
-      font-size: 14px;
-      font-family: 'Geist Mono', monospace;
-    }
-
-    .cond-input:focus {
-      outline: none;
-      border-color: var(--foreground);
-    }
-
-    .cond-preview-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      font-size: 13px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .cond-preview-item:last-child { border-bottom: none; }
-
-    .cond-preview-arrow {
-      color: var(--muted);
-      margin: 0 6px;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn-secondary {
-      flex: 1;
-      background: var(--background);
-      color: var(--foreground);
-      border: 1px solid var(--border);
-      padding: 10px 20px;
-      border-radius: var(--radius);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.2s, transform 0.15s;
-    }
-
-    .btn-secondary:hover { background: var(--surface-hover); transform: translateY(-1px); }
-    .btn-secondary:active { transform: translateY(0); }
-
-    .btn-modal-danger {
-      flex: 1;
-      background: var(--danger);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: var(--radius);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-    }
-
-    .btn-modal-danger:hover { background: var(--danger-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
-    .btn-modal-danger:active { transform: translateY(0); }
-
-    /* Error Modal */
-    .error-modal-message {
-      font-size: 14px;
-      color: var(--foreground-secondary);
-      line-height: 1.7;
-      margin-bottom: 20px;
-      word-break: break-word;
-    }
-
-    /* Success Modal */
-    .success-modal-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--success);
-    }
-
-    .success-modal-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: rgba(22, 163, 74, 0.12);
-      flex-shrink: 0;
-    }
-
-    .success-modal-icon svg {
-      width: 20px;
-      height: 20px;
-      color: var(--success);
-    }
-
-    .success-modal-summary {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
-      padding: 14px;
-      background: rgba(22, 163, 74, 0.06);
-      border: 1px solid rgba(22, 163, 74, 0.15);
-      border-radius: var(--radius);
-    }
-
-    .success-summary-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 14px;
-    }
-
-    .success-summary-label {
-      color: var(--muted);
-    }
-
-    .success-summary-value {
-      font-family: 'Geist Mono', monospace;
-      font-weight: 600;
-      color: var(--foreground);
-    }
-
-    .success-summary-value.highlight {
-      color: var(--success);
-      font-size: 16px;
-    }
-
-    .btn-success-ok {
-      width: 100%;
-      background: var(--success);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: var(--radius);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-    }
-
-    .btn-success-ok:hover {
-      background: #15803d;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
-    }
-
-    .btn-success-ok:active { transform: translateY(0); }
-
-    /* FAQ Accordion */
-    .faq-item { border-bottom: 1px solid var(--border); }
-    .faq-item:last-child { border-bottom: none; }
-
-    .faq-question {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 14px 0;
-      background: none;
-      border: none;
-      color: var(--foreground);
-      font-size: 14px;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      text-align: left;
-      transition: color 0.2s;
-    }
-
-    .faq-question:hover { color: var(--muted); }
-
-    .faq-chevron {
-      width: 16px;
-      height: 16px;
-      flex-shrink: 0;
-      color: var(--muted);
-      transition: transform 0.25s ease;
-    }
-
-    .faq-item.open .faq-chevron { transform: rotate(180deg); }
-
-    .faq-answer {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease, padding 0.3s ease;
-    }
-
-    .faq-item.open .faq-answer { max-height: 300px; }
-
-    .faq-answer-inner {
-      padding: 0 0 14px;
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.8;
-    }
-
-    /* Demo Mode Toggle */
-    .mode-toggle {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 10px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      cursor: pointer;
-      user-select: none;
-      transition: border-color 0.2s, background 0.2s;
-    }
-
-    .mode-toggle:hover { border-color: var(--muted); }
-
-    .mode-toggle-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-      white-space: nowrap;
-      transition: color 0.2s;
-    }
-
-    .mode-toggle.demo .mode-toggle-label { color: var(--muted); }
-    .mode-toggle.live .mode-toggle-label { color: var(--success); }
-
-    .toggle-switch {
-      position: relative;
-      width: 34px;
-      height: 18px;
-      border-radius: 9px;
-      background: var(--border);
-      transition: background 0.25s ease;
-      flex-shrink: 0;
-    }
-
-    .toggle-switch::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--muted);
-      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.25s;
-    }
-
-    .mode-toggle.live .toggle-switch {
-      background: rgba(22, 163, 74, 0.2);
-    }
-
-    .mode-toggle.live .toggle-switch::after {
-      transform: translateX(16px);
-      background: var(--success);
-    }
-
-    /* Live mode indicator dot in badge */
-    .badge.live-badge .badge-dot {
-      background: var(--success);
-      box-shadow: 0 0 6px rgba(22, 163, 74, 0.5);
-    }
-
-    /* Demo notice visibility */
-    .demo-notice.hidden { display: none; }
-
-    /* Refresh button */
-    .refresh-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 6px;
-      cursor: pointer;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: color 0.2s, border-color 0.2s, transform 0.2s;
-    }
-    .refresh-btn:hover { color: var(--foreground); border-color: var(--muted); transform: scale(1.05); }
-    .refresh-btn:active { transform: scale(0.95); }
-    .refresh-btn.spinning svg,
-    .refresh-btn.spinning i { animation: refreshSpin 0.8s linear infinite; }
-    @keyframes refreshSpin { to { transform: rotate(360deg); } }
-
-    /* Live Warning Modal */
-    .live-warning-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0);
-      backdrop-filter: blur(0px);
-      z-index: 1001;
-      align-items: center;
-      justify-content: center;
-    }
-    .live-warning-overlay.active {
-      display: flex;
-    }
-
-    .live-warning-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      width: 100%;
-      max-width: 380px;
-      margin: 0 16px;
-    }
-
-    .live-warning-icon {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 14px;
-      font-size: 15px;
-      font-weight: 600;
-      color: #f59e0b;
-    }
-
-    .live-warning-text {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.7;
-      margin-bottom: 20px;
-    }
-
-    .live-warning-actions {
-      display: flex;
-      gap: 10px;
-    }
-
-    /* SVG path animation base styles */
-    .logo-animated path {
-      stroke-dasharray: var(--path-length, 100);
-      stroke-dashoffset: var(--path-length, 100);
-    }
-
-    /* Reduced motion: disable all custom animations */
-    @media (prefers-reduced-motion: reduce) {
-      .logo-animated path { stroke-dashoffset: 0 !important; stroke-dasharray: none !important; }
-      .brand svg, .footer-logo svg { animation: none !important; }
-      .theme-toggle .theme-icon { animation: none !important; transition: none !important; }
-      .modal-card, .live-warning-card { animation: none !important; }
-      .modal-overlay, .live-warning-overlay { animation: none !important; }
-      .btn .btn-icon { transition: none !important; }
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Longbridge Liquidator - One-click position liquidation tool">
+  <title>LB Liquidator</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <script>(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();</script>
+  <link rel="stylesheet" href="/assets/vendor/fonts/geist-sans.css">
+  <link rel="stylesheet" href="/assets/vendor/fonts/geist-mono.css">
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/shell.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/views.css">
 </head>
-<body>
-  <div class="container">
-    <!-- Header -->
-    <header class="header">
-      <div class="brand">
-        <img src="/icon.png" width="24" height="24" alt="LB Liquidator" style="border-radius:5px;display:block" />
-        <span class="brand-text">Liquidator</span>
-      </div>
-      <div class="header-controls">
-        <div class="mode-toggle demo" id="modeToggle" onclick="handleModeToggle()">
-          <span class="mode-toggle-label" id="modeLabel">Demo</span>
-          <div class="toggle-switch"></div>
+<body class="app" data-theme-choice="system">
+
+  <!-- ================================================================ Rail -->
+  <nav class="rail" aria-label="Primary">
+    <div class="rail-top" data-tauri-drag-region></div>
+    <div class="rail-nav">
+      <button type="button" class="rail-btn" data-action="view_positions" data-view-btn="positions" data-i18n-tip="navPositionsTip"><i data-lucide="briefcase"></i></button>
+      <button type="button" class="rail-btn" data-action="view_orders" data-view-btn="orders" data-i18n-tip="navOrdersTip"><i data-lucide="history"></i></button>
+      <button type="button" class="rail-btn" data-action="view_settings" data-view-btn="settings" data-i18n-tip="navSettingsTip"><i data-lucide="settings"></i></button>
+    </div>
+    <div class="rail-bottom">
+      <button type="button" class="rail-btn" id="themeBtn" data-action="cycle_theme" data-tip="Theme">
+        <i data-lucide="monitor" class="theme-icon theme-icon-system"></i>
+        <i data-lucide="sun" class="theme-icon theme-icon-light"></i>
+        <i data-lucide="moon" class="theme-icon theme-icon-dark"></i>
+      </button>
+      <button type="button" class="account-btn" id="accountBtn" data-action="toggle_account" aria-haspopup="menu" aria-expanded="false" data-i18n-tip="accountTip">
+        <i data-lucide="user"></i>
+        <span class="mode-dot"></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ================================================================ Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-band" data-tauri-drag-region>
+      <img class="brand-icon" src="/icon.png" alt="" data-tauri-drag-region>
+      <span class="brand-name" data-tauri-drag-region>Liquidator</span>
+      <span class="brand-tag" data-tauri-drag-region data-i18n="badge">Local Secure Mode</span>
+    </div>
+
+    <!-- Positions -->
+    <section class="pane" data-pane="positions">
+      <div class="pane-head">
+        <div class="segmented block tone-live" id="modeSeg" role="radiogroup" data-seg="mode">
+          <button type="button" data-value="demo"><span class="dot"></span><span data-i18n="demoShort">Demo</span></button>
+          <button type="button" data-value="live"><span class="dot is-live"></span><span data-i18n="liveShort">Live</span></button>
         </div>
-        <select class="lang-select" id="langSelect" onchange="setLang(this.value)">
-          <option value="zh-CN">简中</option>
-          <option value="zh-TW">繁中</option>
-          <option value="en">EN</option>
-        </select>
-        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-          <i data-lucide="sun" id="themeIconLight" class="theme-icon" style="display: block; width: 16px; height: 16px;"></i>
-          <i data-lucide="moon" id="themeIconDark" class="theme-icon" style="display: none; width: 16px; height: 16px;"></i>
-        </button>
+        <p class="demo-note" id="demoNote"><i data-lucide="info"></i><span data-i18n="demoDesc">UI preview only, no real trading</span></p>
+        <div class="summary" id="accountSummary"></div>
+        <label class="input-icon">
+          <i data-lucide="search"></i>
+          <input type="search" class="input" id="posFilter" autocomplete="off" spellcheck="false" data-i18n-placeholder="filterPlaceholder" placeholder="Filter symbol or name">
+        </label>
+      </div>
+      <div class="list-caption">
+        <label class="cb" data-i18n-title="selectAll"><input type="checkbox" id="selectAll" tabindex="-1"></label>
+        <span id="posCaption"></span>
+      </div>
+      <div class="list scroller" id="posList" role="listbox" aria-multiselectable="true"></div>
+    </section>
+
+    <!-- Orders -->
+    <section class="pane" data-pane="orders" hidden>
+      <div class="pane-head">
+        <div class="pane-title" data-i18n="ordersTitle">Orders</div>
+        <div class="chips" id="orderChips" role="radiogroup">
+          <button type="button" class="chip" data-filter="all"><span data-i18n="filterAll">All</span><span class="chip-count"></span></button>
+          <button type="button" class="chip" data-filter="sell"><span data-i18n="filterSell">Sell</span><span class="chip-count"></span></button>
+          <button type="button" class="chip" data-filter="buy"><span data-i18n="filterBuy">Buy</span><span class="chip-count"></span></button>
+          <button type="button" class="chip" data-filter="conditional"><span data-i18n="filterConditional">Conditional</span><span class="chip-count"></span></button>
+        </div>
+      </div>
+      <div class="list-caption"><span id="ordersCaption"></span><span class="caption-right" data-i18n="newestFirst">Newest first</span></div>
+      <div class="list scroller" id="ordersList" role="listbox"></div>
+    </section>
+
+    <!-- Settings -->
+    <section class="pane" data-pane="settings" hidden>
+      <div class="pane-head">
+        <div class="pane-title" data-i18n="navSettings">Settings</div>
+      </div>
+      <div class="list scroller" id="settingsNav" role="tablist" aria-orientation="vertical">
+        <button type="button" class="settings-nav-item" data-section="account" role="tab"><i data-lucide="key-round"></i><span data-i18n="secAccount">Account</span></button>
+        <button type="button" class="settings-nav-item" data-section="appearance" role="tab"><i data-lucide="palette"></i><span data-i18n="secAppearance">Appearance</span></button>
+        <button type="button" class="settings-nav-item" data-section="language" role="tab"><i data-lucide="languages"></i><span data-i18n="secLanguage">Language</span></button>
+        <button type="button" class="settings-nav-item" data-section="about" role="tab"><i data-lucide="info"></i><span data-i18n="secAbout">About</span></button>
+      </div>
+    </section>
+  </aside>
+
+  <!-- ================================================================ Main -->
+  <main class="main">
+    <header class="tabbar" data-tauri-drag-region>
+      <button type="button" class="icon-btn" data-action="toggle_sidebar" data-i18n-title="toggleSidebarTip"><i data-lucide="panel-left"></i></button>
+
+      <div class="tabbar-group" data-pane="positions" role="tablist" id="posTabs">
+        <button type="button" class="tab" role="tab" data-tab="liquidate"><span data-i18n="tabLiquidate">Liquidate</span></button>
+        <button type="button" class="tab" role="tab" data-tab="conditional"><span data-i18n="tabConditional">Conditional</span></button>
+        <button type="button" class="tab" role="tab" data-tab="buyback"><span data-i18n="tabBuyback">Buy back</span><span class="tab-badge" id="buybackBadge" hidden></span></button>
+      </div>
+      <div class="tabbar-group" data-pane="orders" data-tauri-drag-region hidden>
+        <span class="tabbar-title" data-i18n="ordersTitle">Orders</span>
+        <span class="tabbar-count" id="ordersCount"></span>
+      </div>
+      <div class="tabbar-group" data-pane="settings" data-tauri-drag-region hidden>
+        <span class="tabbar-title" id="settingsTitle"></span>
+      </div>
+
+      <div class="tabbar-spacer" data-tauri-drag-region></div>
+
+      <div class="tabbar-actions">
+        <button type="button" class="btn btn-outline btn-sm" data-pane="orders" data-action="clear_history" id="clearHistoryBtn" hidden><i data-lucide="trash-2"></i><span data-i18n="clearHistory">Clear history</span></button>
+        <button type="button" class="icon-btn" data-pane="positions" id="refreshBtn" data-action="refresh" data-i18n-title="refreshTip"><i data-lucide="refresh-cw"></i></button>
+        <button type="button" class="icon-btn" id="detailsToggle" data-action="toggle_details" data-i18n-title="toggleDetailsTip"><i data-lucide="panel-right"></i></button>
       </div>
     </header>
 
-    <!-- Hero -->
-    <section class="hero">
-      <h1 data-i18n="title">一键清仓</h1>
-      <p data-i18n="subtitle">长桥证券交易工具，本地运行，安全可靠</p>
-      <div class="badge">
-        <span class="badge-dot"></span>
-        <span data-i18n="badge">本地安全模式</span>
-      </div>
-    </section>
-
-    <!-- Demo Notice -->
-    <div class="demo-notice">
-      <i data-lucide="info" style="width: 14px; height: 14px;"></i>
-      <span><strong data-i18n="demo">演示模式</strong> — <span data-i18n="demoDesc">展示界面效果，不连接真实账户</span></span>
-    </div>
-
-    <!-- Config Card -->
-    <div class="card" id="configCard">
-      <div class="card-header">
-        <i data-lucide="key" style="width: 18px; height: 18px; color: var(--muted);"></i>
-        <span class="card-title" data-i18n="apiConfig">API 配置</span>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label" data-i18n="appKey">App Key</label>
-        <input type="password" class="form-input" id="appKey" placeholder="Enter App Key" oninput="saveCredential('appKey', this.value)">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" data-i18n="appSecret">App Secret</label>
-        <input type="password" class="form-input" id="appSecret" placeholder="Enter App Secret" oninput="saveCredential('appSecret', this.value)">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" data-i18n="accessToken">Access Token</label>
-        <input type="password" class="form-input" id="accessToken" placeholder="Enter Access Token" oninput="saveCredential('accessToken', this.value)">
-      </div>
-      
-      <button class="btn btn-primary" id="viewPositionsBtn" onclick="fetchPositions()">
-        <i data-lucide="bar-chart-3" class="btn-icon" style="width: 16px; height: 16px;"></i>
-        <span data-i18n="viewPositions">查看持仓</span>
-      </button>
-    </div>
-
-    <!-- Loading -->
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p data-i18n="loading">加载中...</p>
-    </div>
-
-    <!-- Alert -->
-    <div class="alert" id="alert"></div>
-
-    <!-- Positions -->
-    <div class="card positions-section" id="positionsCard">
-      <div class="card-header" style="justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <i data-lucide="trending-up" style="width: 18px; height: 18px; color: var(--muted);"></i>
-          <span class="card-title" data-i18n="positions">持仓明细</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="text-align: right;">
-            <div class="total-value" id="totalValue">$0.00</div>
-            <div class="daily-pnl" id="dailyPnl"></div>
+    <!-- Positions view -->
+    <div class="view" id="view-positions" data-pane="positions">
+      <div class="state-panel" id="posState" hidden></div>
+      <div class="sel-strip" id="selStrip"></div>
+      <div class="view-body scroller" id="posBody">
+        <section class="tabpanel" data-tabpanel="liquidate" id="panelLiquidate">
+          <div class="toolbar" id="liqToolbar">
+            <span class="field-label" data-i18n="qtyToSell">Quantity to sell</span>
+            <div class="segmented" id="liqRatio" role="radiogroup" data-seg="liqRatio">
+              <button type="button" data-value="1" data-i18n="ratioAll">All</button>
+              <button type="button" data-value="0.5" data-i18n="ratioHalf">1/2</button>
+              <button type="button" data-value="0.3333333333" data-i18n="ratioThird">1/3</button>
+              <button type="button" data-value="0.25" data-i18n="ratioQuarter">1/4</button>
+            </div>
           </div>
-          <button class="refresh-btn" id="refreshBtn" onclick="refreshPositions()" aria-label="Refresh positions" title="Refresh">
-            <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
-          </button>
-        </div>
-      </div>
-      
-      <div class="table-container">
-        <table class="positions-table" id="positionsTable">
-          <thead>
-            <tr>
-              <th class="pos-checkbox-th"><input type="checkbox" class="pos-checkbox" id="selectAllCheckbox" checked onchange="toggleSelectAll(this.checked)"></th>
-              <th data-i18n="symbol">代码</th>
-              <th data-i18n="quantity">数量</th>
-              <th data-i18n="price">价格</th>
-              <th style="text-align: right;" data-i18n="change">涨跌</th>
-              <th style="text-align: right;" data-i18n="value">市值</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+          <div id="liqContent"></div>
+        </section>
 
-      <button class="btn btn-danger" id="liquidateBtn" onclick="openLiquidateModal()">
-        <i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i>
-        <span data-i18n="liquidate">一键清仓</span>
-      </button>
-      <button class="btn btn-primary" id="conditionalBtn" onclick="openConditionalModal()" style="display: none; width: 100%; padding: 14px; font-weight: 600; margin-top: 8px; background: transparent; color: var(--foreground); border: 1px solid var(--border);">
-        <i data-lucide="shield" class="btn-icon" style="width: 16px; height: 16px;"></i>
-        <span data-i18n="conditionalOrder">条件卖出</span>
-      </button>
-      <button class="btn btn-primary" id="buybackBtn" onclick="openBuybackModal()" style="display: none; width: 100%; padding: 14px; font-weight: 600; margin-top: 8px; background: var(--success); color: white;">
-        <i data-lucide="shopping-cart" class="btn-icon" style="width: 16px; height: 16px;"></i>
-        <span data-i18n="buyback">一键买入</span>
-      </button>
-    </div>
-
-    <!-- FAQ Card -->
-    <div class="card" id="faqCard">
-      <div class="card-header">
-        <i data-lucide="help-circle" style="width: 18px; height: 18px; color: var(--muted);"></i>
-        <span class="card-title" data-i18n="faq">常见问题</span>
-      </div>
-
-      <div class="faq-item" id="faqItem1">
-        <button class="faq-question" onclick="toggleFaq('faqItem1')">
-          <span data-i18n="faqQ1">问：如何获取 API 凭证？</span>
-          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer">
-          <div class="faq-answer-inner">
-            <span data-i18n="faqA1s1">1. 登录长桥开发者中心 open.longportapp.com</span><br>
-            <span data-i18n="faqA1s2">2. 在应用凭证页面获取 App Key、App Secret、Access Token</span><br>
-            <span data-i18n="faqA1s3">3. 确保账户已开通交易权限</span><br>
-            <span data-i18n="faqA1s4">详见：https://open.longportapp.com/</span>
+        <section class="tabpanel" data-tabpanel="conditional" id="panelConditional" hidden>
+          <div id="condBlocked"></div>
+          <div id="condForm">
+            <div class="form-grid">
+              <div class="field">
+                <span class="field-label" data-i18n="condType">Type</span>
+                <div class="segmented" id="condType" role="radiogroup" data-seg="condType">
+                  <button type="button" data-value="stop-loss" data-i18n="stopLoss">Stop Loss</button>
+                  <button type="button" data-value="take-profit" data-i18n="takeProfit">Take Profit</button>
+                  <button type="button" data-value="trailing-stop" data-i18n="trailingStop">Trailing Stop</button>
+                </div>
+                <p class="help" id="condTypeHelp"></p>
+              </div>
+              <div class="field">
+                <label class="field-label" for="condPct" data-i18n="condPercentage">Percentage</label>
+                <div class="input-group pct-input">
+                  <input type="number" class="input mono" id="condPct" min="0.1" max="99.9" step="0.1" value="5" inputmode="decimal">
+                  <span class="input-suffix">%</span>
+                </div>
+                <p class="help" id="condPctHelp"></p>
+              </div>
+              <div class="field">
+                <span class="field-label" data-i18n="condTimeInForce">Time in Force</span>
+                <div class="segmented" id="condTif" role="radiogroup" data-seg="condTif">
+                  <button type="button" data-value="Day" data-i18n="condTifDay">Day</button>
+                  <button type="button" data-value="GoodTilCanceled" data-i18n="condTifGtc">Good Til Canceled</button>
+                </div>
+              </div>
+              <div class="field">
+                <span class="field-label" data-i18n="quantity">Qty</span>
+                <div class="segmented" id="condRatio" role="radiogroup" data-seg="condRatio">
+                  <button type="button" data-value="1" data-i18n="ratioAll">All</button>
+                  <button type="button" data-value="0.5" data-i18n="ratioHalf">1/2</button>
+                  <button type="button" data-value="0.3333333333" data-i18n="ratioThird">1/3</button>
+                  <button type="button" data-value="0.25" data-i18n="ratioQuarter">1/4</button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+          <div class="section-label" data-i18n="condPreview">Preview</div>
+          <div id="condPreview"></div>
+        </section>
 
-      <div class="faq-item" id="faqItem2">
-        <button class="faq-question" onclick="toggleFaq('faqItem2')">
-          <span data-i18n="faqQ2">问：我的凭证安全吗？</span>
-          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer">
-          <div class="faq-answer-inner">
-            <span data-i18n="faqA2s1">凭证仅保存在浏览器 localStorage，仅限本机访问。</span><br>
-            <span data-i18n="faqA2s2">服务器绑定 127.0.0.1，外部网络无法连接。</span><br>
-            <span data-i18n="faqA2s3">API 调用直接从本地发往长桥服务器，不经过任何第三方。</span>
+        <section class="tabpanel" data-tabpanel="buyback" id="panelBuyback" hidden>
+          <div class="toolbar" id="bbToolbar">
+            <span class="field-label" data-i18n="qtyToBuy">Quantity to buy</span>
+            <div class="segmented" id="bbRatio" role="radiogroup" data-seg="bbRatio">
+              <button type="button" data-value="1" data-i18n="ratioAll">All</button>
+              <button type="button" data-value="0.5" data-i18n="ratioHalf">1/2</button>
+              <button type="button" data-value="0.3333333333" data-i18n="ratioThird">1/3</button>
+              <button type="button" data-value="0.25" data-i18n="ratioQuarter">1/4</button>
+            </div>
           </div>
-        </div>
+          <div id="bbContent"></div>
+        </section>
       </div>
-
-      <div class="faq-item" id="faqItem3">
-        <button class="faq-question" onclick="toggleFaq('faqItem3')">
-          <span data-i18n="faqQ3">问：什么是演示模式和实盘模式？</span>
-          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer">
-          <div class="faq-answer-inner">
-            <span data-i18n="faqA3s1">演示模式：使用模拟数据，无需凭证，适合体验界面。</span><br>
-            <span data-i18n="faqA3s2">实盘模式：连接真实 Longbridge API，查看持仓并执行市价卖出。</span><br>
-            <span data-i18n="faqA3s3">使用实盘模式需先启动本地服务器（npm start 或 npm run dev）。</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="faq-item" id="faqItem4">
-        <button class="faq-question" onclick="toggleFaq('faqItem4')">
-          <span data-i18n="faqQ4">问：支持哪些市场和订单类型？</span>
-          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer">
-          <div class="faq-answer-inner">
-            <span data-i18n="faqA4s1">支持美股 (.US)、港股 (.HK)、新加坡 (.SG)。</span><br>
-            <span data-i18n="faqA4s2">清仓使用市价单 (Market Order)，按当前市价立即成交。</span><br>
-            <span data-i18n="faqA4s3">部分失败时，成功的订单正常处理，失败的显示错误信息。</span>
-          </div>
-        </div>
+      <div class="action-bar" id="actionBar">
+        <div class="action-hint" id="actionHint"></div>
+        <div class="action-buttons" id="actionButtons"></div>
       </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-logo">
-        <img src="/icon.png" width="20" height="20" alt="LB Liquidator" style="border-radius:4px;display:block" />
-        <span class="footer-brand">Liquidator</span>
+    <!-- Orders view -->
+    <div class="view" id="view-orders" data-pane="orders" hidden>
+      <div class="view-body scroller" id="ordersBody"></div>
+    </div>
+
+    <!-- Settings view -->
+    <div class="view" id="view-settings" data-pane="settings" hidden>
+      <div class="view-body scroller">
+
+        <section class="settings-page" data-section-page="account">
+          <div class="settings-head">
+            <h2 data-i18n="secAccount">Account</h2>
+            <p data-i18n="secAccountDesc">Trading mode and Longbridge OpenAPI credentials.</p>
+          </div>
+          <div class="settings-group">
+            <div class="field">
+              <span class="field-label" data-i18n="tradingMode">Trading mode</span>
+              <div class="segmented tone-live" id="settingsModeSeg" role="radiogroup" data-seg="mode">
+                <button type="button" data-value="demo"><span class="dot"></span><span data-i18n="demoMode">Demo Mode</span></button>
+                <button type="button" data-value="live"><span class="dot is-live"></span><span data-i18n="liveMode">Live Mode</span></button>
+              </div>
+              <p class="help" data-i18n="modeHelp">Demo uses mock data and never places orders. Live connects to your real Longbridge account.</p>
+            </div>
+          </div>
+          <form class="settings-group" id="credForm" autocomplete="off" novalidate>
+            <div class="field">
+              <label class="field-label" for="appKey" data-i18n="appKey">App Key</label>
+              <div class="input-group">
+                <input type="password" class="input input-lg mono" id="appKey" data-cred="appKey" autocomplete="off" spellcheck="false" autocapitalize="off" data-i18n-placeholder="phAppKey" placeholder="Enter App Key">
+                <button type="button" class="icon-btn input-addon reveal-btn" data-reveal="appKey" aria-pressed="false" data-i18n-title="showHide"><i data-lucide="eye" class="icon-show"></i><i data-lucide="eye-off" class="icon-hide"></i></button>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="appSecret" data-i18n="appSecret">App Secret</label>
+              <div class="input-group">
+                <input type="password" class="input input-lg mono" id="appSecret" data-cred="appSecret" autocomplete="off" spellcheck="false" autocapitalize="off" data-i18n-placeholder="phAppSecret" placeholder="Enter App Secret">
+                <button type="button" class="icon-btn input-addon reveal-btn" data-reveal="appSecret" aria-pressed="false" data-i18n-title="showHide"><i data-lucide="eye" class="icon-show"></i><i data-lucide="eye-off" class="icon-hide"></i></button>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="accessToken" data-i18n="accessToken">Access Token</label>
+              <div class="input-group">
+                <input type="password" class="input input-lg mono" id="accessToken" data-cred="accessToken" autocomplete="off" spellcheck="false" autocapitalize="off" data-i18n-placeholder="phAccessToken" placeholder="Enter Access Token">
+                <button type="button" class="icon-btn input-addon reveal-btn" data-reveal="accessToken" aria-pressed="false" data-i18n-title="showHide"><i data-lucide="eye" class="icon-show"></i><i data-lucide="eye-off" class="icon-hide"></i></button>
+              </div>
+            </div>
+            <div class="field-row">
+              <button type="button" class="btn btn-primary" id="testConnBtn"><i data-lucide="plug-zap"></i><span data-i18n="testConnection">Test connection</span></button>
+              <button type="button" class="btn btn-outline" data-action="load_positions"><i data-lucide="bar-chart-3"></i><span data-i18n="viewPositions">View Positions</span></button>
+              <span class="help" id="testConnResult"></span>
+            </div>
+            <div class="note"><i data-lucide="shield-check"></i><span data-i18n="credNote">Credentials are stored only in this app's local storage on this Mac. The server binds to 127.0.0.1 and calls Longbridge directly.</span></div>
+          </form>
+        </section>
+
+        <section class="settings-page" data-section-page="appearance" hidden>
+          <div class="settings-head">
+            <h2 data-i18n="secAppearance">Appearance</h2>
+            <p data-i18n="secAppearanceDesc">Choose how LB Liquidator looks.</p>
+          </div>
+          <div class="settings-group">
+            <div class="field">
+              <span class="field-label" data-i18n="themeLabel">Theme</span>
+              <div class="segmented" id="themeSeg" role="radiogroup" data-seg="theme">
+                <button type="button" data-value="system"><i data-lucide="monitor"></i><span data-i18n="themeSystem">System</span></button>
+                <button type="button" data-value="light"><i data-lucide="sun"></i><span data-i18n="themeLight">Light</span></button>
+                <button type="button" data-value="dark"><i data-lucide="moon"></i><span data-i18n="themeDark">Dark</span></button>
+              </div>
+              <p class="help" data-i18n="themeHelp">System follows your macOS appearance.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-page" data-section-page="language" hidden>
+          <div class="settings-head">
+            <h2 data-i18n="secLanguage">Language</h2>
+            <p data-i18n="secLanguageDesc">Interface language.</p>
+          </div>
+          <div class="settings-group">
+            <div class="field">
+              <span class="field-label" data-i18n="langLabel">Language</span>
+              <div class="segmented" id="langSeg" role="radiogroup" data-seg="lang">
+                <button type="button" data-value="zh-CN" lang="zh-CN">简体中文</button>
+                <button type="button" data-value="zh-TW" lang="zh-TW">繁體中文</button>
+                <button type="button" data-value="en" lang="en">English</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-page" data-section-page="about" hidden>
+          <div class="settings-head">
+            <h2 data-i18n="secAbout">About</h2>
+          </div>
+          <div class="settings-group">
+            <div class="about-app">
+              <img src="/icon.png" alt="">
+              <div>
+                <div class="name">LB Liquidator</div>
+                <div class="sub"><span data-i18n="subtitle">Longbridge trading tool, local-only, secure &amp; reliable</span></div>
+                <div class="sub"><span data-i18n="version">Version</span> <span class="mono selectable" id="aboutVersion">—</span></div>
+              </div>
+            </div>
+            <div class="about-links">
+              <button type="button" class="btn btn-outline btn-sm" data-href="https://github.com/therealechan/longbridge-liquidator-web"><i data-lucide="github"></i>GitHub</button>
+              <button type="button" class="btn btn-outline btn-sm" data-href="https://0xechan.xyz"><i data-lucide="globe"></i>0xechan.xyz</button>
+              <button type="button" class="btn btn-outline btn-sm" data-href="https://open.longportapp.com/"><i data-lucide="external-link"></i>Longbridge OpenAPI</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-action="shortcuts"><i data-lucide="keyboard"></i><span data-i18n="shortcutsTitle">Keyboard shortcuts</span></button>
+            </div>
+            <div class="note note-warning"><i data-lucide="alert-triangle"></i><span data-i18n="disclaimer">For educational purposes only. Trading involves risk.</span></div>
+            <p class="about-copy"><span data-i18n="footer">© 2026 Built by</span> 0xechan <span data-i18n="openSource">· Open source on</span> GitHub</p>
+          </div>
+          <div class="field">
+            <span class="field-label" data-i18n="faq">FAQ</span>
+            <div class="faq">
+              <details>
+                <summary><span data-i18n="faqQ1">Q: How do I get API credentials?</span><i data-lucide="chevron-right"></i></summary>
+                <div class="faq-answer selectable">
+                  <p data-i18n="faqA1s1"></p><p data-i18n="faqA1s2"></p><p data-i18n="faqA1s3"></p><p data-i18n="faqA1s4"></p>
+                </div>
+              </details>
+              <details>
+                <summary><span data-i18n="faqQ2">Q: Are my credentials safe?</span><i data-lucide="chevron-right"></i></summary>
+                <div class="faq-answer selectable">
+                  <p data-i18n="faqA2s1"></p><p data-i18n="faqA2s2"></p><p data-i18n="faqA2s3"></p>
+                </div>
+              </details>
+              <details>
+                <summary><span data-i18n="faqQ3">Q: What are Demo Mode and Live Mode?</span><i data-lucide="chevron-right"></i></summary>
+                <div class="faq-answer selectable">
+                  <p data-i18n="faqA3s1"></p><p data-i18n="faqA3s2"></p><p data-i18n="faqA3s3"></p>
+                </div>
+              </details>
+              <details>
+                <summary><span data-i18n="faqQ4">Q: Which markets and order types are supported?</span><i data-lucide="chevron-right"></i></summary>
+                <div class="faq-answer selectable">
+                  <p data-i18n="faqA4s1"></p><p data-i18n="faqA4s2"></p><p data-i18n="faqA4s3"></p>
+                </div>
+              </details>
+            </div>
+          </div>
+        </section>
+
       </div>
-      
-      <div class="footer-copy">© 2026 Built by <a href="https://0xechan.xyz" target="_blank" class="footer-link">0xechan</a> · Open source on <a href="https://github.com/therealechan/longbridge-liquidator-web" target="_blank" class="footer-link">GitHub</a></div>
-      <div class="footer-disclaimer" data-i18n="disclaimer">本工具仅供学习交流，投资有风险，操作需谨慎</div>
-    </footer>
+    </div>
+  </main>
+
+  <!-- ================================================================ Details -->
+  <aside class="details" id="details" aria-labelledby="detailsTitle">
+    <div class="details-band" data-tauri-drag-region>
+      <span class="pane-title" id="detailsTitle" data-i18n="detailsTitle">Details</span>
+      <button type="button" class="icon-btn" data-action="toggle_details" data-i18n-title="toggleDetailsTip"><i data-lucide="x"></i></button>
+    </div>
+    <div class="details-body scroller" id="detailsBody"></div>
+  </aside>
+
+  <!-- ================================================================ Status bar -->
+  <footer class="statusbar">
+    <div class="sb-left">
+      <span class="sb-item"><span class="dot" id="sbModeDot"></span><span id="sbModeText"></span></span>
+      <span class="sb-sep">·</span>
+      <span class="sb-item" id="sbServer"><span class="dot is-pending" id="sbServerDot"></span><span class="mono">127.0.0.1:3456</span></span>
+    </div>
+    <div class="sb-center" id="sbUpdated"></div>
+    <div class="sb-right">
+      <span class="mono" id="sbVersion"></span>
+      <span class="sb-sep">·</span>
+      <span data-i18n="notAdvice">Not investment advice</span>
+    </div>
+  </footer>
+
+  <!-- ================================================================ Account popover -->
+  <div class="popover" id="accountPopover" role="menu" hidden>
+    <div class="pop-head"><span class="dot" id="popModeDot"></span><span id="popModeText"></span></div>
+    <div class="pop-meta"><span data-i18n="version">Version</span><span class="mono" id="popVersion">—</span></div>
+    <div class="pop-sep"></div>
+    <button type="button" class="pop-item" role="menuitem" data-href="https://github.com/therealechan/longbridge-liquidator-web"><i data-lucide="github"></i>GitHub<i data-lucide="external-link" class="pop-hint"></i></button>
+    <button type="button" class="pop-item" role="menuitem" data-href="https://0xechan.xyz"><i data-lucide="globe"></i>0xechan.xyz<i data-lucide="external-link" class="pop-hint"></i></button>
+    <div class="pop-sep"></div>
+    <button type="button" class="pop-item" role="menuitem" data-action="shortcuts"><i data-lucide="keyboard"></i><span data-i18n="shortcutsTitle">Keyboard shortcuts</span><span class="pop-hint">⌘/</span></button>
+    <button type="button" class="pop-item" role="menuitem" data-action="about"><i data-lucide="info"></i><span data-i18n="secAbout">About</span></button>
   </div>
 
-  <!-- Liquidate Confirmation Modal -->
-  <div class="modal-overlay" id="liquidateModal" onclick="closeLiquidateModal(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="modal-title">
-        <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
-        <span id="modalTitle">确认清仓？</span>
-      </div>
-      <div class="modal-warning-banner" id="modalWarningBanner">
-        <i data-lucide="alert-circle" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-        <span id="modalWarningText">将按照市价卖出以下持仓</span>
-      </div>
-      <div class="ratio-selector" id="liquidateRatioSelector"></div>
-      <div class="modal-positions" id="modalPositions"></div>
-      <div class="modal-total">
-        <span id="modalTotalLabel">总市值</span>
-        <span class="modal-total-value" id="modalTotalValue">$0.00</span>
+  <!-- ================================================================ Modals -->
+  <!-- Liquidate confirmation -->
+  <div class="modal" id="liquidateModal" role="dialog" aria-modal="true" aria-labelledby="liqModalTitle" hidden>
+    <div class="modal-panel">
+      <div class="modal-head tone-danger"><i data-lucide="alert-triangle"></i><span id="liqModalTitle" data-i18n="confirmLiquidationTitle">Confirm Liquidation?</span></div>
+      <div class="modal-body">
+        <div class="note note-danger"><i data-lucide="alert-circle"></i><span data-i18n="marketOrderWarning">Will be sold at market price</span></div>
+        <div class="modal-meta" id="liqModalMeta"></div>
+        <div class="modal-list" id="liqModalList"></div>
+        <div class="modal-total"><span data-i18n="totalMarketValue">Total Value</span><span class="val" id="liqModalTotal"></span></div>
       </div>
       <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeLiquidateModal()" id="modalCancelBtn">取消</button>
-        <button class="btn-modal-danger" onclick="confirmLiquidate()" id="modalConfirmBtn">确认卖出</button>
+        <button type="button" class="btn btn-outline" data-close data-autofocus data-i18n="cancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="liqModalConfirm" data-confirm data-i18n="confirmSell">Confirm Sell</button>
       </div>
     </div>
   </div>
 
-  <!-- Buyback Confirmation Modal -->
-  <div class="modal-overlay" id="buybackModal" onclick="closeBuybackModal(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="modal-title" style="color: var(--success);">
-        <i data-lucide="shopping-cart" style="width: 18px; height: 18px;"></i>
-        <span id="buybackModalTitle">确认买入？</span>
-      </div>
-      <div class="modal-warning-banner" style="background: rgba(22, 163, 74, 0.1); border-color: rgba(22, 163, 74, 0.3); color: var(--success);">
-        <i data-lucide="info" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-        <span id="buybackModalWarning">将按照市价买入以下持仓</span>
-      </div>
-      <div class="ratio-selector" id="buybackRatioSelector"></div>
-      <div class="modal-positions" id="buybackModalPositions"></div>
-      <div style="padding: 0 20px 8px; font-size: 12px; color: var(--muted); text-align: center;">
-        <span id="buybackPriceNote">实际成交价以市场价为准</span>
-      </div>
-      <div class="modal-total">
-        <span id="buybackModalTotalLabel">总市值</span>
-        <span class="modal-total-value" id="buybackModalTotalValue">$0.00</span>
+  <!-- Buyback confirmation -->
+  <div class="modal" id="buybackModal" role="dialog" aria-modal="true" aria-labelledby="bbModalTitle" hidden>
+    <div class="modal-panel">
+      <div class="modal-head tone-success"><i data-lucide="shopping-cart"></i><span id="bbModalTitle" data-i18n="buybackConfirmTitle">Confirm Buy Back?</span></div>
+      <div class="modal-body">
+        <div class="note note-success"><i data-lucide="info"></i><span data-i18n="buybackWarning">Will buy the following positions at market price</span></div>
+        <div class="modal-meta" id="bbModalMeta"></div>
+        <div class="modal-list" id="bbModalList"></div>
+        <p class="help" data-i18n="buybackPriceNote">Actual price depends on market conditions</p>
+        <div class="modal-total"><span data-i18n="selectedPositions">Selected Positions</span><span class="val" id="bbModalTotal"></span></div>
       </div>
       <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeBuybackModal()" id="buybackModalCancelBtn">取消</button>
-        <button class="btn-modal-danger" onclick="confirmBuyback()" id="buybackModalConfirmBtn" style="background: var(--success);">确认买入</button>
+        <button type="button" class="btn btn-outline" data-close data-autofocus data-i18n="cancel">Cancel</button>
+        <button type="button" class="btn btn-success" id="bbModalConfirm" data-confirm data-i18n="buybackConfirm">Confirm Buy</button>
       </div>
     </div>
   </div>
 
-  <!-- Conditional Order Modal -->
-  <div class="modal-overlay" id="conditionalModal" onclick="closeConditionalModal(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="modal-title" style="color: var(--foreground);">
-        <i data-lucide="shield" style="width: 18px; height: 18px;"></i>
-        <span id="condModalTitle">条件卖出</span>
+  <!-- Conditional confirmation -->
+  <div class="modal" id="conditionalModal" role="dialog" aria-modal="true" aria-labelledby="condModalTitle" hidden>
+    <div class="modal-panel wide">
+      <div class="modal-head"><i data-lucide="shield"></i><span id="condModalTitle" data-i18n="condConfirmTitle">Confirm Conditional Orders?</span></div>
+      <div class="modal-body">
+        <div class="note"><i data-lucide="alert-circle"></i><span data-i18n="condWarning">Will set conditional sell orders for the following positions</span></div>
+        <div class="modal-meta" id="condModalMeta"></div>
+        <div class="modal-list" id="condModalList"></div>
       </div>
-      <div class="modal-warning-banner" style="background: var(--surface); border-color: var(--border); color: var(--muted);">
-        <i data-lucide="alert-circle" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-        <span id="condModalWarning">将为以下持仓设置条件卖出单</span>
-      </div>
-
-      <div class="cond-form-group">
-        <label class="cond-form-label" id="condTypeLabel">类型</label>
-        <div class="ratio-selector" id="condTypeSelector"></div>
-      </div>
-
-      <div class="cond-form-group">
-        <label class="cond-form-label" id="condPctLabel">百分比</label>
-        <input type="number" class="cond-input" id="condPctInput" min="0.1" max="99.9" step="0.1" value="5" oninput="updateConditionalPreview()">
-      </div>
-
-      <div class="cond-form-group">
-        <label class="cond-form-label" id="condTifLabel">有效期</label>
-        <div class="ratio-selector" id="condTifSelector"></div>
-      </div>
-
-      <div class="cond-form-group">
-        <label class="cond-form-label" id="condQtyLabel">数量</label>
-        <div class="ratio-selector" id="condRatioSelector"></div>
-      </div>
-
-      <div class="cond-form-group">
-        <label class="cond-form-label" id="condPreviewLabel">预览</label>
-        <div class="modal-positions" id="condPreviewList" style="max-height: 180px;"></div>
-      </div>
-
       <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeConditionalModal()" id="condCancelBtn">取消</button>
-        <button class="btn-modal-danger" onclick="confirmConditionalOrder()" id="condSubmitBtn" style="background: var(--accent); color: var(--accent-foreground);">提交条件单</button>
+        <button type="button" class="btn btn-outline" data-close data-autofocus data-i18n="cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="condModalConfirm" data-confirm data-i18n="condSubmit">Submit Orders</button>
       </div>
     </div>
   </div>
 
-  <!-- Live Mode Warning Modal -->
-  <div class="live-warning-overlay" id="liveWarningModal" onclick="closeLiveWarning(event)">
-    <div class="live-warning-card" onclick="event.stopPropagation()">
-      <div class="live-warning-icon">
-        <i data-lucide="shield-alert" style="width: 18px; height: 18px;"></i>
-        <span id="liveWarningTitle">Live Mode</span>
-      </div>
-      <div class="live-warning-text" id="liveWarningText"></div>
-      <div class="live-warning-actions">
-        <button class="btn-secondary" onclick="closeLiveWarning()" id="liveWarningCancelBtn">Cancel</button>
-        <button class="btn-modal-danger" onclick="confirmLiveMode()" id="liveWarningConfirmBtn" style="background: #f59e0b;">Confirm</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Error Modal -->
-  <div class="modal-overlay" id="errorModal" onclick="closeErrorModal(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="modal-title" style="color: var(--danger);">
-        <i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i>
-        <span id="errorModalTitle">错误</span>
-      </div>
-      <div class="error-modal-message" id="errorModalMessage"></div>
+  <!-- Live mode warning -->
+  <div class="modal" id="liveWarningModal" role="dialog" aria-modal="true" aria-labelledby="liveWarningTitle" hidden>
+    <div class="modal-panel">
+      <div class="modal-head tone-warning"><i data-lucide="shield-alert"></i><span id="liveWarningTitle" data-i18n="liveMode">Live Mode</span></div>
+      <div class="modal-body"><p class="modal-text" data-i18n="liveWarning"></p></div>
       <div class="modal-actions">
-        <button class="btn btn-primary" onclick="closeErrorModal()" id="errorModalOkBtn" style="background: var(--danger); color: white;">确定</button>
+        <button type="button" class="btn btn-outline" data-close data-autofocus data-i18n="liveCancel">Cancel</button>
+        <button type="button" class="btn btn-warning" id="liveWarningConfirm" data-confirm data-i18n="liveConfirm">Confirm Switch</button>
       </div>
     </div>
   </div>
 
-  <!-- Success Modal -->
-  <div class="modal-overlay" id="successModal" onclick="closeSuccessModal(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div class="success-modal-title">
-        <div class="success-modal-icon">
-          <i data-lucide="check" style="width: 20px; height: 20px;"></i>
-        </div>
-        <span id="successModalTitle">清仓完成</span>
-      </div>
-      <div class="success-modal-summary" id="successModalSummary"></div>
+  <!-- Generic confirm (clear history / clear record) -->
+  <div class="modal" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle" hidden>
+    <div class="modal-panel">
+      <div class="modal-head"><i data-lucide="trash-2"></i><span id="confirmModalTitle"></span></div>
+      <div class="modal-body"><p class="modal-text" id="confirmModalText"></p></div>
       <div class="modal-actions">
-        <button class="btn-success-ok" onclick="closeSuccessModal()" id="successModalOkBtn">确定</button>
+        <button type="button" class="btn btn-outline" data-close data-autofocus data-i18n="cancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmModalOk" data-confirm></button>
       </div>
     </div>
   </div>
 
-  <script>
-    // ── Motion helpers ──
-    const { animate } = Motion;
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  <!-- Error -->
+  <div class="modal" id="errorModal" role="alertdialog" aria-modal="true" aria-labelledby="errorModalTitle" hidden>
+    <div class="modal-panel">
+      <div class="modal-head tone-danger"><i data-lucide="alert-circle"></i><span id="errorModalTitle" data-i18n="error">Error</span></div>
+      <div class="modal-body"><p class="modal-text selectable" id="errorModalMessage"></p></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" data-close data-confirm data-i18n="ok">OK</button>
+      </div>
+    </div>
+  </div>
 
-    function motionAnimate(...args) {
-      if (prefersReducedMotion) return;
-      return animate(...args);
-    }
+  <!-- Success -->
+  <div class="modal" id="successModal" role="dialog" aria-modal="true" aria-labelledby="successModalTitle" hidden>
+    <div class="modal-panel">
+      <div class="modal-head tone-success"><span class="modal-head-icon"><i data-lucide="check"></i></span><span id="successModalTitle"></span></div>
+      <div class="modal-body" id="successModalSummary"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-success" data-close data-confirm data-i18n="ok">OK</button>
+      </div>
+    </div>
+  </div>
 
-    // ── SVG path draw animation ──
-    function animateLogoPaths(svgEl, delay = 0) {
-      if (prefersReducedMotion) {
-        svgEl.querySelectorAll('path').forEach(p => {
-          p.style.strokeDasharray = 'none';
-          p.style.strokeDashoffset = '0';
-        });
-        return;
-      }
-      const paths = svgEl.querySelectorAll('path');
-      paths.forEach((path, i) => {
-        const length = path.getTotalLength();
-        path.style.setProperty('--path-length', length);
-        path.style.strokeDasharray = length;
-        path.style.strokeDashoffset = length;
-        animate(
-          path,
-          { strokeDashoffset: [length, 0] },
-          { duration: 0.6, delay: delay + i * 0.12, easing: [0.34, 1.56, 0.64, 1] }
-        );
-      });
-    }
-
-    // ── Logo subtle breathing (after draw completes) ──
-    function startLogoBreathing(svgEl, delay) {
-      if (prefersReducedMotion) return;
-      setTimeout(() => {
-        animate(
-          svgEl,
-          { opacity: [0.85, 1, 0.85] },
-          { duration: 4, repeat: Infinity, easing: 'ease-in-out' }
-        );
-      }, delay);
-    }
-
-    // ── Theme icon morph animation ──
-    function animateThemeSwitch(outgoing, incoming) {
-      if (prefersReducedMotion) {
-        outgoing.style.display = 'none';
-        incoming.style.display = 'block';
-        return;
-      }
-      animate(outgoing, { rotate: 90, scale: 0, opacity: 0 }, { duration: 0.25, easing: 'ease-in' })
-        .finished.then(() => {
-          outgoing.style.display = 'none';
-          outgoing.style.transform = '';
-          outgoing.style.opacity = '';
-          incoming.style.display = 'block';
-          animate(incoming,
-            { rotate: [-90, 0], scale: [0, 1], opacity: [0, 1] },
-            { duration: 0.4, easing: [0.34, 1.56, 0.64, 1] }
-          );
-        });
-    }
-
-    // ── Button icon hover animations ──
-    function setupButtonHoverAnimations() {
-      if (prefersReducedMotion) return;
-
-      // Chart icon on "View Positions" button
-      const viewBtn = document.querySelector('.btn-primary');
-      if (viewBtn) {
-        const icon = viewBtn.querySelector('.btn-icon');
-        if (icon) {
-          viewBtn.addEventListener('mouseenter', () => {
-            animate(icon, { y: [0, -2, 0] }, { duration: 0.35, easing: 'ease-out' });
-          });
-        }
-      }
-
-      // Zap icon on "Liquidate" button
-      const zapBtn = document.getElementById('liquidateBtn');
-      if (zapBtn) {
-        const icon = zapBtn.querySelector('.btn-icon');
-        if (icon) {
-          zapBtn.addEventListener('mouseenter', () => {
-            animate(icon,
-              { opacity: [1, 0.4, 1, 0.6, 1] },
-              { duration: 0.5, easing: 'ease-in-out' }
-            );
-          });
-        }
-      }
-    }
-
-    // ── Modal spring animation with Motion ──
-    function animateModalIn(overlay, card) {
-      if (prefersReducedMotion) {
-        overlay.style.background = 'rgba(0,0,0,0.6)';
-        overlay.style.backdropFilter = 'blur(4px)';
-        return;
-      }
-      animate(overlay,
-        { background: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.6)'] },
-        { duration: 0.3, easing: 'ease-out' }
-      );
-      animate(card,
-        { scale: [0.92, 1], opacity: [0, 1], y: [16, 0] },
-        { duration: 0.45, easing: [0.34, 1.56, 0.64, 1] }
-      );
-    }
-
-    function animateModalOut(overlay, card, callback) {
-      if (prefersReducedMotion) {
-        callback();
-        return;
-      }
-      animate(card,
-        { scale: [1, 0.95], opacity: [1, 0], y: [0, 8] },
-        { duration: 0.18, easing: 'ease-in' }
-      );
-      animate(overlay,
-        { background: ['rgba(0,0,0,0.6)', 'rgba(0,0,0,0)'] },
-        { duration: 0.2, easing: 'ease-in' }
-      ).finished.then(callback);
-    }
-
-    // ── Check icon draw animation (success state) ──
-    function animateCheckIcon(container) {
-      if (prefersReducedMotion) return;
-      const svg = container.querySelector('svg');
-      if (!svg) return;
-      // Wait for lucide to render, then animate the path
-      requestAnimationFrame(() => {
-        const paths = svg.querySelectorAll('path, polyline, line');
-        paths.forEach((p, i) => {
-          const len = p.getTotalLength ? p.getTotalLength() : 20;
-          p.style.strokeDasharray = len;
-          p.style.strokeDashoffset = len;
-          animate(p, { strokeDashoffset: [len, 0] }, { duration: 0.4, delay: i * 0.1, easing: [0.34, 1.56, 0.64, 1] });
-        });
-      });
-    }
-
-    // Initialize Lucide icons
-    lucide.createIcons();
-
-    // FAQ accordion toggle
-    function toggleFaq(id) {
-      document.getElementById(id).classList.toggle('open');
-    }
-
-    // Demo Mode state (default: ON for safety) — must be before setLang which calls updateModeUI
-    let isDemoMode = localStorage.getItem('demoMode') !== 'false';
-
-    // Language select init
-    document.getElementById('langSelect').value = currentLang;
-    setLang(currentLang);
-
-    // Theme toggle (now using Motion)
-    function toggleTheme() {
-      const html = document.documentElement;
-      const isDark = html.classList.contains('dark');
-
-      // Grab current icon elements (may be <i> or lucide-replaced <svg>)
-      const iconLight = document.getElementById('themeIconLight');
-      const iconDark = document.getElementById('themeIconDark');
-
-      // In dark mode: moon is visible → animate moon out, sun in
-      // In light mode: sun is visible → animate sun out, moon in
-      const outgoing = isDark ? iconDark : iconLight;
-      const incoming = isDark ? iconLight : iconDark;
-
-      animateThemeSwitch(outgoing, incoming);
-
-      // Toggle class + persist
-      if (isDark) {
-        html.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      } else {
-        html.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-      }
-    }
-
-    // Load saved theme
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-      document.getElementById('themeIconLight').style.display = 'block';
-      document.getElementById('themeIconDark').style.display = 'none';
-    } else {
-      document.getElementById('themeIconLight').style.display = 'none';
-      document.getElementById('themeIconDark').style.display = 'block';
-    }
-
-    function updateModeUI() {
-      const toggle = document.getElementById('modeToggle');
-      const label = document.getElementById('modeLabel');
-      const demoNotice = document.querySelector('.demo-notice');
-      const badge = document.querySelector('.badge');
-
-      if (isDemoMode) {
-        toggle.className = 'mode-toggle demo';
-        label.textContent = t('demoMode');
-        if (demoNotice) demoNotice.classList.remove('hidden');
-        if (badge) {
-          badge.classList.remove('live-badge');
-          badge.querySelector('[data-i18n="badge"]').textContent = t('badge');
-        }
-      } else {
-        toggle.className = 'mode-toggle live';
-        label.textContent = t('liveMode');
-        if (demoNotice) demoNotice.classList.add('hidden');
-        if (badge) {
-          badge.classList.add('live-badge');
-          badge.querySelector('[data-i18n="badge"]').textContent = t('liveMode');
-        }
-      }
-    }
-
-    function handleModeToggle() {
-      if (isDemoMode) {
-        // Switching to live mode — show warning
-        document.getElementById('liveWarningTitle').textContent = t('liveMode');
-        document.getElementById('liveWarningText').textContent = t('liveWarning');
-        document.getElementById('liveWarningCancelBtn').textContent = t('liveCancel');
-        document.getElementById('liveWarningConfirmBtn').textContent = t('liveConfirm');
-        const overlay = document.getElementById('liveWarningModal');
-        overlay.classList.add('active');
-        overlay.style.display = 'flex';
-        animateModalIn(overlay, overlay.querySelector('.live-warning-card'));
-        lucide.createIcons();
-      } else {
-        isDemoMode = true;
-        localStorage.setItem('demoMode', 'true');
-        updateModeUI();
-        document.getElementById('positionsCard').classList.remove('active');
-        document.getElementById('configCard').style.display = '';
-        currentPositions = [];
-        selectedSymbols.clear();
-      }
-    }
-
-    function closeLiveWarning(event) {
-      if (event && event.target !== event.currentTarget) return;
-      const overlay = document.getElementById('liveWarningModal');
-      const card = overlay.querySelector('.live-warning-card');
-      animateModalOut(overlay, card, () => {
-        overlay.classList.remove('active');
-        overlay.style.display = '';
-      });
-    }
-
-    function confirmLiveMode() {
-      isDemoMode = false;
-      localStorage.setItem('demoMode', 'false');
-      updateModeUI();
-      closeLiveWarning();
-      document.getElementById('positionsCard').classList.remove('active');
-      document.getElementById('configCard').style.display = '';
-      currentPositions = [];
-    }
-
-    // Initialize mode UI
-    updateModeUI();
-
-    // Credential persistence (localStorage, localhost only)
-    function saveCredential(key, value) {
-      localStorage.setItem('lb_' + key, value);
-    }
-    function restoreCredentials() {
-      ['appKey', 'appSecret', 'accessToken'].forEach(key => {
-        const saved = localStorage.getItem('lb_' + key);
-        if (saved) document.getElementById(key).value = saved;
-      });
-    }
-    restoreCredentials();
-
-    // Mock data
-    const mockPositions = [
-      { symbol: "AAPL.US", quantity: 100, market_price: 185.50, prev_close: 183.20 },
-      { symbol: "TSLA.US", quantity: 50, market_price: 242.30, prev_close: 248.50 },
-      { symbol: "NVDA.US", quantity: 25, market_price: 875.20, prev_close: 875.20 },
-      { symbol: "00700.HK", quantity: 200, market_price: 385.60, prev_close: 380.00 },
-    ];
-
-    let currentPositions = [];
-    let selectedSymbols = new Set();
-
-    function toggleSelectAll(checked) {
-      selectedSymbols = checked ? new Set(currentPositions.map(p => p.symbol)) : new Set();
-      document.querySelectorAll('.pos-row-checkbox').forEach(cb => cb.checked = checked);
-      updateLiquidateBtn();
-    }
-
-    function togglePositionSelect(symbol, checked) {
-      if (checked) {
-        selectedSymbols.add(symbol);
-      } else {
-        selectedSymbols.delete(symbol);
-      }
-      const selectAllCb = document.getElementById('selectAllCheckbox');
-      if (selectAllCb) selectAllCb.checked = selectedSymbols.size === currentPositions.length;
-      updateLiquidateBtn();
-    }
-
-    function updateLiquidateBtn() {
-      const btn = document.getElementById('liquidateBtn');
-      const hasSelection = selectedSymbols.size > 0;
-      btn.disabled = !hasSelection;
-      btn.style.opacity = hasSelection ? '' : '0.5';
-      btn.style.cursor = hasSelection ? '' : 'not-allowed';
-      if (typeof updateConditionalBtn === 'function') updateConditionalBtn();
-    }
-
-    function showLoading(show) {
-      document.getElementById('loading').classList.toggle('active', show);
-    }
-
-    function showAlert(message, type = 'success') {
-      const alert = document.getElementById('alert');
-      alert.className = `alert alert-${type} active`;
-      alert.textContent = message;
-    }
-
-    function hideAlert() {
-      document.getElementById('alert').classList.remove('active');
-    }
-
-    function showErrorModal(message) {
-      document.getElementById('errorModalTitle').textContent = t('error');
-      document.getElementById('errorModalMessage').textContent = message;
-      document.getElementById('errorModalOkBtn').textContent = t('ok');
-      const overlay = document.getElementById('errorModal');
-      overlay.classList.add('active');
-      overlay.style.display = 'flex';
-      animateModalIn(overlay, overlay.querySelector('.modal-card'));
-      lucide.createIcons();
-    }
-
-    function closeErrorModal(event) {
-      if (event && event.target !== event.currentTarget) return;
-      const overlay = document.getElementById('errorModal');
-      const card = overlay.querySelector('.modal-card');
-      animateModalOut(overlay, card, () => {
-        overlay.classList.remove('active');
-        overlay.style.display = '';
-      });
-    }
-
-    function showSuccessModal(soldCount, totalValue, soldPositions) {
-      document.getElementById('successModalTitle').textContent = t('success');
-      document.getElementById('successModalOkBtn').textContent = t('ok');
-
-      const unit = t('stockUnit');
-      let positionsHtml = '';
-      if (soldPositions && soldPositions.length > 0) {
-        positionsHtml = soldPositions.map(pos => {
-          const sym = escapeHtml(pos.symbol);
-          return `
-          <div class="modal-position-item">
-            <span><span class="modal-position-symbol">${sym}</span> × ${pos.quantity}</span>
-            <span class="modal-position-value">${formatCurrency(pos.quantity * pos.market_price, pos.symbol)}</span>
-          </div>`;
-        }).join('');
-      }
-
-      const totalDisplay = soldPositions && soldPositions.length > 0 ? formatTotalValue(soldPositions) : formatCurrency(totalValue);
-      const summaryHtml = `
-        <div style="max-height: 160px; overflow-y: auto; margin-bottom: 10px;">
-          ${positionsHtml}
+  <!-- Keyboard shortcuts -->
+  <div class="modal" id="shortcutsModal" role="dialog" aria-modal="true" aria-labelledby="shortcutsModalTitle" hidden>
+    <div class="modal-panel">
+      <div class="modal-head"><i data-lucide="keyboard"></i><span id="shortcutsModalTitle" data-i18n="shortcutsTitle">Keyboard shortcuts</span></div>
+      <div class="modal-body">
+        <div class="shortcut-list">
+          <div class="shortcut-group" data-i18n="scGroupGeneral">General</div>
+          <div class="sc-label" data-i18n="navPositions">Positions</div><div class="sc-keys"><kbd>⌘</kbd><kbd>1</kbd></div>
+          <div class="sc-label" data-i18n="navOrders">Orders</div><div class="sc-keys"><kbd>⌘</kbd><kbd>2</kbd></div>
+          <div class="sc-label" data-i18n="navSettings">Settings</div><div class="sc-keys"><kbd>⌘</kbd><kbd>3</kbd> <kbd>⌘</kbd><kbd>,</kbd></div>
+          <div class="sc-label" data-i18n="refreshTip">Refresh positions</div><div class="sc-keys"><kbd>⌘</kbd><kbd>R</kbd></div>
+          <div class="sc-label" data-i18n="toggleSidebarTip">Toggle sidebar</div><div class="sc-keys"><kbd>⌘</kbd><kbd>B</kbd></div>
+          <div class="sc-label" data-i18n="toggleDetailsTip">Toggle details</div><div class="sc-keys"><kbd>⌘</kbd><kbd>D</kbd></div>
+          <div class="sc-label" data-i18n="shortcutsTitle">Keyboard shortcuts</div><div class="sc-keys"><kbd>⌘</kbd><kbd>/</kbd></div>
+          <div class="sc-label" data-i18n="scClose">Close dialog / menu</div><div class="sc-keys"><kbd>Esc</kbd></div>
+          <div class="shortcut-group" data-i18n="navPositions">Positions</div>
+          <div class="sc-label" data-i18n="scPrimary">Run the current tab's action</div><div class="sc-keys"><kbd>⌘</kbd><kbd>↩</kbd></div>
+          <div class="sc-label" data-i18n="scMove">Move through the list</div><div class="sc-keys"><kbd>↑</kbd><kbd>↓</kbd></div>
+          <div class="sc-label" data-i18n="scToggle">Include / exclude position</div><div class="sc-keys"><kbd>Space</kbd></div>
+          <div class="sc-label" data-i18n="selectAll">Select All</div><div class="sc-keys"><kbd>⌘</kbd><kbd>A</kbd></div>
+          <div class="sc-label" data-i18n="scFilter">Filter positions</div><div class="sc-keys"><kbd>⌘</kbd><kbd>F</kbd></div>
         </div>
-        <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border); font-size: 14px; font-weight: 600;">
-          <span>${t('soldCount')}: ${soldCount}${unit ? ' ' + unit : ''}</span>
-          <span style="font-family: 'Geist Mono', monospace; color: var(--success);">${totalDisplay}</span>
-        </div>
-      `;
-      document.getElementById('successModalSummary').innerHTML = summaryHtml;
-
-      const overlay = document.getElementById('successModal');
-      overlay.classList.add('active');
-      overlay.style.display = 'flex';
-      animateModalIn(overlay, overlay.querySelector('.modal-card'));
-      lucide.createIcons();
-
-      // Animate the check icon inside the modal
-      const iconContainer = overlay.querySelector('.success-modal-icon');
-      if (iconContainer) {
-        requestAnimationFrame(() => animateCheckIcon(iconContainer));
-      }
-    }
-
-    function closeSuccessModal(event) {
-      if (event && event.target !== event.currentTarget) return;
-      const overlay = document.getElementById('successModal');
-      const card = overlay.querySelector('.modal-card');
-      animateModalOut(overlay, card, () => {
-        overlay.classList.remove('active');
-        overlay.style.display = '';
-      });
-    }
-
-    function formatCurrency(value, symbol) {
-      const currency = symbol ? getCurrencyForSymbol(symbol) : 'USD';
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(value);
-    }
-
-    function getCurrencyForSymbol(symbol) {
-      if (typeof symbol !== 'string') return 'USD';
-      if (symbol.endsWith('.HK')) return 'HKD';
-      if (symbol.endsWith('.SG')) return 'SGD';
-      return 'USD';
-    }
-
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.appendChild(document.createTextNode(str));
-      return div.innerHTML;
-    }
-
-    function setViewBtnLoading(loading) {
-      const btn = document.getElementById('viewPositionsBtn');
-      if (!btn) return;
-      if (loading) {
-        btn.classList.add('btn-loading');
-        btn.innerHTML = `<span class="btn-spinner"></span><span>${t('loading')}</span>`;
-      } else {
-        btn.classList.remove('btn-loading');
-        btn.innerHTML = `<i data-lucide="bar-chart-3" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="viewPositions">${t('viewPositions')}</span>`;
-        lucide.createIcons();
-      }
-    }
-
-    async function fetchPositions() {
-      const appKey = document.getElementById('appKey').value.trim();
-      const appSecret = document.getElementById('appSecret').value.trim();
-      const accessToken = document.getElementById('accessToken').value.trim();
-
-      // Demo mode: use mock data directly, no fetch needed
-      if (isDemoMode) {
-        hideAlert();
-        setViewBtnLoading(true);
-        await new Promise(r => setTimeout(r, 600));
-
-        currentPositions = mockPositions;
-        const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
-        renderPositions(currentPositions, totalValue);
-
-        document.getElementById('positionsCard').classList.add('active');
-        document.getElementById('configCard').style.display = 'none';
-        setViewBtnLoading(false);
-        lucide.createIcons();
-        setupButtonHoverAnimations();
-        return;
-      }
-
-      if (!appKey || !appSecret || !accessToken) {
-        showErrorModal(t('apiRequired'));
-        return;
-      }
-
-      hideAlert();
-      setViewBtnLoading(true);
-
-      try {
-        const resp = await fetch('/api/positions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ app_key: appKey, app_secret: appSecret, access_token: accessToken })
-        });
-
-        // Read response as text first to avoid "Unexpected end of JSON input"
-        const text = await resp.text();
-        if (!text) {
-          throw new Error('Empty response from server');
-        }
-
-        // Safe JSON parse
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          throw new Error('Invalid JSON response: ' + text.substring(0, 100));
-        }
-
-        if (!resp.ok) throw new Error(data.error || 'API request failed');
-
-        currentPositions = data.positions || [];
-        const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
-        renderPositions(currentPositions, totalValue);
-
-        document.getElementById('positionsCard').classList.add('active');
-        document.getElementById('configCard').style.display = 'none';
-      } catch (err) {
-        showErrorModal(err.message);
-      } finally {
-        setViewBtnLoading(false);
-        lucide.createIcons();
-        setupButtonHoverAnimations();
-      }
-    }
-
-    async function refreshPositions() {
-      const btn = document.getElementById('refreshBtn');
-      if (btn.classList.contains('spinning')) return;
-      btn.classList.add('spinning');
-      try {
-        await fetchPositions();
-      } finally {
-        btn.classList.remove('spinning');
-      }
-    }
-
-    function formatTotalValue(positions) {
-      const currencies = new Set(positions.map(p => getCurrencyForSymbol(p.symbol)));
-      const total = positions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
-      if (currencies.size === 1) {
-        return formatCurrency(total, positions[0].symbol);
-      }
-      return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(total);
-    }
-
-    function formatDailyPnl(positions) {
-      const byCurrency = {};
-      positions.forEach(p => {
-        if (p.prev_close == null || p.prev_close <= 0) return;
-        const cur = getCurrencyForSymbol(p.symbol);
-        byCurrency[cur] = (byCurrency[cur] || 0) + (p.market_price - p.prev_close) * p.quantity;
-      });
-      const entries = Object.entries(byCurrency);
-      if (entries.length === 0) return '';
-      const parts = entries.map(([cur, val]) => {
-        const sign = val > 0 ? '+' : '';
-        const color = val > 0 ? 'var(--success)' : val < 0 ? 'var(--danger)' : 'var(--muted)';
-        const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: cur }).format(val);
-        return `<span style="color:${color}">${sign}${formatted}</span>`;
-      });
-      return `${t('dailyPnl')}: ${parts.join(' / ')}`;
-    }
-
-    function renderPositions(positions, totalValue) {
-      const tbody = document.querySelector('#positionsTable tbody');
-      document.getElementById('totalValue').textContent = positions.length > 0 ? formatTotalValue(positions) : formatCurrency(0);
-      const pnlEl = document.getElementById('dailyPnl');
-      pnlEl.innerHTML = positions.length > 0 ? formatDailyPnl(positions) : '';
-
-      // Default: select all
-      selectedSymbols = new Set(positions.map(p => p.symbol));
-      const selectAllCb = document.getElementById('selectAllCheckbox');
-      if (selectAllCb) selectAllCb.checked = positions.length > 0;
-
-      if (positions.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No positions</td></tr>`;
-        updateLiquidateBtn();
-        return;
-      }
-
-      tbody.innerHTML = positions.map(pos => {
-        const sym = escapeHtml(pos.symbol);
-        const changeVal = (pos.prev_close != null && pos.prev_close > 0) ? pos.market_price - pos.prev_close : null;
-        const changeRate = changeVal != null ? (changeVal / pos.prev_close) * 100 : null;
-        let changeHtml = '<span class="mono" style="color: var(--muted);">—</span>';
-        if (changeVal != null) {
-          const sign = changeVal > 0 ? '+' : '';
-          const color = changeVal > 0 ? 'var(--success)' : changeVal < 0 ? 'var(--danger)' : 'var(--muted)';
-          changeHtml = `<span class="mono" style="color: ${color};">${sign}${changeVal.toFixed(2)}<br><small>${sign}${changeRate.toFixed(2)}%</small></span>`;
-        }
-        return `
-        <tr>
-          <td class="pos-checkbox-td"><input type="checkbox" class="pos-checkbox pos-row-checkbox" checked onchange="togglePositionSelect('${sym}', this.checked)"></td>
-          <td class="symbol">${sym}</td>
-          <td class="mono">${pos.quantity}</td>
-          <td class="mono">${formatCurrency(pos.market_price, pos.symbol)}</td>
-          <td class="mono" style="text-align: right;">${changeHtml}</td>
-          <td class="mono" style="text-align: right;">${formatCurrency(pos.quantity * pos.market_price, pos.symbol)}</td>
-        </tr>
-      `}).join('');
-      updateLiquidateBtn();
-    }
-
-    // Modal i18n
-    const modalI18n = {
-      'zh-CN': { title: '确认清仓？', total: '总市值', cancel: '取消', confirm: '确认卖出', success: '清仓完成', warning: '将按照市价卖出以下持仓', selected: '选中持仓' },
-      'zh-TW': { title: '確認清倉？', total: '總市值', cancel: '取消', confirm: '確認賣出', success: '清倉完成', warning: '將按照市價賣出以下持倉', selected: '選中持倉' },
-      'en': { title: 'Confirm Liquidation?', total: 'Total Value', cancel: 'Cancel', confirm: 'Confirm Sell', success: 'Liquidation Complete', warning: 'Will be sold at market price', selected: 'Selected Positions' }
-    };
-
-    let liquidateRatio = 1;
-    let buybackRatio = 1;
-
-    function getAdjustedQty(qty, ratio) {
-      if (ratio >= 1) return qty;
-      return Math.max(1, Math.floor(qty * ratio));
-    }
-
-    function renderRatioSelector(containerId, currentRatio, setFn, isSuccess) {
-      const ratios = [
-        { value: 1, label: t('ratioAll') },
-        { value: 0.5, label: t('ratioHalf') },
-        { value: 1/3, label: t('ratioThird') },
-        { value: 0.25, label: t('ratioQuarter') }
-      ];
-      const activeClass = isSuccess ? 'active-success' : 'active';
-      document.getElementById(containerId).innerHTML = ratios.map(r =>
-        `<button class="ratio-btn${Math.abs(r.value - currentRatio) < 0.01 ? ' ' + activeClass : ''}" onclick="${setFn}(${r.value})">${r.label}</button>`
-      ).join('');
-    }
-
-    function updateLiquidateModalContent() {
-      const selected = currentPositions.filter(p => selectedSymbols.has(p.symbol));
-      document.getElementById('modalPositions').innerHTML = selected.map(pos => {
-        const sym = escapeHtml(pos.symbol);
-        const qty = getAdjustedQty(pos.quantity, liquidateRatio);
-        return `
-        <div class="modal-position-item">
-          <span><span class="modal-position-symbol">${sym}</span> × ${qty}</span>
-          <span class="modal-position-value">${formatCurrency(qty * pos.market_price, pos.symbol)}</span>
-        </div>
-      `}).join('');
-      const adjustedPositions = selected.map(p => ({ ...p, quantity: getAdjustedQty(p.quantity, liquidateRatio) }));
-      document.getElementById('modalTotalValue').textContent = adjustedPositions.length > 0 ? formatTotalValue(adjustedPositions) : formatCurrency(0);
-    }
-
-    function setLiquidateRatio(ratio) {
-      liquidateRatio = ratio;
-      renderRatioSelector('liquidateRatioSelector', liquidateRatio, 'setLiquidateRatio', false);
-      updateLiquidateModalContent();
-    }
-
-    function setBuybackRatio(ratio) {
-      buybackRatio = ratio;
-      renderRatioSelector('buybackRatioSelector', buybackRatio, 'setBuybackRatio', true);
-      updateBuybackModalContent();
-    }
-
-    function updateBuybackModalContent() {
-      const saved = getSavedPositions();
-      document.getElementById('buybackModalPositions').innerHTML = saved.map(pos => {
-        const qty = getAdjustedQty(pos.quantity, buybackRatio);
-        return `
-        <div class="modal-position-row">
-          <span class="modal-position-symbol">${escapeHtml(pos.symbol)}</span>
-          <span class="modal-position-qty">${qty}${t('shareUnit')}</span>
-        </div>
-      `}).join('');
-      document.getElementById('buybackModalTotalValue').textContent = `${saved.length} ${t('stockUnit')}`;
-    }
-
-    function openLiquidateModal() {
-      const selected = currentPositions.filter(p => selectedSymbols.has(p.symbol));
-      if (selected.length === 0) return;
-
-      liquidateRatio = 1;
-      const lang = modalI18n[currentLang] || modalI18n['en'];
-      document.getElementById('modalTitle').textContent = lang.title;
-      document.getElementById('modalWarningText').textContent = lang.warning;
-      document.getElementById('modalTotalLabel').textContent = lang.total;
-      document.getElementById('modalCancelBtn').textContent = lang.cancel;
-      document.getElementById('modalConfirmBtn').textContent = lang.confirm;
-
-      renderRatioSelector('liquidateRatioSelector', liquidateRatio, 'setLiquidateRatio', false);
-      updateLiquidateModalContent();
-
-      const overlay = document.getElementById('liquidateModal');
-      overlay.classList.add('active');
-      overlay.style.display = 'flex';
-      animateModalIn(overlay, overlay.querySelector('.modal-card'));
-      lucide.createIcons();
-    }
-
-    function closeLiquidateModal(event) {
-      if (event && event.target !== event.currentTarget) return;
-      const overlay = document.getElementById('liquidateModal');
-      const card = overlay.querySelector('.modal-card');
-      animateModalOut(overlay, card, () => {
-        overlay.classList.remove('active');
-        overlay.style.display = '';
-      });
-    }
-
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        closeLiquidateModal();
-        closeBuybackModal();
-        closeConditionalModal();
-        closeLiveWarning();
-        closeErrorModal();
-        closeSuccessModal();
-      }
-    });
-
-    async function confirmLiquidate() {
-      const ratio = liquidateRatio;
-      closeLiquidateModal();
-
-      const liquidateBtn = document.getElementById('liquidateBtn');
-      liquidateBtn.classList.add('btn-loading');
-      liquidateBtn.innerHTML = `<span class="btn-spinner" style="border-top-color: white;"></span><span>${t('loading')}</span>`;
-
-      const lang = modalI18n[currentLang] || modalI18n['en'];
-      const selectedPositions = currentPositions.filter(p => selectedSymbols.has(p.symbol));
-      const soldPositions = selectedPositions.map(p => ({
-        ...p,
-        sellQty: getAdjustedQty(p.quantity, ratio)
-      }));
-
-      if (isDemoMode) {
-        await new Promise(r => setTimeout(r, 800));
-        handleLiquidateSuccess(soldPositions, lang);
-        return;
-      }
-
-      const appKey = document.getElementById('appKey').value.trim();
-      const appSecret = document.getElementById('appSecret').value.trim();
-      const accessToken = document.getElementById('accessToken').value.trim();
-
-      try {
-        const resp = await fetch('/api/liquidate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            app_key: appKey,
-            app_secret: appSecret,
-            access_token: accessToken,
-            positions: soldPositions.map(p => ({ symbol: p.symbol, quantity: p.sellQty }))
-          })
-        });
-
-        const text = await resp.text();
-        if (!text) throw new Error('Empty response from server');
-
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          throw new Error('Invalid JSON response: ' + text.substring(0, 100));
-        }
-
-        if (!resp.ok) throw new Error(data.error || 'Liquidation request failed');
-
-        const succeededSymbols = new Set(
-          (data.results || []).filter(r => r.success).map(r => r.symbol)
-        );
-        const failedResults = (data.results || []).filter(r => !r.success);
-
-        const successfulPositions = soldPositions.filter(p => succeededSymbols.has(p.symbol));
-        handleLiquidateSuccess(successfulPositions, lang);
-
-        if (failedResults.length > 0) {
-          const failedMsg = failedResults.map(r => `${r.symbol}: ${r.error}`).join('\n');
-          showErrorModal(t('partialFailure') + '\n' + failedMsg);
-        }
-      } catch (err) {
-        liquidateBtn.classList.remove('btn-loading');
-        liquidateBtn.innerHTML = `<i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="liquidate">${t('liquidate')}</span>`;
-        lucide.createIcons();
-        showErrorModal(err.message);
-      }
-    }
-
-    function handleLiquidateSuccess(soldPositions, lang) {
-      const soldCount = soldPositions.length;
-      const soldQtyMap = new Map(soldPositions.map(p => [p.symbol, p.sellQty || p.quantity]));
-      const soldValue = soldPositions.reduce((sum, p) => sum + ((p.sellQty || p.quantity) * p.market_price), 0);
-
-      // Save liquidated positions snapshot for buy-back
-      const snapshot = soldPositions.map(p => ({ symbol: p.symbol, quantity: p.sellQty || p.quantity }));
-      const existing = JSON.parse(localStorage.getItem('lastLiquidatedPositions') || '[]');
-      const merged = [...existing];
-      for (const s of snapshot) {
-        const idx = merged.findIndex(m => m.symbol === s.symbol);
-        if (idx >= 0) merged[idx].quantity += s.quantity;
-        else merged.push({ ...s });
-      }
-      localStorage.setItem('lastLiquidatedPositions', JSON.stringify(merged));
-
-      // Update positions: reduce quantity or remove if fully sold
-      for (const p of currentPositions) {
-        const soldQty = soldQtyMap.get(p.symbol);
-        if (soldQty != null) {
-          p.quantity -= soldQty;
-        }
-      }
-      currentPositions = currentPositions.filter(p => p.quantity > 0);
-      selectedSymbols.clear();
-      const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
-      renderPositions(currentPositions, totalValue);
-
-      const btn = document.getElementById('liquidateBtn');
-      btn.classList.remove('btn-loading');
-
-      if (currentPositions.length === 0) {
-        btn.innerHTML = `<i data-lucide="check" class="btn-icon" style="width: 16px; height: 16px;"></i><span>${lang.success}</span>`;
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-        btn.style.cursor = 'not-allowed';
-        animateCheckIcon(btn);
-      } else {
-        btn.innerHTML = `<i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="liquidate">${t('liquidate')}</span>`;
-      }
-
-      updateBuybackBtn();
-      lucide.createIcons();
-      const displayPositions = soldPositions.map(p => ({ ...p, quantity: p.sellQty || p.quantity }));
-      showSuccessModal(soldCount, soldValue, displayPositions);
-    }
-
-    // ── Buy Back functions ──
-    function getSavedPositions() {
-      try { return JSON.parse(localStorage.getItem('lastLiquidatedPositions') || '[]'); }
-      catch { return []; }
-    }
-
-    function updateBuybackBtn() {
-      const btn = document.getElementById('buybackBtn');
-      const saved = getSavedPositions();
-      btn.style.display = saved.length > 0 ? 'flex' : 'none';
-      btn.innerHTML = `<i data-lucide="shopping-cart" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="buyback">${t('buyback')}</span>`;
-      btn.disabled = false;
-      btn.style.opacity = '1';
-      btn.style.cursor = 'pointer';
-      lucide.createIcons();
-    }
-
-    function openBuybackModal() {
-      const saved = getSavedPositions();
-      if (saved.length === 0) return;
-
-      buybackRatio = 1;
-      document.getElementById('buybackModalTitle').textContent = t('buybackConfirmTitle');
-      document.getElementById('buybackModalWarning').textContent = t('buybackWarning');
-      document.getElementById('buybackPriceNote').textContent = t('buybackPriceNote');
-      document.getElementById('buybackModalTotalLabel').textContent = t('selectedPositions');
-      document.getElementById('buybackModalCancelBtn').textContent = modalI18n[currentLang]?.cancel || 'Cancel';
-      document.getElementById('buybackModalConfirmBtn').textContent = t('buybackConfirm');
-
-      renderRatioSelector('buybackRatioSelector', buybackRatio, 'setBuybackRatio', true);
-      updateBuybackModalContent();
-
-      const overlay = document.getElementById('buybackModal');
-      overlay.classList.add('active');
-    }
-
-    function closeBuybackModal(e) {
-      if (e && e.target !== e.currentTarget) return;
-      const overlay = document.getElementById('buybackModal');
-      overlay.classList.remove('active');
-    }
-
-    async function confirmBuyback() {
-      const ratio = buybackRatio;
-      closeBuybackModal();
-      const saved = getSavedPositions();
-      if (saved.length === 0) return;
-
-      const buyPositions = saved.map(p => ({
-        ...p,
-        buyQty: getAdjustedQty(p.quantity, ratio)
-      }));
-
-      const buybackBtn = document.getElementById('buybackBtn');
-      buybackBtn.classList.add('btn-loading');
-      buybackBtn.innerHTML = `<span class="btn-spinner" style="border-top-color: white;"></span><span>${t('loading')}</span>`;
-
-      if (isDemoMode) {
-        await new Promise(r => setTimeout(r, 800));
-        handleBuybackSuccess(buyPositions);
-        return;
-      }
-
-      const appKey = document.getElementById('appKey').value.trim();
-      const appSecret = document.getElementById('appSecret').value.trim();
-      const accessToken = document.getElementById('accessToken').value.trim();
-
-      try {
-        const resp = await fetch('/api/buyback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            app_key: appKey,
-            app_secret: appSecret,
-            access_token: accessToken,
-            positions: buyPositions.map(p => ({ symbol: p.symbol, quantity: p.buyQty }))
-          })
-        });
-
-        const text = await resp.text();
-        if (!text) throw new Error('Empty response from server');
-
-        let data;
-        try { data = JSON.parse(text); }
-        catch (e) { throw new Error('Invalid JSON response: ' + text.substring(0, 100)); }
-
-        if (!resp.ok) throw new Error(data.error || 'Buy back request failed');
-
-        const succeededSymbols = new Set(
-          (data.results || []).filter(r => r.success).map(r => r.symbol)
-        );
-        const failedResults = (data.results || []).filter(r => !r.success);
-
-        const successfulPositions = buyPositions.filter(p => succeededSymbols.has(p.symbol));
-        handleBuybackSuccess(successfulPositions);
-
-        if (failedResults.length > 0) {
-          const failedMsg = failedResults.map(r => `${r.symbol}: ${r.error}`).join('\n');
-          showErrorModal(t('buybackPartialFailure') + '\n' + failedMsg);
-        }
-      } catch (err) {
-        buybackBtn.classList.remove('btn-loading');
-        buybackBtn.innerHTML = `<i data-lucide="shopping-cart" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="buyback">${t('buyback')}</span>`;
-        lucide.createIcons();
-        showErrorModal(err.message);
-      }
-    }
-
-    function handleBuybackSuccess(boughtPositions) {
-      const buyQtyMap = new Map(boughtPositions.map(p => [p.symbol, p.buyQty || p.quantity]));
-
-      // Update snapshot: reduce quantity or remove if fully bought back
-      const saved = getSavedPositions();
-      const remaining = [];
-      for (const p of saved) {
-        const boughtQty = buyQtyMap.get(p.symbol);
-        if (boughtQty != null) {
-          const left = p.quantity - boughtQty;
-          if (left > 0) remaining.push({ ...p, quantity: left });
-        } else {
-          remaining.push(p);
-        }
-      }
-      if (remaining.length === 0) {
-        localStorage.removeItem('lastLiquidatedPositions');
-      } else {
-        localStorage.setItem('lastLiquidatedPositions', JSON.stringify(remaining));
-      }
-
-      const buybackBtn = document.getElementById('buybackBtn');
-      buybackBtn.classList.remove('btn-loading');
-
-      updateBuybackBtn();
-
-      const liqBtn = document.getElementById('liquidateBtn');
-      liqBtn.disabled = false;
-      liqBtn.style.opacity = '1';
-      liqBtn.style.cursor = 'pointer';
-      liqBtn.innerHTML = `<i data-lucide="zap" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="liquidate">${t('liquidate')}</span>`;
-
-      lucide.createIcons();
-
-      const count = boughtPositions.length;
-      const displayPositions = boughtPositions.map(p => ({ ...p, quantity: p.buyQty || p.quantity }));
-      const summaryHtml = `
-        <div style="text-align: center; padding: 8px 0;">
-          <div style="font-size: 14px; color: var(--muted); margin-bottom: 4px;">${t('boughtCount')}</div>
-          <div style="font-size: 24px; font-weight: 700; color: var(--success);">${count} ${t('stockUnit')}</div>
-          <div style="margin-top: 12px; font-size: 13px; color: var(--muted);">
-            ${displayPositions.map(p => `${escapeHtml(p.symbol)} × ${p.quantity}`).join('<br>')}
-          </div>
-        </div>
-      `;
-      document.getElementById('successModalTitle').textContent = t('buybackSuccess');
-      document.getElementById('successModalOkBtn').textContent = t('ok');
-      document.getElementById('successModalSummary').innerHTML = summaryHtml;
-      const overlay = document.getElementById('successModal');
-      overlay.classList.add('active');
-
-      if (!isDemoMode) {
-        setTimeout(() => refreshPositions(), 1000);
-      } else {
-        for (const p of boughtPositions) {
-          const qty = p.buyQty || p.quantity;
-          const existing = currentPositions.find(cp => cp.symbol === p.symbol);
-          if (existing) {
-            existing.quantity += qty;
-          } else {
-            const mock = mockPositions.find(m => m.symbol === p.symbol);
-            if (mock) currentPositions.push({ ...mock, quantity: qty });
-          }
-        }
-        const totalValue = currentPositions.reduce((sum, p) => sum + (p.quantity * p.market_price), 0);
-        renderPositions(currentPositions, totalValue);
-      }
-    }
-
-    function clearBuybackSnapshot() {
-      localStorage.removeItem('lastLiquidatedPositions');
-      updateBuybackBtn();
-    }
-
-    // ── Conditional Order functions ──
-    let condOrderType = 'stop-loss';
-    let condTimeInForce = 'Day';
-    let condRatio = 1;
-
-    function updateConditionalBtn() {
-      const btn = document.getElementById('conditionalBtn');
-      const hasSelection = selectedSymbols.size > 0;
-      btn.style.display = hasSelection ? 'flex' : 'none';
-      btn.innerHTML = `<i data-lucide="shield" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="conditionalOrder">${t('conditionalOrder')}</span>`;
-      lucide.createIcons();
-    }
-
-    function setCondOrderType(type) {
-      condOrderType = type;
-      renderCondTypeSelector();
-      updateConditionalPreview();
-    }
-
-    function setCondTimeInForce(tif) {
-      condTimeInForce = tif;
-      renderCondTifSelector();
-    }
-
-    function setCondRatio(ratio) {
-      condRatio = ratio;
-      renderRatioSelector('condRatioSelector', condRatio, 'setCondRatio', false);
-      document.getElementById('condRatioSelector').querySelectorAll('.ratio-btn').forEach(btn => {
-        if (btn.classList.contains('active')) {
-          btn.classList.remove('active');
-          btn.classList.add('active-warning');
-        }
-      });
-      updateConditionalPreview();
-    }
-
-    function renderCondTypeSelector() {
-      const types = [
-        { value: 'stop-loss', label: t('stopLoss') },
-        { value: 'take-profit', label: t('takeProfit') },
-        { value: 'trailing-stop', label: t('trailingStop') }
-      ];
-      document.getElementById('condTypeSelector').innerHTML = types.map(tp =>
-        `<button class="ratio-btn${tp.value === condOrderType ? ' active-warning' : ''}" onclick="setCondOrderType('${tp.value}')">${tp.label}</button>`
-      ).join('');
-    }
-
-    function renderCondTifSelector() {
-      const tifs = [
-        { value: 'Day', label: t('condTifDay') },
-        { value: 'GoodTilCanceled', label: t('condTifGtc') }
-      ];
-      document.getElementById('condTifSelector').innerHTML = tifs.map(tf =>
-        `<button class="ratio-btn${tf.value === condTimeInForce ? ' active-warning' : ''}" onclick="setCondTimeInForce('${tf.value}')">${tf.label}</button>`
-      ).join('');
-    }
-
-    function updateConditionalPreview() {
-      const pct = parseFloat(document.getElementById('condPctInput').value) || 0;
-      const selected = currentPositions.filter(p => selectedSymbols.has(p.symbol));
-      const container = document.getElementById('condPreviewList');
-
-      if (pct <= 0 || pct >= 100 || selected.length === 0) {
-        container.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--muted); font-size: 13px;">—</div>';
-        return;
-      }
-
-      container.innerHTML = selected.map(pos => {
-        const sym = escapeHtml(pos.symbol);
-        const qty = getAdjustedQty(pos.quantity, condRatio);
-        const price = pos.market_price;
-
-        let triggerHtml;
-        if (condOrderType === 'trailing-stop') {
-          triggerHtml = `<span style="color: var(--foreground);">${t('condTrailingPct')}: ${pct}%</span>`;
-        } else {
-          const factor = condOrderType === 'stop-loss' ? (1 - pct / 100) : (1 + pct / 100);
-          const triggerPrice = (price * factor).toFixed(2);
-          const color = condOrderType === 'stop-loss' ? 'var(--danger)' : 'var(--success)';
-          triggerHtml = `<span style="font-family: 'Geist Mono', monospace;">${formatCurrency(price, pos.symbol)}</span>` +
-            `<span class="cond-preview-arrow">→</span>` +
-            `<span style="font-family: 'Geist Mono', monospace; color: ${color};">${formatCurrency(parseFloat(triggerPrice), pos.symbol)}</span>`;
-        }
-
-        return `<div class="cond-preview-item">
-          <span><span class="modal-position-symbol">${sym}</span> × ${qty}</span>
-          <span>${triggerHtml}</span>
-        </div>`;
-      }).join('');
-    }
-
-    function openConditionalModal() {
-      const selected = currentPositions.filter(p => selectedSymbols.has(p.symbol));
-      if (selected.length === 0) return;
-
-      condOrderType = 'stop-loss';
-      condTimeInForce = 'Day';
-      condRatio = 1;
-      document.getElementById('condPctInput').value = '5';
-
-      document.getElementById('condModalTitle').textContent = t('conditionalOrder');
-      document.getElementById('condModalWarning').textContent = t('condWarning');
-      document.getElementById('condPctLabel').textContent = t('condPercentage');
-      document.getElementById('condTifLabel').textContent = t('condTimeInForce');
-      document.getElementById('condPreviewLabel').textContent = t('condPreview');
-      document.getElementById('condCancelBtn').textContent = modalI18n[currentLang]?.cancel || 'Cancel';
-      document.getElementById('condSubmitBtn').textContent = t('condSubmit');
-
-      renderCondTypeSelector();
-      renderCondTifSelector();
-      renderRatioSelector('condRatioSelector', condRatio, 'setCondRatio', false);
-      document.getElementById('condRatioSelector').querySelectorAll('.ratio-btn').forEach(btn => {
-        if (btn.classList.contains('active')) {
-          btn.classList.remove('active');
-          btn.classList.add('active-warning');
-        }
-      });
-      updateConditionalPreview();
-
-      const overlay = document.getElementById('conditionalModal');
-      overlay.classList.add('active');
-      overlay.style.display = 'flex';
-      animateModalIn(overlay, overlay.querySelector('.modal-card'));
-      lucide.createIcons();
-    }
-
-    function closeConditionalModal(event) {
-      if (event && event.target !== event.currentTarget) return;
-      const overlay = document.getElementById('conditionalModal');
-      const card = overlay.querySelector('.modal-card');
-      animateModalOut(overlay, card, () => {
-        overlay.classList.remove('active');
-        overlay.style.display = '';
-      });
-    }
-
-    async function confirmConditionalOrder() {
-      const pct = parseFloat(document.getElementById('condPctInput').value) || 0;
-      if (pct <= 0 || pct >= 100) return;
-
-      const ratio = condRatio;
-      const type = condOrderType;
-      const tif = condTimeInForce;
-      closeConditionalModal();
-
-      const selected = currentPositions.filter(p => selectedSymbols.has(p.symbol));
-      if (selected.length === 0) return;
-
-      const condBtn = document.getElementById('conditionalBtn');
-      condBtn.classList.add('btn-loading');
-      condBtn.innerHTML = `<span class="btn-spinner" style="border-top-color: var(--foreground);"></span><span>${t('loading')}</span>`;
-
-      const orderPositions = selected.map(p => ({
-        symbol: p.symbol,
-        quantity: getAdjustedQty(p.quantity, ratio),
-        currentPrice: p.market_price
-      }));
-
-      if (isDemoMode) {
-        await new Promise(r => setTimeout(r, 800));
-        handleConditionalSuccess(orderPositions, type, pct);
-        return;
-      }
-
-      const appKey = document.getElementById('appKey').value.trim();
-      const appSecret = document.getElementById('appSecret').value.trim();
-      const accessToken = document.getElementById('accessToken').value.trim();
-
-      try {
-        const resp = await fetch('/api/conditional-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            app_key: appKey,
-            app_secret: appSecret,
-            access_token: accessToken,
-            positions: orderPositions,
-            orderConfig: { type, percentage: pct, timeInForce: tif }
-          })
-        });
-
-        const text = await resp.text();
-        if (!text) throw new Error('Empty response from server');
-
-        let data;
-        try { data = JSON.parse(text); }
-        catch (e) { throw new Error('Invalid JSON response: ' + text.substring(0, 100)); }
-
-        if (!resp.ok) throw new Error(data.error || 'Conditional order request failed');
-
-        const succeededPositions = orderPositions.filter(p =>
-          (data.results || []).some(r => r.success && r.symbol === p.symbol)
-        );
-        const failedResults = (data.results || []).filter(r => !r.success);
-
-        handleConditionalSuccess(succeededPositions, type, pct);
-
-        if (failedResults.length > 0) {
-          const failedMsg = failedResults.map(r => `${r.symbol}: ${r.error}`).join('\n');
-          showErrorModal(t('condPartialFailure') + '\n' + failedMsg);
-        }
-      } catch (err) {
-        condBtn.classList.remove('btn-loading');
-        condBtn.innerHTML = `<i data-lucide="shield" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="conditionalOrder">${t('conditionalOrder')}</span>`;
-        lucide.createIcons();
-        showErrorModal(err.message);
-      }
-    }
-
-    function handleConditionalSuccess(positions, type, pct) {
-      const condBtn = document.getElementById('conditionalBtn');
-      condBtn.classList.remove('btn-loading');
-      condBtn.innerHTML = `<i data-lucide="shield" class="btn-icon" style="width: 16px; height: 16px;"></i><span data-i18n="conditionalOrder">${t('conditionalOrder')}</span>`;
-      lucide.createIcons();
-
-      const count = positions.length;
-      const typeLabel = type === 'stop-loss' ? t('stopLoss') : type === 'take-profit' ? t('takeProfit') : t('trailingStop');
-
-      const detailHtml = positions.map(p => {
-        const sym = escapeHtml(p.symbol);
-        let info;
-        if (type === 'trailing-stop') {
-          info = `${t('condTrailingPct')}: ${pct}%`;
-        } else {
-          const factor = type === 'stop-loss' ? (1 - pct / 100) : (1 + pct / 100);
-          const trigger = (p.currentPrice * factor).toFixed(2);
-          info = `${formatCurrency(p.currentPrice, p.symbol)} → ${formatCurrency(parseFloat(trigger), p.symbol)}`;
-        }
-        return `${sym} × ${p.quantity} (${info})`;
-      }).join('<br>');
-
-      const summaryHtml = `
-        <div style="text-align: center; padding: 8px 0;">
-          <div style="font-size: 14px; color: var(--muted); margin-bottom: 4px;">${t('condOrderCount')}</div>
-          <div style="font-size: 24px; font-weight: 700; color: var(--foreground);">${count} × ${typeLabel}</div>
-          <div style="margin-top: 12px; font-size: 13px; color: var(--muted);">
-            ${detailHtml}
-          </div>
-        </div>
-      `;
-      document.getElementById('successModalTitle').textContent = t('condSuccess');
-      document.getElementById('successModalOkBtn').textContent = t('ok');
-      document.getElementById('successModalSummary').innerHTML = summaryHtml;
-      const overlay = document.getElementById('successModal');
-      overlay.classList.add('active');
-      overlay.style.display = 'flex';
-      animateModalIn(overlay, overlay.querySelector('.modal-card'));
-      lucide.createIcons();
-      const iconContainer = overlay.querySelector('.success-modal-icon');
-      if (iconContainer) requestAnimationFrame(() => animateCheckIcon(iconContainer));
-    }
-
-    // ── Init: run logo draw animations on page load ──
-    window.addEventListener('DOMContentLoaded', () => {
-      const headerLogo = document.getElementById('headerLogo');
-      const footerLogo = document.getElementById('footerLogo');
-      if (headerLogo) {
-        animateLogoPaths(headerLogo, 0.2);
-        startLogoBreathing(headerLogo, 1200);
-      }
-      if (footerLogo) {
-        animateLogoPaths(footerLogo, 0.6);
-        startLogoBreathing(footerLogo, 1600);
-      }
-      setupButtonHoverAnimations();
-      updateBuybackBtn();
-    });
-
-    // Self-test on load
-    (function test() {
-      console.log('Liquidator tests:');
-
-      // Test 1: i18n loaded
-      console.log('✓ i18n:', Object.keys(i18n).length, 'languages');
-
-      // Test 2: Theme toggle works
-      const isDark = document.documentElement.classList.contains('dark');
-      console.log('✓ Theme:', isDark ? 'dark' : 'light');
-
-      // Test 3: Demo mode state
-      console.log('✓ Demo mode:', isDemoMode);
-
-      // Test 4: Elements exist
-      console.log('✓ Elements:', {
-        appKey: !!document.getElementById('appKey'),
-        accessToken: !!document.getElementById('accessToken'),
-        langSelect: !!document.getElementById('langSelect')
-      });
-    })();
-  </script>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" data-close data-confirm data-i18n="ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="/assets/vendor/lucide.min.js"></script>
+  <script src="/assets/js/i18n.js"></script>
+  <script src="/assets/js/format.js"></script>
+  <script src="/assets/js/state.js"></script>
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/tauri.js"></script>
+  <script src="/assets/js/toast.js"></script>
+  <script src="/assets/js/modals.js"></script>
+  <script src="/assets/js/shell.js"></script>
+  <script src="/assets/js/views/positions.js"></script>
+  <script src="/assets/js/views/orders.js"></script>
+  <script src="/assets/js/views/settings.js"></script>
+  <script src="/assets/js/shortcuts.js"></script>
+  <script src="/assets/js/main.js"></script>
 </body>
 </html>

@@ -3,28 +3,38 @@
   "version": "1.0.13",
   "identifier": "work.echan.liquidator",
   "build": {
-    "frontendDist": "frontend",
+    "frontendDist": "../public",
     "devUrl": "http://localhost:3456",
-    "beforeDevCommand": "",
+    "beforeDevCommand": "npm start",
     "beforeBuildCommand": "node scripts/prepare-server.js"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "label": "main",
         "title": "LB Liquidator",
         "width": 1280,
         "height": 800,
-        "minWidth": 800,
+        "minWidth": 900,
         "minHeight": 600,
         "resizable": true,
         "fullscreen": false,
         "center": true,
-        "url": "tauri://localhost/loading.html"
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": {
+          "x": 13,
+          "y": 13
+        },
+        "backgroundColor": "#0a0a0a"
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost http://127.0.0.1:3456 http://localhost:3456",
+      "dangerousDisableAssetCspModification": [
+        "style-src"
+      ]
     },
     "macOSPrivateApi": false
   },

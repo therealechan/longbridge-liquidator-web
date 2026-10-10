@@ -1,393 +1,287 @@
 # Design Guideline
 
-A comprehensive UI/UX design system extracted from Liquidator. Use this as a reference when building new projects with the same visual language.
+Design system for LB Liquidator, a native-feeling macOS desktop app built from a vanilla web UI (Tauri 2 + WKWebView). The source of truth for values is `public/assets/css/tokens.css`; this document explains how they are used. Use it as a reference when building new views or other projects with the same visual language.
 
 ---
 
-## 1. Design Philosophy
+## 1. Principles
 
-- **Vercel-inspired minimalism** — Clean, spacious, monochrome-first with intentional color accents
-- **Dark-first** — Default to dark mode; light mode is the alternate
-- **Single-column centered layout** — Max-width 640px, generous vertical padding
-- **Progressive disclosure** — Show only what's needed; use modals and accordions for secondary content
-- **Motion with purpose** — Subtle spring animations that reinforce interactions, never decorative
-- **Accessibility-aware** — Respects `prefers-reduced-motion`, uses semantic HTML, ARIA labels on icon-only buttons
-
----
-
-## 2. Color System
-
-All colors are defined as CSS custom properties on `:root` (light) and `.dark` (dark).
-
-### Light Mode (`:root`)
-
-| Token | Value | Usage |
-|---|---|---|
-| `--background` | `#ffffff` | Page background |
-| `--surface` | `#f4f4f5` | Card backgrounds, elevated surfaces |
-| `--surface-hover` | `#e4e4e7` | Surface hover state |
-| `--border` | `#e4e4e7` | Borders, dividers |
-| `--foreground` | `#18181b` | Primary text |
-| `--foreground-secondary` | `#3f3f46` | Secondary text, card titles |
-| `--muted` | `#71717a` | Tertiary text, labels |
-| `--muted-foreground` | `#a1a1aa` | Disabled text, footnotes |
-| `--accent` | `#18181b` | Primary button background (black) |
-| `--accent-foreground` | `#fafafa` | Primary button text (white) |
-| `--danger` | `#dc2626` | Destructive actions, errors |
-| `--danger-hover` | `#b91c1c` | Danger hover state |
-| `--success` | `#16a34a` | Positive actions, confirmations |
-
-### Dark Mode (`.dark`)
-
-| Token | Value | Usage |
-|---|---|---|
-| `--background` | `#0a0a0a` | Page background |
-| `--surface` | `#171717` | Card backgrounds |
-| `--surface-hover` | `#262626` | Surface hover state |
-| `--border` | `#262626` | Borders, dividers |
-| `--foreground` | `#ededed` | Primary text |
-| `--foreground-secondary` | `#d4d4d4` | Secondary text |
-| `--muted` | `#737373` | Tertiary text |
-| `--muted-foreground` | `#a3a3a3` | Disabled text |
-| `--accent` | `#fafafa` | Primary button background (white) |
-| `--accent-foreground` | `#171717` | Primary button text (black) |
-
-### Semantic Color Usage
-
-- **Danger (red)** — Destructive/irreversible actions: sell, liquidate, delete, errors
-- **Success (green)** — Positive actions: buy, confirm, completion states
-- **Amber `#f59e0b`** — Warning states: live mode toggle, caution dialogs
-- **Accent (black/white flip)** — Neutral primary actions: submit, view, navigate
+- **Native desktop feel** — It is a Mac app, not a web page. Fixed window layout, no page scroll, system menus and shortcuts, drag-able title area, overlay scrollbars.
+- **Dark-first, monochrome** — Designed and reviewed in dark first; light is the equal alternate. The default follows the system appearance. Neutrals do the structure (surface steps, hairline borders).
+- **Colour only for semantics** — Red = sell / destructive / error. Green = buy / success / gain. Amber = Live mode, warnings, conditional orders. Everything else is grey, black or white. No decorative colour, gradients or glows.
+- **Dense but calm** — 13px base text, 28-30px controls, 1px borders, 6px radii. Information density like Linear or Xcode; whitespace comes from alignment, not padding.
+- **Motion with purpose** — 120-180ms opacity/transform for state changes (popovers, modals, toasts, tooltips). Nothing bounces, lifts or loops except spinners and the pending dot.
+- **Keyboard-complete** — Every primary action has a shortcut; focus rings show for keyboard users only.
+- **Local assets only** — Fonts and icons are vendored; the CSP allows no external script or style hosts.
 
 ---
 
-## 3. Typography
+## 2. Layout
 
-### Font Stack
+`<body class="app">` is a CSS grid filling the window (`100vh`). Nothing at document level scrolls; only inner `.scroller` regions do.
 
-```css
-/* Sans — body, UI, headings */
-font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-
-/* Mono — data, prices, symbols, form inputs */
-font-family: 'Geist Mono', monospace;
+```
+┌──────┬───────────┬───────────────────────┬───────────┐
+│ rail │  sidebar  │ tab bar (44)          │  details  │
+│ 52   │   280     ├───────────────────────┤    300    │
+│      │           │ main view             │           │
+├──────┴───────────┴───────────────────────┴───────────┤
+│ status bar (26)                                      │
+└──────────────────────────────────────────────────────┘
 ```
 
-Load via CDN (weights 400, 500, 600, 700 for Sans; 400, 500, 600 for Mono).
+| Region | Size | Contents |
+|---|---|---|
+| Rail | `--rail-w` 52px | Positions / Orders / Settings (36px buttons, 20px icons). Bottom: theme cycle button, account button (30px circle with Demo/Live dot) |
+| Sidebar | `--sidebar-w` 280px | 44px brand band; per-view pane. Positions: Demo/Live segmented control, per-currency totals, filter input, select-all caption, position list with checkboxes. Orders: type chips + history list. Settings: section nav |
+| Tab bar | `--band-h` 44px | Liquidate / Conditional / Buy back tabs (or the view title), refresh, details toggle |
+| Main | flexible | Active view. Summary strip, content, sticky action footer |
+| Details | `--details-w` 300px | Selected position (price, 2x3 stat grid, include/exclude, recent orders). Toggle with ⌘D |
+| Status bar | `--bar-h` 26px | Left: mode + server address. Centre: last updated. Right: version, disclaimer |
 
-### Scale
+- Sidebar and details are collapsible (`body.no-sidebar`, `body.no-details`, remembered in localStorage). The grid column collapses to 0.
+- Under 1100px the details panel steps aside and ⌘D shows it as an overlay (`details-peek`). Minimum window 900x600.
+- The top 44px of rail, sidebar, tab bar and details sit under the transparent title bar (`titleBarStyle: Overlay`, traffic lights at x13 y13). Keep content in those bands clear of x<70 where the lights are (sidebar band pads 34px left; the tab bar pads 36px when the sidebar is folded).
+- Drag regions: `data-tauri-drag-region` on the rail-top, sidebar band, tab bar and details band. Decorative children either carry the attribute or set `pointer-events: none`. Interactive children are real buttons and are not draggable.
+- Settings, About content (hero, FAQ, footer) lives in Settings → About; there is no marketing chrome in the shell.
 
-| Element | Size | Weight | Tracking |
+---
+
+## 3. Colour Tokens
+
+Defined in `tokens.css`. `:root` is light; dark applies with `html[data-theme="dark"]`, or when no explicit choice is stored and the OS prefers dark (`:root:not([data-theme="light"])` inside `prefers-color-scheme: dark`). Theme choice is `system` | `light` | `dark`; `system` removes the `data-theme` attribute.
+
+### Core palette
+
+| Token | Light | Dark | Usage |
 |---|---|---|---|
-| Page title (h1) | 36px | 600 | -0.03em |
-| Card title | 13px | 600 | 0.05em (uppercase) |
-| Modal title | 16px | 600 | — |
-| Body text | 14–15px | 400 | — |
-| Label | 13px | 500 | — |
-| Badge / small | 12px | 400 | — |
-| Footnote | 11px | 400 | — |
-| Data (mono) | 14px | 600 | — |
-| Total value (mono) | 18px | 600 | — |
+| `--background` | `#ffffff` | `#0a0a0a` | Main view, inputs, table bodies |
+| `--surface` | `#f4f4f5` | `#171717` | Sidebar, tab bar, details, modals, toasts, menus |
+| `--surface-hover` | `#e4e4e7` | `#262626` | Active list row |
+| `--surface-2` | `#fafafa` | `#0f0f0f` | Rail and status bar (the recessed chrome) |
+| `--surface-3` | `#e4e4e7` | `#262626` | Active segmented/chip fill |
+| `--border` | `#e4e4e7` | `#262626` | Region dividers, control borders |
+| `--border-soft` | `#f0f0f1` | `#1f1f1f` | Row separators inside lists and tables |
+| `--border-strong` | `#d4d4d8` | `#3f3f46` | Outline buttons, hovered inputs, scrollbar thumbs, checkbox border |
+| `--foreground` | `#18181b` | `#ededed` | Primary text |
+| `--foreground-secondary` | `#3f3f46` | `#d4d4d4` | Secondary text, unselected rows |
+| `--muted` | `#71717a` | `#737373` | Labels, captions, icons |
+| `--muted-foreground` | `#a1a1aa` | `#a3a3a3` | Hints, placeholders-on-tint |
+| `--accent` | `#18181b` | `#fafafa` | Primary button, active indicators, checked boxes |
+| `--accent-foreground` | `#fafafa` | `#171717` | Text on `--accent` |
 
-### Rules
+### Overlays (alpha tints for hover and press)
 
-- `line-height: 1.6` globally; `1.7–1.8` for long-form text (FAQ answers)
-- Headings use negative letter-spacing (`-0.02em` to `-0.03em`)
-- Card titles are always UPPERCASE with wide tracking (`0.05em`)
-- Financial data, symbols, and form inputs always use Geist Mono
+| Token | Light | Dark |
+|---|---|---|
+| `--overlay-weak` | `rgba(0,0,0,0.025)` | `rgba(255,255,255,0.03)` |
+| `--overlay` | `rgba(0,0,0,0.05)` | `rgba(255,255,255,0.05)` |
+| `--overlay-strong` | `rgba(0,0,0,0.07)` | `rgba(255,255,255,0.08)` |
+| `--skeleton` | `rgba(0,0,0,0.06)` | `rgba(255,255,255,0.07)` |
 
----
-
-## 4. Spacing & Layout
-
-### Container
-
-```css
-.container {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 60px 24px 40px;
-}
-```
-
-### Border Radius
+### Status (same in both themes)
 
 | Token | Value | Usage |
 |---|---|---|
-| `--radius` | `6px` | Cards, buttons, inputs, modals |
-| `--radius-sm` | `4px` | Small elements |
-| `100px` | — | Badges (pill shape) |
-| `50%` | — | Circles (toggle knob, status dot) |
+| `--danger` / `--danger-hover` | `#dc2626` / `#b91c1c` | Sell, destructive, errors, negative P/L |
+| `--success` / `--success-hover` | `#16a34a` / `#15803d` | Buy, success, positive P/L, server OK |
+| `--warning` / `--warning-hover` | `#f59e0b` / `#d97706` | Live mode, conditional orders, caution |
+| `--danger-soft`, `--success-soft`, `--warning-soft` | `rgba(...,0.12)` of the above | Badge, note and icon backgrounds |
+| `--on-color` | `#ffffff` | Text on danger / success / warning fills |
 
-### Spacing Pattern
+### Elevation
 
-- Card internal padding: `28px`
-- Card margin-bottom: `20px`
-- Card header padding-bottom: `14px` (with border-bottom)
-- Form group margin-bottom: `16px`
-- Section gap (hero → content): `40–48px`
-- Footer margin-top: `60px`
-- Modal max-width: `400px`
-
----
-
-## 5. Components
-
-### 5.1 Card
-
-```
-┌─────────────────────────────────┐
-│ [icon]  CARD TITLE              │  ← card-header (border-bottom)
-│─────────────────────────────────│
-│                                 │
-│  Content area                   │  ← 28px padding
-│                                 │
-│  [Primary Action Button]        │
-└─────────────────────────────────┘
-```
-
-- Background: `var(--surface)`
-- Border: `1px solid var(--border)`
-- Hover: border transitions to `var(--muted)`
-- Header icon: 18px, `color: var(--muted)`
-
-### 5.2 Buttons
-
-**Primary** — Full-width, accent bg/fg flip
-```css
-padding: 10px 20px;
-border-radius: var(--radius);
-font-size: 14px; font-weight: 500;
-```
-
-**Danger** — Full-width, red bg, white text, `font-weight: 600`, `padding: 14px`
-- Hover: `box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25)`
-
-**Secondary** — Outlined, used in modal action pairs
-```css
-background: var(--background);
-border: 1px solid var(--border);
-```
-
-**Ghost/Outline** — Transparent bg, border only (conditional order button)
-
-**All buttons share:**
-- Hover: `opacity: 0.9; transform: translateY(-1px)`
-- Active: `transform: translateY(0) scale(0.98)`
-- Icon inside button scales to `1.15` on hover
-- Loading state: `pointer-events: none; opacity: 0.8` + spinner
-
-### 5.3 Form Inputs
-
-```css
-background: var(--background);  /* recessed into page */
-border: 1px solid var(--border);
-border-radius: var(--radius);
-padding: 10px 14px;
-font-size: 14px;
-font-family: 'Geist Mono', monospace;
-```
-- Focus: `border-color: var(--foreground)`, no outline
-- Sensitive fields use `type="password"`
-
-### 5.4 Data Table
-
-```
-┌──┬────────┬─────┬───────┬────────┬──────────┐
-│☑ │ Symbol │ Qty │ Price │ Change │    Value │  ← th: 11px uppercase
-├──┼────────┼─────┼───────┼────────┼──────────┤
-│☑ │AAPL.US │ 100 │185.50 │ +1.25% │$18550.00│  ← td: 14px
-│☑ │TSLA.US │  50 │242.30 │ -2.49% │$12115.00│
-└──┴────────┴─────┴───────┴────────┴──────────┘
-```
-
-- Wrapped in `.table-container` with `border` and `border-radius` (overflow hidden)
-- Header: `11px`, uppercase, wide tracking, `color: var(--muted)`, `background: var(--background)`
-- Row hover: `background: var(--surface-hover)`
-- Last row: no bottom border
-- Checkbox column: fixed 36px width
-- Symbol column: Geist Mono, `font-weight: 600`
-- Numeric columns: Geist Mono
-- Change column: colored green (positive) or red (negative)
-
-### 5.5 Modal
-
-```
-┌─ Overlay (rgba black + backdrop blur) ──────┐
-│                                              │
-│   ┌─ Modal Card ──────────────────────┐      │
-│   │ [icon] Title                      │      │
-│   │ ┌─ Warning Banner ─────────────┐  │      │
-│   │ │ ⓘ Warning message            │  │      │
-│   │ └──────────────────────────────┘  │      │
-│   │ [Ratio Selector: All|1/2|1/3|1/4]│      │
-│   │ Position list (scrollable)        │      │
-│   │ ─────────────────────────────     │      │
-│   │ Total              $XX,XXX.XX     │      │
-│   │ [Cancel]  [Confirm Action]        │      │
-│   └───────────────────────────────────┘      │
-│                                              │
-└──────────────────────────────────────────────┘
-```
-
-- Overlay: `rgba(0,0,0,0.6)` + `backdrop-filter: blur(4px)`
-- Card: `var(--surface)` bg, `28px` padding, `max-width: 400px`
-- Title color matches action type: red (sell), green (buy), amber (warning), foreground (neutral)
-- Warning banner: semi-transparent colored background with matching border
-- Action buttons: always a pair — secondary (cancel) + colored (confirm)
-- Click overlay to dismiss; `event.stopPropagation()` on card
-
-### 5.6 Badge (Pill)
-
-```css
-padding: 6px 12px;
-border-radius: 100px;
-font-size: 12px;
-background: var(--surface);
-border: 1px solid var(--border);
-color: var(--muted);
-```
-- Status dot: 6px circle, `var(--success)`, pulsing animation
-
-### 5.7 Toggle Switch
-
-- Container: `34px × 18px`, `border-radius: 9px`
-- Knob: `14px` circle, slides `16px` right when active
-- Off state: `var(--border)` track, `var(--muted)` knob
-- On state: `rgba(22, 163, 74, 0.2)` track, `var(--success)` knob
-- Spring easing on knob: `cubic-bezier(0.34, 1.56, 0.64, 1)`
-
-### 5.8 FAQ Accordion
-
-- Items separated by `border-bottom: 1px solid var(--border)`
-- Question: full-width button, `14px`, `font-weight: 500`, chevron icon right-aligned
-- Answer: `max-height: 0` → `max-height: 300px` transition
-- Chevron rotates 180° when open
-
-### 5.9 Alert
-
-- Success: green-tinted background + border
-- Warning: amber-tinted background + border (text color flips in dark mode)
-- Appears with `fadeSlideIn` animation
-
-### 5.10 Ratio Selector
-
-A row of equal-width buttons for selecting fractions (All, 1/2, 1/3, 1/4).
-
-```css
-display: flex; gap: 6px;
-/* Each button */
-flex: 1; padding: 6px 0;
-border: 1px solid var(--border);
-border-radius: 6px;
-font-size: 13px; font-weight: 500;
-```
-- Active state color matches context: red (sell), green (buy), accent (neutral)
-
----
-
-## 6. Animation & Motion
-
-Powered by **Motion.js** (Framer Motion standalone, loaded from CDN).
-
-### Easing
-
-| Name | Value | Usage |
+| Token | Light | Dark |
 |---|---|---|
-| Spring | `[0.34, 1.56, 0.64, 1]` | Modals, toggles, icon morphs — bouncy overshoot |
-| Ease-out | `ease-out` | Fade-ins, overlays |
-| Ease-in | `ease-in` | Fade-outs, exits |
-| Linear | `linear` | Spinners |
+| `--shadow-menu` | `0 0 0 1px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.12)` | `0 0 0 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.5)` |
+| `--shadow-modal` | `0 0 0 1px rgba(0,0,0,0.06), 0 24px 64px rgba(0,0,0,0.22)` | `0 0 0 1px rgba(255,255,255,0.07), 0 24px 64px rgba(0,0,0,0.6)` |
+| `--scrim` | `rgba(0,0,0,0.28)` | `rgba(0,0,0,0.55)` |
 
-### Patterns
+Shadows carry a 1px ring so floating surfaces keep an edge in dark mode. Panels in the shell itself are separated by borders, never shadows.
 
-| Animation | Properties | Duration |
-|---|---|---|
-| Modal enter | `scale: 0.92→1, opacity: 0→1, y: 16→0` | 0.45s spring |
-| Modal exit | `scale: 1→0.95, opacity: 1→0, y: 0→8` | 0.18s ease-in |
-| Overlay enter | `background: transparent → rgba(0,0,0,0.6)` | 0.3s ease-out |
-| Theme icon out | `rotate: 0→90, scale: 1→0, opacity: 1→0` | 0.25s ease-in |
-| Theme icon in | `rotate: -90→0, scale: 0→1, opacity: 0→1` | 0.4s spring |
-| SVG path draw | `strokeDashoffset: length → 0` | 0.6s spring, staggered 0.12s |
-| Logo breathing | `opacity: 0.85 → 1 → 0.85` | 4s infinite |
-| Button hover | `translateY(-1px)` | CSS 0.2s |
-| Button active | `translateY(0) scale(0.98)` | CSS 0.2s |
-| Content appear | `opacity: 0→1, translateY(12px→0)` | CSS 0.4s (fadeSlideIn) |
-| Spinner | Dual-ring counter-rotate | 0.8s / 1.2s linear infinite |
-| Status dot pulse | `opacity: 1 → 0.5 → 1` | 2s infinite |
+### Shape, size and motion
 
-### Reduced Motion
+| Token | Value |
+|---|---|
+| `--radius` / `--radius-sm` | 6px / 4px |
+| `--control-h` | 28px (inputs, segmented controls, icon buttons) |
+| `--button-h` / `--button-lg-h` | 30px / 36px (small buttons are 26px) |
+| `--rail-w`, `--sidebar-w`, `--details-w` | 52px, 280px, 300px |
+| `--band-h`, `--bar-h` | 44px, 26px |
+| `--ease-out` | `cubic-bezier(0.2, 0.8, 0.2, 1)` |
 
-All custom animations are gated behind:
-```js
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-```
-CSS fallback:
+Larger radii in use: popovers, toasts 8px; modals 10px; empty-state icon tile 10px; chips 12px; avatar circles 50%.
+
+### Colour rules
+
+- Sell and Liquidate = `--danger` fill. Buy back = `--success`. Conditional = `--warning`. Neutral actions (submit, test connection) = `--accent`.
+- Gains/losses use `.pos` / `.neg` / `.flat` text colours, never backgrounds.
+- Selection and active state are neutral: `--surface-hover` fill plus a 2px `--accent` edge. Never a coloured highlight.
+- Do not add a literal colour to a stylesheet. If a new one is needed, add a token (both themes) first.
+
+---
+
+## 4. Typography
+
 ```css
-@media (prefers-reduced-motion: reduce) {
-  /* Disable all path draws, breathing, icon morphs, modal springs */
-}
+--font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+             "PingFang SC", "PingFang TC", "Helvetica Neue", sans-serif;
+--font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Monaco, monospace;
 ```
 
----
+Geist and Geist Mono are vendored in `public/assets/vendor/fonts/` (no CDN). The CJK fallbacks (PingFang) cover zh-CN and zh-TW.
 
-## 7. Icons
+Body is 13px / 1.35, antialiased. Use mono for anything numeric or identifying (symbols, prices, quantities, order IDs, timestamps, credentials); `font-variant-numeric: tabular-nums` on every number so columns align.
 
-**Lucide Icons** — loaded from unpkg CDN, rendered via `lucide.createIcons()`.
+| Role | Size | Weight | Notes |
+|---|---|---|---|
+| Hero price (details) | 24px mono | 600 | tracking -0.02em |
+| Settings title | 18px | 600 | |
+| Symbol in details, About app name | 16px | 600-700 | mono for symbols |
+| Modal title, empty-state title, summary totals | 14px | 600 | |
+| Body, buttons, tabs, inputs, table cells | 13px | 400-500 | tabs: active 500 |
+| Secondary, segmented, chips, help text | 12px | 400-500 | `.help` line-height 1.45 |
+| Labels, captions, status bar, table headers | 11px | 500 | Labels/headers uppercase, tracking 0.06em, `--muted` |
+| Badges, brand tag, tiny counters | 10px | 600 | uppercase, tracking 0.04-0.06em |
 
-- Size: `14–18px` inline with text/buttons
-- Color: inherits from parent (`currentColor`)
-- Common icons used: `key`, `bar-chart-3`, `trending-up`, `zap`, `shopping-cart`, `shield`, `alert-triangle`, `alert-circle`, `info`, `check`, `refresh-cw`, `sun`, `moon`, `help-circle`, `chevron-down`
-
----
-
-## 8. Scrollbar
-
-Custom WebKit scrollbar:
-```css
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--background); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-```
+Rules: sentence case for text, uppercase only for 10-11px labels and badges. Max two weights per component. Never go below 10px.
 
 ---
 
-## 9. Interaction Patterns
+## 5. Density and spacing
 
-- **Hover lift** — Buttons lift 1px on hover, press down on active
-- **Border highlight** — Cards and inputs highlight border on hover/focus
-- **Icon scale** — Button icons scale to 1.15 on hover
-- **Brand hover** — Logo rotates 12° and scales 1.08
-- **Overlay dismiss** — Click outside modal to close
-- **Confirmation flow** — Destructive actions always require a modal confirmation with explicit button pair
-- **Loading state** — Button becomes non-interactive with spinner replacing icon
-- **State persistence** — Theme, language, mode, and credentials persist in localStorage
+- Spacing is on a 2/4/6/8/10/12/16/24 px ladder; prefer 8 and 12.
+- Region padding: 12px horizontal in the sidebar, 16-24px in main views; modal padding 14-18px.
+- Control heights: icon button 28, input/segmented 28 (large input 32), button 30 (small 26, large 36), tab bar 44, table header 30, list caption 30, popover item 28.
+- Rows: position and order list rows are min-height 46px; table body rows use 8px vertical padding; modal list rows 7px.
+- Borders are 1px; use `--border-soft` between rows and `--border` between regions.
+- Prefer a quiet divider over a card. Cards (`.summary`, `.settings-group`, `.table-wrap`) are `--background` on a `--surface` region with a 1px `--border` and `--radius`.
 
 ---
 
-## 10. Footer
+## 6. Components
 
-```
-[Logo SVG]  Brand Name
+### Rail button
+36x36, radius 6, 20px Lucide icon (stroke 1.5), `--muted`. Hover: `--overlay-strong` fill, `--foreground`. Current view: same fill plus a 2px `--accent` bar at the rail's left edge (`left: -8px`). Tooltip appears to the right after 350ms hover (see Tooltip).
 
-© 2026 Built by Author · Open source on GitHub
-Disclaimer text
-```
+### Account button
+30px circle, `--overlay` fill, 1px border, with a 9px mode dot at the bottom-right (grey = Demo, `--warning` = Live). Opens a 240px popover above the status bar.
 
-- Logo SVG has path-draw animation on load + subtle breathing loop
-- Links use animated underline on hover (background-size trick)
-- Disclaimer: `11px`, `var(--muted-foreground)`
+### Segmented control
+Height 28, 2px inner padding, `--background` track with 1px border, radius 6; segments radius 4, 12px text, `--muted`. Active: `--surface-3` fill, `--foreground`, weight 500. The Demo|Live control is full width with a status dot per segment; Live active uses `--warning-soft` / `--warning`. Used for quantity ratio (All / 1/2 / 1/3 / 1/4), conditional type, time in force, language and theme.
+
+### Chips
+24px, radius 12, 12px text, 1px border, optional 10px count. Active: `--surface-3` fill, `--border-strong`. Used for order filters.
+
+### List rows (positions, orders)
+Min-height 46, padding 7x12, transition 80ms. Left: 14px checkbox (positions) or action badge (orders). Main: 13px mono symbol (600) over 11px `--muted` name or meta. Right: 12px mono price with 11px coloured change over 11px mono quantity. Hover `--overlay`; active `--surface-hover` with `inset 2px 0 var(--accent)`. Unchecked rows dim to `--foreground-secondary`. Arrow keys move the active row, Space toggles its checkbox.
+
+### Tables
+Wrapped in `.table-wrap` (1px border, radius 6, hidden overflow). Header row 30px, sticky, `--surface`, 11px uppercase `--muted`, no selection. Cells 13px, padding 8x12, `--border-soft` row lines, numbers right-aligned in mono 12px, symbol cells mono 600 with an 11px `--muted` name beneath. Row hover `--overlay-weak` (clickable rows `--overlay`). Footer rows are `--surface` with weight 600 and a top border. Table text is selectable.
+
+### Buttons
+Height 30 (sm 26, lg 36), padding 0 12, radius 6, 13px weight 500, gap 6, 15px icons. A keyboard hint renders inline at 11px, 70% opacity.
+
+| Variant | Fill | Text | Use |
+|---|---|---|---|
+| `btn-primary` | `--accent` | `--accent-foreground` | Neutral primary |
+| `btn-danger` | `--danger` | `--on-color` | Sell / liquidate |
+| `btn-success` | `--success` | `--on-color` | Buy back |
+| `btn-warning` | `--warning` | `--on-color` | Conditional |
+| `btn-outline` | transparent, 1px `--border-strong` | `--foreground` | Secondary |
+| `btn-ghost` | transparent | `--foreground-secondary` | Tertiary, toolbars |
+
+Hover darkens fills (`*-hover` tokens) or applies `--overlay-strong`. Disabled is opacity 0.45. No lift, scale or shadow on hover. Icon buttons are 28x28, `--muted`, hover `--overlay-strong`.
+
+### Inputs
+Height 28 (large 32), padding 0 9, radius 6, 1px `--border`, `--background`, 13px; credentials and numbers use mono 12px. Hover: `--border-strong`. Focus: `--muted` border plus a 3px `--overlay-strong` ring. Invalid (`aria-invalid`): `--danger` border plus 3px `--danger-soft` ring. Icon inputs pad 28px left. Secret fields have an eye reveal button as a trailing 22-28px addon. Field label above: 11px uppercase `--muted`, gap 6; help text 12px `--muted`.
+
+### Checkbox
+Custom 14px box in a 16px hit area, radius 3, `--border-strong`. Checked and indeterminate: `--accent` fill with an `--accent-foreground` mark.
+
+### Notes (banners)
+12px, padding 9x10, radius 6, 14px icon. Neutral uses `--overlay` and a border; warning / danger / success use the `*-soft` fill and coloured text, no border.
+
+### Badges
+18px, radius 4, 10px/600 uppercase. Sell and failed use danger-soft, buy and submitted use success-soft, conditional and live use warning-soft, demo uses neutral overlay.
+
+### Modals
+Fixed scrim (`--scrim` with 8px backdrop blur), centred panel max-width 440 (wide 520), radius 10, `--surface`, `--shadow-modal`. Head: 14px/600 title with an 18px icon, tone-coloured for danger / success / warning. Body: 13px, padding 14x18, `--foreground-secondary` text, scrolls internally. Actions: right-aligned, buttons min-width 84, padding 12x18x16. Enter animation 160ms (opacity, scale 0.97 to 1). Esc closes, ⌘↩ confirms. Destructive confirmations list affected symbols with quantity and estimated value and a total.
+
+### Toasts
+Bottom-right, above the status bar (12px inset), stacked, max 4. 260-400px wide, `--surface`, radius 8, `--shadow-menu`, a 3px inset bar on the left in the tone colour (success / error / warning, neutral for info). Title 13/600, message 12px `--muted-foreground`, 22px close button. Auto-dismiss after 4s (paused on hover); errors use `role="alert"`. Slide in 180ms from the right.
+
+### Tooltips
+Rail buttons use `data-tip` (from `data-i18n-tip`): `--surface` bubble, 1px border, `--shadow-menu`, radius 6, 12px, to the right of the button, 120ms fade with a 350ms hover delay and instant on keyboard focus. Elsewhere use the native `title` attribute (`data-i18n-title`). Tooltips include the shortcut where there is one, e.g. "Positions ⌘1".
+
+### Popover / menu
+`--surface`, radius 8, `--shadow-menu`, padding 6. Items 28px, 12-13px, icon 14px in `--muted`, hint right-aligned 11px. Hover `--overlay-strong`. Opens with a 140ms fade and 4px rise. Esc and outside click close it.
+
+### Empty states
+Centred column: 40px rounded tile (radius 10, `--overlay`, 1px border, 20px muted icon; error variant uses `--danger-soft`), 14px/600 title, 12px `--muted` description (max 340px), optional single `btn-outline` action. Use the `compact` variant inside lists. Every list and table has one, plus error and loading (skeleton, `--skeleton`) states.
+
+### Status bar
+26px, 11px `--muted`, `--surface-2`, three zones (left, centre, right), 7px status dots: grey pending (pulse), green OK, red error, amber Live.
+
+### Kbd
+20px min, radius 4, 1px border with a 2px bottom border, 11px sans. Inside buttons it is unstyled text.
 
 ---
 
-## Quick Start for New Projects
+## 7. Native-feel rules
 
-1. Copy the CSS custom properties (Section 2) into your stylesheet
-2. Load Geist Sans + Geist Mono fonts from CDN
-3. Load Lucide icons from CDN
-4. Load Motion.js from CDN (optional, for spring animations)
-5. Use the `.container` → `.card` → `.card-header` + content pattern for page sections
-6. Apply `.btn-primary` / `.btn-danger` / `.btn-secondary` for actions
-7. Use `.modal-overlay` + `.modal-card` for confirmations
-8. Gate all JS animations behind `prefers-reduced-motion` check
+- **No page scroll.** `html, body { overflow: hidden; overscroll-behavior: none }`. Scroll only inside `.scroller` or `overflow-y: auto` panels, with `overscroll-behavior: contain`.
+- **Text selection.** `user-select: none` and `cursor: default` on the whole app (links and buttons are `cursor: default`, as in native apps). Only data is selectable: inputs, table cells, stat values, order details, and `.selectable`. Inputs use the text cursor.
+- **Focus.** `:focus { outline: none }` and `:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }`. Inputs show their own border and ring on focus instead. Mouse clicks never leave a ring.
+- **Scrollbars.** 6px thin, transparent until the scroller is hovered, thumb `--border-strong` (then `--muted` on thumb hover), transparent track. The document itself has no scrollbar.
+- **Window.** Overlay title bar, hidden title, traffic lights at (13,13). Drag regions as listed in Layout. Window size and position are restored (window-state plugin).
+- **Menus.** The native menu mirrors the shortcuts and sends actions to the page; do not build a second in-page menu bar.
+- **Drop and navigation.** Dragging a file onto the window must not navigate (the page cancels `dragover` / `drop`).
+- **Links** open in the default browser through the Tauri opener (`data-href`), never inside the app window.
+- **Reduced motion.** Under `prefers-reduced-motion: reduce` all animations and transitions collapse to ~0ms (a global rule in `base.css`). Do not rely on motion to convey state.
+- **Appearance.** Follow the system theme unless the user picked one; `color-scheme` is set so native form controls match.
+- **Icons.** Lucide, vendored, 16px default (rail 20, buttons 15, inline 12-14), stroke width 1.5, `currentColor`. Icon-only controls need an `aria-label` (set by `data-i18n-tip` / `data-i18n-title`).
+
+---
+
+## 8. Keyboard shortcuts
+
+| Shortcut | Action |
+|---|---|
+| ⌘R | Refresh positions |
+| ⌘A | Select all positions (outside text fields) |
+| ⌘↩ | Confirm the primary action / the open dialog |
+| ⌘, | Settings |
+| ⌘B | Toggle sidebar |
+| ⌘D | Toggle details panel |
+| ⌘/ | Keyboard shortcuts sheet |
+| ⌘1 / ⌘2 / ⌘3 | Positions / Orders / Settings |
+| ⌘F | Focus the position filter |
+| ↑ / ↓ | Move the active row (Positions, Orders) |
+| Space | Toggle the active position's checkbox |
+| Esc | Close popover, then dialog, then details peek; blur a field |
+
+Rules: show the shortcut next to the action it triggers (tooltips, menu hints, button hints). Native menu accelerators and `shortcuts.js` call the same action ids, so a shortcut works in a plain browser too. While a dialog is open only Esc and ⌘↩ apply. Never bind a bare letter key when a field could have focus.
+
+---
+
+## 9. Internationalisation
+
+- Three languages: `zh-CN`, `zh-TW`, `en`. Every user-facing string lives in `public/assets/js/i18n.js`; keep the three blocks in the same key order.
+- Static markup uses `data-i18n` (text), `data-i18n-placeholder`, `data-i18n-title` (title + aria-label) and `data-i18n-tip` (rail tooltip). Dynamic strings use `LB.t(key, { name })` with `{name}` placeholders; there is no pluralisation, so write counts as "{n} selected".
+- Never concatenate translated fragments into sentences; give the whole sentence a key.
+- Layouts must survive both a short (`Demo`) and long (`Good Til Canceled`) label: segmented buttons truncate with an ellipsis, tab labels do not wrap.
+- Keep financial terms consistent with the dictionary: 止损 / 止損 (stop loss), 止盈 (take profit), 追踪止损 / 追蹤止損 (trailing stop), 一键清仓 / 一鍵清倉 (liquidate), 一键买入 / 一鍵買入 (buy back).
+- Currency amounts use the position's currency prefix (`$`, `HK$`); keep per-currency totals separate, never convert.
+- The language preference is stored in localStorage `lang` and applied without reloading (the `lang` bus event re-renders views).
+
+---
+
+## 10. Quick start for a new view
+
+1. Add a pane to the sidebar and a section to the main region in `public/index.html` using existing classes (`.pane`, `.view`, `.table-wrap`, `.empty`).
+2. Add rules only to `views.css`, using tokens, never literal colours or sizes.
+3. Create `public/assets/js/views/<name>.js` as a plain script on `window.LB`, expose `init()` and a render function, and register it in the load order in `index.html`.
+4. Use `data-action` for clicks (no inline handlers); route through `LB.dispatchAction`.
+5. Add strings to all three languages, a rail entry, a shortcut and a menu item if it is a top-level view.
+6. Check dark, light, 900x600 and the details-peek width (<1100px).

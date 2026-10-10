@@ -1,10 +1,43 @@
+const path = require('path');
 const express = require('express');
+
+let APP_VERSION = '0.0.0';
+try {
+  APP_VERSION = require('../package.json').version || APP_VERSION;
+} catch (_) {
+  // package.json not present (e.g. stripped bundle) — keep fallback
+}
 
 const app = express();
 const PORT = process.env.PORT || 3456;
 
+// ── CORS: the Tauri shell loads the UI from tauri://localhost and calls this
+//    API cross-origin. Only allow the app's own origins (no wildcard).
+const ALLOWED_ORIGINS = new Set([
+  'tauri://localhost',
+  'http://tauri.localhost',
+  'https://tauri.localhost',
+  'http://localhost:3456',
+  'http://127.0.0.1:3456',
+]);
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Max-Age', '600');
+  }
+  res.append('Vary', 'Origin');
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  next();
+});
+
 app.use(express.json({ limit: '1mb' }));
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ── Longbridge SDK (lazy-loaded) ──
 let Config, TradeContext, QuoteContext, OrderType, OrderSide, TimeInForceType, TriggerPriceType, Decimal;
@@ -50,6 +83,22 @@ function sanitizeError(msg) {
   return String(msg).replace(/[A-Za-z0-9_\-]{20,}/g, '[REDACTED]');
 }
 
+// ── Helper: Decimal/string/number → finite number, with fallback ──
+function toNumber(value, fallback) {
+  if (value === null || value === undefined) return fallback;
+  const n = Number(typeof value === 'object' ? value.toString() : value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+// ── Helper: infer settlement currency from the symbol suffix ──
+function inferCurrency(symbol) {
+  const suffix = String(symbol || '').split('.').pop().toUpperCase();
+  if (suffix === 'HK') return 'HKD';
+  if (suffix === 'SG') return 'SGD';
+  if (suffix === 'SH' || suffix === 'SZ') return 'CNY';
+  return 'USD';
+}
+
 // ── Context cache: reuse SDK connections for the same credentials ──
 let cachedKey = null;
 let cachedTradeCtx = null;
@@ -88,7 +137,7 @@ function invalidateCache() {
 
 // ── GET /api/health ──
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', local: true, sdk: sdkAvailable });
+  res.json({ status: 'ok', local: true, sdk: sdkAvailable, version: APP_VERSION });
 });
 
 // ── POST /api/positions ──
@@ -108,10 +157,14 @@ app.post('/api/positions', async (req, res) => {
     const positions = [];
     for (const channel of resp.channels || []) {
       for (const pos of channel.positions || []) {
+        const quantity = toNumber(pos.quantity, 0);
         positions.push({
           symbol: pos.symbol,
-          quantity: Number(pos.quantity),
-          costPrice: Number(pos.costPrice || 0),
+          symbolName: pos.symbolName || pos.symbol,
+          quantity,
+          availableQuantity: toNumber(pos.availableQuantity, quantity),
+          costPrice: toNumber(pos.costPrice, 0),
+          currency: pos.currency || inferCurrency(pos.symbol),
         });
       }
     }
@@ -141,9 +194,13 @@ app.post('/api/positions', async (req, res) => {
       const prevClose = quote ? quote.prevClose : null;
       return {
         symbol: p.symbol,
+        symbol_name: p.symbolName,
         quantity: p.quantity,
+        available_quantity: p.availableQuantity,
+        cost_price: p.costPrice,
         market_price: marketPrice,
         prev_close: prevClose,
+        currency: p.currency,
       };
     });
 

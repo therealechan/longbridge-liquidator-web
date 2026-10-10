@@ -2,8 +2,12 @@
 /**
  * prepare-server.js
  *
- * Copies src/, public/, and node_modules/ into src-tauri/server-bundle/
- * so Tauri can bundle them as app resources.
+ * Copies src/, public/, node_modules/ and package.json into
+ * src-tauri/server-bundle/ so Tauri can bundle them as app resources.
+ *
+ * The desktop UI itself is served from the app bundle (tauri.conf.json >
+ * build.frontendDist = ../public); public/ is still copied so the bundled
+ * Express server can serve the same UI to a browser on 127.0.0.1:3456.
  *
  * Run automatically via tauri.conf.json > build.beforeBuildCommand.
  * Can also be run manually: node scripts/prepare-server.js
@@ -18,6 +22,7 @@ const DEST = path.resolve(ROOT, 'src-tauri', 'server-bundle');
 
 // Directories to bundle
 const SOURCES = ['src', 'public', 'node_modules'];
+const FILES   = ['package.json'];
 
 console.log('📦 Preparing server bundle for Tauri…');
 console.log(`   Source: ${ROOT}`);
@@ -40,6 +45,17 @@ for (const dir of SOURCES) {
   }
   console.log(`   Copying ${dir}/…`);
   copyDir(src, dst);
+}
+
+// Copy individual files (package.json provides the version for /api/health)
+for (const file of FILES) {
+  const src = path.join(ROOT, file);
+  if (!fs.existsSync(src)) {
+    console.warn(`   ⚠️  Skipping ${file} (not found)`);
+    continue;
+  }
+  console.log(`   Copying ${file}…`);
+  fs.copyFileSync(src, path.join(DEST, file));
 }
 
 console.log('✅ Server bundle ready.');

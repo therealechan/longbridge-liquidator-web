@@ -1,0 +1,408 @@
+/* ==========================================================================
+   The app shell. <body> is the grid; nothing at document level scrolls.
+
+     rail | sidebar | main    | details
+     bar    bar       bar       bar
+
+   The top 44px of the rail, sidebar, tab bar and details panel sit under the
+   transparent macOS title bar (titleBarStyle: Overlay), so they are drag
+   regions (data-tauri-drag-region) and the traffic lights live at x13 y13.
+   ========================================================================== */
+
+body.app {
+  display: grid;
+  height: 100vh;
+  height: 100dvh;
+  grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr) var(--details-w);
+  grid-template-rows: minmax(0, 1fr) var(--bar-h);
+  grid-template-areas:
+    "rail sidebar main details"
+    "bar  bar     bar  bar";
+}
+
+body.app.no-sidebar { grid-template-columns: var(--rail-w) 0 minmax(0, 1fr) var(--details-w); }
+body.app.no-details { grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr) 0; }
+body.app.no-sidebar.no-details { grid-template-columns: var(--rail-w) 0 minmax(0, 1fr) 0; }
+body.app.no-sidebar .sidebar,
+body.app.no-details .details { display: none; }
+
+/* Under 1100px the details panel steps aside; ⌘D then peeks it as an overlay. */
+@media (max-width: 1099px) {
+  body.app,
+  body.app.no-details { grid-template-columns: var(--rail-w) var(--sidebar-w) minmax(0, 1fr) 0; }
+  body.app.no-sidebar,
+  body.app.no-sidebar.no-details { grid-template-columns: var(--rail-w) 0 minmax(0, 1fr) 0; }
+  body.app .details { display: none; }
+  body.app.details-peek .details {
+    display: flex;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: var(--bar-h);
+    width: var(--details-w);
+    z-index: 30;
+    box-shadow: var(--shadow-menu);
+  }
+}
+
+/* ---- drag regions ----
+   Tauri starts a window drag on mousedown on an element that carries
+   data-tauri-drag-region itself, so decorative children either carry it too
+   or ignore the pointer. */
+[data-tauri-drag-region] > .tabbar-title,
+[data-tauri-drag-region] > .tabbar-count { pointer-events: none; }
+
+/* ==========================================================================
+   Rail
+   ========================================================================== */
+.rail {
+  grid-area: rail;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 10px;
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
+  min-height: 0;
+  z-index: 2;
+}
+.rail-top { flex: none; width: 100%; height: var(--band-h); }
+.rail-nav { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.rail-bottom { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+.rail-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+  color: var(--muted);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.rail-btn .lucide { width: 20px; height: 20px; stroke-width: 1.5; }
+.rail-btn:hover { background: var(--overlay-strong); color: var(--foreground); }
+.rail-btn.is-current { background: var(--overlay-strong); color: var(--foreground); }
+.rail-btn.is-current::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* theme button: one icon per choice */
+.theme-icon { display: none; }
+body[data-theme-choice="system"] .theme-icon-system,
+body[data-theme-choice="light"] .theme-icon-light,
+body[data-theme-choice="dark"] .theme-icon-dark { display: block; }
+
+/* account button */
+.account-btn {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  color: var(--foreground-secondary);
+}
+.account-btn:hover,
+.account-btn[aria-expanded="true"] { background: var(--overlay-strong); color: var(--foreground); }
+.account-btn .lucide { width: 15px; height: 15px; }
+.account-btn .mode-dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--surface-2);
+  background: var(--muted);
+}
+body.is-live .account-btn .mode-dot { background: var(--warning); }
+
+/* rail tooltips */
+[data-tip] { position: relative; }
+.rail [data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translate(-4px, -50%);
+  z-index: 60;
+  padding: 4px 8px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-menu);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms;
+}
+@media (hover: hover) and (pointer: fine) {
+  .rail [data-tip]:hover::after { opacity: 1; visibility: visible; transform: translate(0, -50%); transition-delay: 350ms; }
+}
+.rail [data-tip]:focus-visible::after { opacity: 1; visibility: visible; transform: translate(0, -50%); }
+.rail [aria-expanded="true"]::after { display: none; }
+
+/* ==========================================================================
+   Sidebar
+   ========================================================================== */
+.sidebar {
+  grid-area: sidebar;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+.sidebar-band {
+  flex: none;
+  height: var(--band-h);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* the traffic lights reach ~x70; keep the band's contents clear of them */
+  padding: 0 12px 0 34px;
+}
+.sidebar-band > * { pointer-events: none; }
+.brand-icon { width: 18px; height: 18px; border-radius: 4px; }
+.brand-name { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+.brand-tag {
+  margin-left: auto;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.pane { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.pane-head {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px 12px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.pane-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.list-caption {
+  flex: none;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px;
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-soft);
+}
+.list-caption .caption-right { margin-left: auto; }
+
+.list { flex: 1; min-height: 0; padding: 4px 0; }
+
+/* ==========================================================================
+   Main
+   ========================================================================== */
+.main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--background);
+}
+
+.tabbar {
+  flex: none;
+  height: var(--band-h);
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  padding: 0 8px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+/* with the sidebar folded the tab bar starts at x52, under the lights */
+body.no-sidebar .tabbar { padding-left: 36px; }
+.tabbar > .icon-btn { align-self: center; }
+.tabbar-group { display: flex; align-items: stretch; gap: 2px; min-width: 0; }
+.tabbar-spacer { flex: 1; min-width: 16px; }
+.tabbar-actions { display: flex; align-items: center; gap: 4px; }
+.tabbar-title {
+  align-self: center;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.tabbar-count {
+  align-self: center;
+  font-size: 11px;
+  color: var(--muted);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: color 120ms ease, box-shadow 120ms ease;
+}
+.tab:hover { color: var(--foreground); }
+.tab.is-active { color: var(--foreground); font-weight: 500; box-shadow: inset 0 -2px var(--accent); }
+.tab .tab-badge {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  background: var(--overlay-strong);
+  color: var(--foreground-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.view-body { flex: 1; min-height: 0; }
+
+/* ==========================================================================
+   Details
+   ========================================================================== */
+.details {
+  grid-area: details;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+.details-band {
+  flex: none;
+  height: var(--band-h);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+.details-band .pane-title { pointer-events: none; }
+.details-band .icon-btn { margin-left: auto; }
+.details-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+
+/* ==========================================================================
+   Status bar
+   ========================================================================== */
+.statusbar {
+  grid-area: bar;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  white-space: nowrap;
+  min-width: 0;
+  z-index: 2;
+}
+.sb-left, .sb-right { display: flex; align-items: center; gap: 10px; min-width: 0; overflow: hidden; }
+.sb-right { justify-content: flex-end; }
+.sb-center { text-align: center; font-variant-numeric: tabular-nums; }
+.sb-item { display: inline-flex; align-items: center; gap: 6px; }
+.sb-sep { color: var(--muted-foreground); opacity: 0.6; }
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: none;
+}
+.dot.is-live, .dot.is-warning { background: var(--warning); }
+.dot.is-ok { background: var(--success); }
+.dot.is-error { background: var(--danger); }
+.dot.is-pending { background: var(--muted-foreground); animation: pulse 1.2s ease-in-out infinite; }
+
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+/* ---- popover (account) ---- */
+.popover {
+  position: fixed;
+  left: calc(var(--rail-w) + 6px);
+  bottom: calc(var(--bar-h) + 8px);
+  z-index: 50;
+  width: 240px;
+  padding: 6px;
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow-menu);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 140ms ease, transform 140ms var(--ease-out);
+}
+.popover.is-open { opacity: 1; transform: none; }
+.pop-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 4px;
+  font-weight: 600;
+}
+.pop-meta {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 8px 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.pop-sep { height: 1px; margin: 4px 2px; background: var(--border); }
+.pop-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  color: var(--foreground-secondary);
+}
+.pop-item:hover { background: var(--overlay-strong); color: var(--foreground); }
+.pop-item .pop-hint { margin-left: auto; font-size: 11px; color: var(--muted); }
+.pop-item .lucide { width: 14px; height: 14px; color: var(--muted); }

@@ -11,6 +11,63 @@ describe('GET /api/health', () => {
     assert.equal(res.body.local, true);
     assert.equal(typeof res.body.sdk, 'boolean');
   });
+
+  it('returns the package.json version', async () => {
+    const pkg = require('../package.json');
+    const res = await request(app).get('/api/health');
+    assert.equal(typeof res.body.version, 'string');
+    assert.equal(res.body.version, pkg.version);
+  });
+});
+
+describe('CORS', () => {
+  const allowed = [
+    'tauri://localhost',
+    'http://tauri.localhost',
+    'https://tauri.localhost',
+    'http://localhost:3456',
+    'http://127.0.0.1:3456',
+  ];
+
+  for (const origin of allowed) {
+    it(`echoes allowed origin ${origin}`, async () => {
+      const res = await request(app).get('/api/health').set('Origin', origin);
+      assert.equal(res.status, 200);
+      assert.equal(res.headers['access-control-allow-origin'], origin);
+    });
+  }
+
+  it('omits CORS headers for a disallowed origin', async () => {
+    const res = await request(app).get('/api/health').set('Origin', 'https://evil.example.com');
+    assert.equal(res.status, 200);
+    assert.equal(res.headers['access-control-allow-origin'], undefined);
+  });
+
+  it('omits CORS headers when no Origin is sent', async () => {
+    const res = await request(app).get('/api/health');
+    assert.equal(res.headers['access-control-allow-origin'], undefined);
+  });
+
+  it('answers OPTIONS preflight with 204 and allow headers', async () => {
+    const res = await request(app)
+      .options('/api/positions')
+      .set('Origin', 'tauri://localhost')
+      .set('Access-Control-Request-Method', 'POST')
+      .set('Access-Control-Request-Headers', 'content-type');
+    assert.equal(res.status, 204);
+    assert.equal(res.headers['access-control-allow-origin'], 'tauri://localhost');
+    assert.match(res.headers['access-control-allow-methods'], /POST/);
+    assert.match(res.headers['access-control-allow-methods'], /OPTIONS/);
+    assert.match(res.headers['access-control-allow-headers'], /Content-Type/i);
+  });
+
+  it('does not grant preflight to a disallowed origin', async () => {
+    const res = await request(app)
+      .options('/api/liquidate')
+      .set('Origin', 'https://evil.example.com')
+      .set('Access-Control-Request-Method', 'POST');
+    assert.equal(res.headers['access-control-allow-origin'], undefined);
+  });
 });
 
 describe('GET / (static)', () => {

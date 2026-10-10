@@ -1,0 +1,109 @@
+/* ==========================================================================
+   Reset, type and the rules that make a web view feel like a Mac app:
+   no page scroll, no rubber-banding, no text selection on chrome, overlay
+   scrollbars on the inner scrollers, focus rings for the keyboard only.
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+html {
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar { display: none; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--foreground);
+  background: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+  overflow: hidden;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+img, svg { display: block; }
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  background: none;
+  border: 0;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a { color: inherit; text-decoration: none; cursor: default; }
+
+[hidden] { display: none !important; }
+
+/* Text the user may want to copy */
+input, textarea,
+.selectable, .selectable *,
+td, .dt-value, .stat-value, .order-detail, .order-detail * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+input, textarea { cursor: text; }
+
+.mono { font-family: var(--font-mono); }
+.num, .mono, td, .stat-value { font-variant-numeric: tabular-nums; }
+
+/* ---- focus: keyboard only ---- */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- inner scrollers: 6px overlay thumb, visible on hover ---- */
+.scroller {
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.scroller:hover { scrollbar-color: var(--border-strong) transparent; }
+.scroller::-webkit-scrollbar { width: 6px; height: 6px; }
+.scroller::-webkit-scrollbar-track { background: transparent; }
+.scroller::-webkit-scrollbar-corner { background: transparent; }
+.scroller::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+.scroller:hover::-webkit-scrollbar-thumb { background: var(--border-strong); }
+.scroller::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ---- lucide defaults ---- */
+.lucide {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  stroke-width: 1.5;
+}
+
+::selection { background: var(--overlay-strong); }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

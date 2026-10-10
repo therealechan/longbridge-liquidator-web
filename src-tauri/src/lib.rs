@@ -2,26 +2,112 @@ use std::net::TcpStream;
 use std::process::{Child, Command};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tauri::Manager;
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+use tauri::webview::PageLoadEvent;
+use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_opener::OpenerExt;
+use tauri_plugin_window_state::{AppHandleExt, StateFlags};
+
+const SERVER_ADDR: &str = "127.0.0.1:3456";
+const REPO_URL: &str = "https://github.com/therealechan/longbridge-liquidator-web";
+const MAIN_WINDOW: &str = "main";
+
+/// Menu item ids forwarded to the frontend as the payload of the `menu` event.
+const FRONTEND_MENU_ACTIONS: &[&str] = &[
+    "settings",
+    "refresh",
+    "toggle_sidebar",
+    "toggle_details",
+    "shortcuts",
+    "view_positions",
+    "view_orders",
+    "about",
+];
+
+/// Window-state flags we persist: geometry only (never visibility/decorations).
+fn window_state_flags() -> StateFlags {
+    StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED
+}
 
 /// Holds the handle to the spawned Node.js server process.
 struct NodeProcess(Arc<Mutex<Option<Child>>>);
 
+/// Kill the Node server (and anything it spawned) if we started it.
+/// Idempotent: the child is taken out of the slot, so later calls are no-ops.
+fn stop_node_server(app: &AppHandle) {
+    let Some(state) = app.try_state::<NodeProcess>() else { return };
+    let child = match state.0.lock() {
+        Ok(mut guard) => guard.take(),
+        Err(poisoned) => poisoned.into_inner().take(),
+    };
+    let Some(mut child) = child else { return };
+    let pid = child.id();
+    eprintln!("[lb-liquidator] stopping node server (pid {pid})");
+
+    #[cfg(unix)]
+    {
+        // The child was spawned as the leader of its own process group
+        // (process_group(0)), so signalling -pid reaches any grandchildren too.
+        // SIGTERM first for a clean shutdown, then SIGKILL if it lingers.
+        let pgid = pid as i32;
+        unsafe { libc::kill(-pgid, libc::SIGTERM) };
+        let deadline = std::time::Instant::now() + Duration::from_millis(1500);
+        loop {
+            match child.try_wait() {
+                Ok(Some(_)) => break,
+                Ok(None) if std::time::Instant::now() < deadline => {
+                    std::thread::sleep(Duration::from_millis(50));
+                }
+                _ => {
+                    unsafe { libc::kill(-pgid, libc::SIGKILL) };
+                    break;
+                }
+            }
+        }
+        // Reap stragglers in the group that outlived the leader.
+        unsafe { libc::kill(-pgid, libc::SIGKILL) };
+    }
+
+    let _ = child.kill();
+    let _ = child.wait();
+}
+
+/// Persist window geometry and stop the server — shared by every exit path.
+fn shutdown(app: &AppHandle) {
+    let _ = app.save_window_state(window_state_flags());
+    stop_node_server(app);
+}
+
+/// Last fatal server-startup error, replayed to the frontend after page load
+/// in case the `server-error` event fired before its listener was registered.
+struct ServerError(Arc<Mutex<Option<String>>>);
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(window_state_flags())
+                .build(),
+        )
         .setup(|app| {
             // ── Build app menu ────────────────────────────────────────────────
-            let check_update_item = MenuItemBuilder::with_id("check_update", "Check for Updates…")
+            let about_item = MenuItemBuilder::with_id("about", "About LB Liquidator").build(app)?;
+            let check_update_item =
+                MenuItemBuilder::with_id("check_update", "Check for Updates…").build(app)?;
+            let settings_item = MenuItemBuilder::with_id("settings", "Settings…")
+                .accelerator("CmdOrCtrl+,")
                 .build(app)?;
 
             let app_submenu = SubmenuBuilder::new(app, "LB Liquidator")
-                .about(None)
+                .item(&about_item)
                 .separator()
                 .item(&check_update_item)
+                .separator()
+                .item(&settings_item)
                 .separator()
                 .hide()
                 .hide_others()
@@ -39,6 +125,32 @@ pub fn run() {
                 .select_all()
                 .build()?;
 
+            let positions_item = MenuItemBuilder::with_id("view_positions", "Positions")
+                .accelerator("CmdOrCtrl+1")
+                .build(app)?;
+            let orders_item = MenuItemBuilder::with_id("view_orders", "Orders")
+                .accelerator("CmdOrCtrl+2")
+                .build(app)?;
+            let sidebar_item = MenuItemBuilder::with_id("toggle_sidebar", "Toggle Sidebar")
+                .accelerator("CmdOrCtrl+B")
+                .build(app)?;
+            let details_item = MenuItemBuilder::with_id("toggle_details", "Toggle Details")
+                .accelerator("CmdOrCtrl+D")
+                .build(app)?;
+            let refresh_item = MenuItemBuilder::with_id("refresh", "Refresh")
+                .accelerator("CmdOrCtrl+R")
+                .build(app)?;
+
+            let view_submenu = SubmenuBuilder::new(app, "View")
+                .item(&positions_item)
+                .item(&orders_item)
+                .separator()
+                .item(&sidebar_item)
+                .item(&details_item)
+                .separator()
+                .item(&refresh_item)
+                .build()?;
+
             let window_submenu = SubmenuBuilder::new(app, "Window")
                 .minimize()
                 .maximize()
@@ -46,21 +158,55 @@ pub fn run() {
                 .close_window()
                 .build()?;
 
+            let shortcuts_item = MenuItemBuilder::with_id("shortcuts", "Keyboard Shortcuts")
+                .accelerator("CmdOrCtrl+/")
+                .build(app)?;
+            let github_item =
+                MenuItemBuilder::with_id("open_github", "GitHub Repository").build(app)?;
+
+            let help_submenu = SubmenuBuilder::new(app, "Help")
+                .item(&shortcuts_item)
+                .separator()
+                .item(&github_item)
+                .build()?;
+
             let menu = MenuBuilder::new(app)
                 .item(&app_submenu)
                 .item(&edit_submenu)
+                .item(&view_submenu)
                 .item(&window_submenu)
+                .item(&help_submenu)
                 .build()?;
 
             app.set_menu(menu)?;
 
+            #[cfg(target_os = "macos")]
+            {
+                let _ = window_submenu.set_as_windows_menu_for_nsapp();
+                let _ = help_submenu.set_as_help_menu_for_nsapp();
+            }
+
             // ── Handle menu events ────────────────────────────────────────────
             app.on_menu_event(|app, event| {
-                if event.id() == "check_update" {
-                    let handle = app.clone();
-                    tauri::async_runtime::spawn(async move {
-                        check_for_updates_manual(handle).await;
-                    });
+                let id = event.id().as_ref();
+                match id {
+                    "check_update" => {
+                        let handle = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            check_for_updates_manual(handle).await;
+                        });
+                    }
+                    "open_github" => {
+                        if let Err(e) = app.opener().open_url(REPO_URL, None::<&str>) {
+                            eprintln!("[lb-liquidator] failed to open GitHub URL: {e}");
+                        }
+                    }
+                    _ if FRONTEND_MENU_ACTIONS.contains(&id) => {
+                        if let Err(e) = app.emit_to(MAIN_WINDOW, "menu", id) {
+                            eprintln!("[lb-liquidator] failed to emit menu event '{id}': {e}");
+                        }
+                    }
+                    _ => {}
                 }
             });
 
@@ -71,13 +217,23 @@ pub fn run() {
                 tauri::async_runtime::block_on(check_for_updates(update_handle));
             });
 
-            // ── Start Node.js server ──────────────────────────────────────────
-            let app_handle = app.handle().clone();
-            let resource_dir = app_handle
-                .path()
-                .resource_dir()
-                .expect("cannot resolve resource dir");
+            // ── Start Node.js API server ──────────────────────────────────────
+            // The UI is bundled (frontendDist) and polls /api/health itself;
+            // here we only spawn the server and report definite failures.
+            let child_arc: Arc<Mutex<Option<Child>>> = Arc::new(Mutex::new(None));
+            let error_arc: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+            app.manage(NodeProcess(child_arc.clone()));
+            app.manage(ServerError(error_arc.clone()));
 
+            let app_handle = app.handle().clone();
+
+            if TcpStream::connect(SERVER_ADDR).is_ok() {
+                // e.g. `tauri dev`, where beforeDevCommand already runs `npm start`
+                eprintln!("[lb-liquidator] server already listening on {SERVER_ADDR} — not spawning");
+                return Ok(());
+            }
+
+            let resource_dir = app_handle.path().resource_dir()?;
             let server_dir = resource_dir.join("server-bundle");
             let server_script = server_dir.join("src").join("server.js");
 
@@ -87,63 +243,112 @@ pub fn run() {
             let node_bin = find_node();
             eprintln!("[lb-liquidator] using node: {}", node_bin);
 
-            let child = Command::new(&node_bin)
-                .arg(&server_script)
+            let mut cmd = Command::new(&node_bin);
+            cmd.arg(&server_script)
                 .current_dir(&server_dir)
-                .env("PORT", "3456")
-                .spawn()
-                .expect("failed to spawn node server — is Node.js installed?");
+                .env("PORT", "3456");
+            // Own process group, so shutdown can kill Node and its children together.
+            #[cfg(unix)]
+            {
+                use std::os::unix::process::CommandExt;
+                cmd.process_group(0);
+            }
 
-            let child_arc = Arc::new(Mutex::new(Some(child)));
-            app.manage(NodeProcess(child_arc.clone()));
-
-            let window = app_handle
-                .get_webview_window("main")
-                .expect("main window not found");
-
-            std::thread::spawn(move || {
-                let mut ready = false;
-                for _ in 0..60 {
-                    std::thread::sleep(Duration::from_millis(500));
-                    if TcpStream::connect("127.0.0.1:3456").is_ok() {
-                        ready = true;
-                        break;
+            match cmd.spawn() {
+                Ok(child) => {
+                    if let Ok(mut guard) = child_arc.lock() {
+                        *guard = Some(child);
                     }
                 }
-
-                if ready {
-                    eprintln!("[lb-liquidator] server ready — navigating webview");
-                    let url: tauri::Url = "http://127.0.0.1:3456"
-                        .parse()
-                        .expect("invalid app URL");
-                    let _ = window.navigate(url);
-                } else {
-                    eprintln!("[lb-liquidator] ERROR: server did not start within 30 seconds");
-                    let _ = window.eval(
-                        "document.getElementById('status').textContent = \
-                         '❌ Failed to start server. Please ensure Node.js is installed.';"
-                    );
+                Err(e) => {
+                    let msg = if e.kind() == std::io::ErrorKind::NotFound {
+                        "Node.js was not found. Please install Node.js (https://nodejs.org) and restart LB Liquidator.".to_string()
+                    } else {
+                        format!("Failed to start the local server ({node_bin}): {e}")
+                    };
+                    report_server_error(&app_handle, &error_arc, msg);
+                    return Ok(());
                 }
+            }
+
+            std::thread::spawn(move || {
+                for _ in 0..60 {
+                    std::thread::sleep(Duration::from_millis(500));
+                    if TcpStream::connect(SERVER_ADDR).is_ok() {
+                        eprintln!("[lb-liquidator] server ready on {SERVER_ADDR}");
+                        return;
+                    }
+                    // Node exited before the port opened → definite failure.
+                    let exited = child_arc
+                        .lock()
+                        .ok()
+                        .and_then(|mut g| g.as_mut().and_then(|c| c.try_wait().ok().flatten()));
+                    if let Some(status) = exited {
+                        // A concurrent instance may own the port; re-check once.
+                        if TcpStream::connect(SERVER_ADDR).is_ok() {
+                            eprintln!("[lb-liquidator] node exited ({status}) but {SERVER_ADDR} is reachable");
+                            return;
+                        }
+                        report_server_error(
+                            &app_handle,
+                            &error_arc,
+                            format!("The local server exited unexpectedly ({status})."),
+                        );
+                        return;
+                    }
+                }
+                report_server_error(
+                    &app_handle,
+                    &error_arc,
+                    "The local server did not start within 30 seconds.".to_string(),
+                );
             });
 
             Ok(())
         })
+        .on_page_load(|webview, payload| {
+            // Replay a startup failure that may have happened before the
+            // frontend registered its `server-error` listener.
+            if payload.event() != PageLoadEvent::Finished {
+                return;
+            }
+            let Some(state) = webview.try_state::<ServerError>() else { return };
+            let pending = state.0.lock().ok().and_then(|g| g.clone());
+            if let Some(msg) = pending {
+                let handle = webview.app_handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(750));
+                    let _ = handle.emit_to(MAIN_WINDOW, "server-error", msg);
+                });
+            }
+        })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
-                if let Some(state) = window.try_state::<NodeProcess>() {
-                    if let Ok(mut guard) = state.0.lock() {
-                        if let Some(mut child) = guard.take() {
-                            eprintln!("[lb-liquidator] killing node server (pid {})", child.id());
-                            let _ = child.kill();
-                            let _ = child.wait();
-                        }
-                    }
-                }
+                // Closing the (only) window quits the app. We exit the process
+                // directly, so RunEvent::Exit never fires — clean up first.
+                shutdown(window.app_handle());
                 std::process::exit(0);
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running lb-liquidator");
+        .build(tauri::generate_context!())
+        .expect("error while building lb-liquidator");
+
+    // ⌘Q / the Quit menu item / `quit app` Apple Events / app.exit() go through
+    // the run loop rather than closing the window, so the Destroyed handler
+    // above never runs for them. Stop the server on every exit path here.
+    app.run(|app_handle, event| match event {
+        tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit => shutdown(app_handle),
+        _ => {}
+    });
+}
+
+/// Record a fatal server-startup error and notify the frontend.
+fn report_server_error(app: &AppHandle, slot: &Arc<Mutex<Option<String>>>, msg: String) {
+    eprintln!("[lb-liquidator] ERROR: {msg}");
+    if let Ok(mut guard) = slot.lock() {
+        *guard = Some(msg.clone());
+    }
+    let _ = app.emit_to(MAIN_WINDOW, "server-error", msg);
 }
 
 /// Silent background update check on launch — prompts user if an update is found.

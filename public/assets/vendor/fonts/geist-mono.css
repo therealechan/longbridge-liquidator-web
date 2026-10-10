@@ -1,0 +1,22 @@
+/* Geist Mono (latin) — vendored from @fontsource/geist-mono 5.3.0, SIL OFL 1.1 (see OFL-geist.txt) */
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("./geist-mono-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url("./geist-mono-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url("./geist-mono-latin-600-normal.woff2") format("woff2");
+}

@@ -1,0 +1,127 @@
+/* ==========================================================================
+   Design tokens. The monochrome palette is the original app's; the extra
+   surfaces, borders, overlays, tints and shadows give the desktop shell its
+   structure. Every colour used anywhere in the UI is one of these.
+   Light is the default; dark applies when the user picked it
+   (html[data-theme="dark"]) or follows the OS when they did not.
+   ========================================================================== */
+
+:root {
+  /* original palette */
+  --background: #ffffff;
+  --surface: #f4f4f5;
+  --surface-hover: #e4e4e7;
+  --border: #e4e4e7;
+  --foreground: #18181b;
+  --foreground-secondary: #3f3f46;
+  --muted: #71717a;
+  --muted-foreground: #a1a1aa;
+  --accent: #18181b;
+  --accent-foreground: #fafafa;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --success: #16a34a;
+  --radius: 6px;
+  --radius-sm: 4px;
+
+  /* shell structure */
+  --surface-2: #fafafa;
+  --surface-3: #e4e4e7;
+  --border-soft: #f0f0f1;
+  --border-strong: #d4d4d8;
+  --overlay-weak: rgba(0, 0, 0, 0.025);
+  --overlay: rgba(0, 0, 0, 0.05);
+  --overlay-strong: rgba(0, 0, 0, 0.07);
+
+  /* status */
+  --warning: #f59e0b;
+  --danger-soft: rgba(220, 38, 38, 0.12);
+  --success-soft: rgba(22, 163, 74, 0.12);
+  --warning-soft: rgba(245, 158, 11, 0.12);
+  --success-hover: #15803d;
+  --warning-hover: #d97706;
+  --on-color: #ffffff;              /* text on danger / success / warning fills */
+  --skeleton: rgba(0, 0, 0, 0.06);
+
+  /* elevation */
+  --shadow-menu: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-modal: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 24px 64px rgba(0, 0, 0, 0.22);
+  --scrim: rgba(0, 0, 0, 0.28);
+
+  /* type */
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "PingFang TC", "Helvetica Neue", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Monaco, monospace;
+
+  /* layout */
+  --rail-w: 52px;
+  --sidebar-w: 280px;
+  --details-w: 300px;
+  --bar-h: 26px;
+  --band-h: 44px;
+  --control-h: 28px;
+  --button-h: 30px;
+  --button-lg-h: 36px;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  color-scheme: light;
+}
+
+/* ---- dark: explicit choice ---- */
+:root[data-theme="dark"] {
+  --background: #0a0a0a;
+  --surface: #171717;
+  --surface-hover: #262626;
+  --border: #262626;
+  --foreground: #ededed;
+  --foreground-secondary: #d4d4d4;
+  --muted: #737373;
+  --muted-foreground: #a3a3a3;
+  --accent: #fafafa;
+  --accent-foreground: #171717;
+
+  --surface-2: #0f0f0f;
+  --surface-3: #262626;
+  --border-soft: #1f1f1f;
+  --border-strong: #3f3f46;
+  --overlay-weak: rgba(255, 255, 255, 0.03);
+  --overlay: rgba(255, 255, 255, 0.05);
+  --overlay-strong: rgba(255, 255, 255, 0.08);
+  --skeleton: rgba(255, 255, 255, 0.07);
+
+  --shadow-menu: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 24px 64px rgba(0, 0, 0, 0.6);
+  --scrim: rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+}
+
+/* ---- dark: follow the OS when no explicit choice ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #0a0a0a;
+    --surface: #171717;
+    --surface-hover: #262626;
+    --border: #262626;
+    --foreground: #ededed;
+    --foreground-secondary: #d4d4d4;
+    --muted: #737373;
+    --muted-foreground: #a3a3a3;
+    --accent: #fafafa;
+    --accent-foreground: #171717;
+
+    --surface-2: #0f0f0f;
+    --surface-3: #262626;
+    --border-soft: #1f1f1f;
+    --border-strong: #3f3f46;
+    --overlay-weak: rgba(255, 255, 255, 0.03);
+    --overlay: rgba(255, 255, 255, 0.05);
+    --overlay-strong: rgba(255, 255, 255, 0.08);
+    --skeleton: rgba(255, 255, 255, 0.07);
+
+    --shadow-menu: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-modal: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 24px 64px rgba(0, 0, 0, 0.6);
+    --scrim: rgba(0, 0, 0, 0.55);
+
+    color-scheme: dark;
+  }
+}

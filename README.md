@@ -17,6 +17,17 @@
 |-----------|------------|
 | ![Dark mode - positions view](docs/screenshots/dark-positions.png) | ![Light mode - positions view](docs/screenshots/light-positions.png) |
 
+| Conditional Sell | Order History |
+|-----------------|---------------|
+| ![Conditional sell view](docs/screenshots/conditional-sell.png) | ![Orders view](docs/screenshots/orders.png) |
+
+| Settings (Account) |
+|--------------------|
+| ![Settings - account and API configuration](docs/screenshots/api-config.png) |
+
+-----------|------------|
+| ![Dark mode - positions view](docs/screenshots/dark-positions.png) | ![Light mode - positions view](docs/screenshots/light-positions.png) |
+
 | Conditional Sell | API Setup |
 |-----------------|-----------|
 | ![Conditional sell dialog](docs/screenshots/conditional-sell.png) | ![API configuration](docs/screenshots/api-config.png) |
@@ -31,14 +42,20 @@
 
 ## Features
 
-- **Local-only** — API credentials stored in browser localStorage only, server binds to 127.0.0.1
+- **Native desktop shell** — fixed-window layout like a Mac app: icon rail, positions sidebar, tabbed main view, details panel and status bar; overlay title bar, native menus, window size remembered
+- **Local-only** — API credentials stored in local storage only, server binds to 127.0.0.1, UI and fonts bundled (no CDN requests)
 - **Mac native app** — Tauri v2 wrapper, double-click to launch, no terminal needed
 - **Auto-updates** — Sparkle-powered, checks for updates on launch + manual check via menu
-- **Selective liquidation** — choose positions, sell at full / ½ / ⅓ / ¼ ratio
-- **Conditional sell** — batch set take-profit, stop-loss, or trailing stop orders
-- **Live positions** — real-time quotes, multi-currency (USD / HKD / SGD), daily P/L
+- **Selective liquidation** — tick positions in the sidebar, sell at full / ½ / ⅓ / ¼ ratio
+- **Conditional sell** — batch set take-profit, stop-loss, or trailing stop orders with a live trigger-price preview
+- **Buy back** — re-buy what you just liquidated
+- **Order history** — every order you submit is logged in the Orders view (stored locally), filterable by Sell / Buy / Conditional
+- **Live positions** — multi-currency (USD / HKD / SGD) totals, daily P/L, cost price and unrealized P/L in the details panel
+- **Settings** — account and API credentials, appearance (System / Light / Dark), language, and About
+- **Keyboard shortcuts** — ⌘R refresh, ⌘A select all, ⌘↩ confirm, ⌘, settings, ⌘B sidebar, ⌘D details, ⌘/ shortcuts, ⌘1/2/3 views, ⌘F filter
+- **System theme** — follows macOS light / dark automatically, or pin one
 - **i18n** — 简体中文 · 繁體中文 · English
-- **Demo mode** — full UI preview without a real account
+- **Demo mode** — full UI preview with mock data, no real account needed
 
 ---
 
@@ -47,12 +64,12 @@
 | Layer | Technology |
 |-------|------------|
 | Backend | Node.js + Express |
-| Frontend | Vanilla HTML / CSS / JS |
+| Frontend | Vanilla HTML / CSS / JS (no bundler); CSS and scripts in `public/assets/`, shared `window.LB` namespace |
 | Mac App | [Tauri v2](https://tauri.app/) (Rust + WKWebView) |
 | Auto-update | [tauri-plugin-updater](https://github.com/tauri-apps/plugins-workspace) (Sparkle on macOS) |
 | Trading SDK | [Longbridge OpenAPI Node.js SDK](https://www.npmjs.com/package/longport) |
-| Icons | [Lucide](https://lucide.dev/) |
-| Fonts | [Geist](https://vercel.com/font) |
+| Icons | [Lucide](https://lucide.dev/) (bundled) |
+| Fonts | [Geist](https://vercel.com/font) and Geist Mono (bundled) |
 
 ---
 
@@ -91,12 +108,10 @@ src-tauri/target/release/bundle/dmg/LB Liquidator_x.x.x_aarch64.dmg
 **Dev mode (faster iteration):**
 
 ```bash
-# Terminal 1
-npm run dev
-
-# Terminal 2
-npx tauri dev
+npm run tauri:dev
 ```
+
+This starts the Express server (`npm start`) and opens the native window on `http://localhost:3456`. The UI is plain files in `public/assets/`, so there is no build step for frontend changes — restart `tauri dev` (or refresh the browser tab in web mode) to pick them up.
 
 ---
 
@@ -109,6 +124,8 @@ npm install
 npm start
 # → http://127.0.0.1:3456
 ```
+
+Web mode shows the same UI in your browser. Native-only features (overlay title bar, menu bar, auto-update) are not available there, but all keyboard shortcuts work.
 
 ---
 
@@ -128,7 +145,7 @@ The app updates itself automatically — on launch it checks for newer versions 
 | App Secret | Application secret |
 | Access Token | API access token |
 
-Get credentials from [Longbridge Developer Center](https://open.longportapp.com/) → User Center → App Credentials.
+Enter them in **Settings → Account** (⌘,). Get credentials from [Longbridge Developer Center](https://open.longportapp.com/) → User Center → App Credentials.
 
 > 📖 Docs: https://open.longportapp.com/docs
 
@@ -136,21 +153,26 @@ Get credentials from [Longbridge Developer Center](https://open.longportapp.com/
 
 ## Usage
 
-1. Enter your Longbridge API credentials
-2. Click **View Positions** to load your current holdings
-3. Select positions to operate on (all selected by default)
-4. Choose an action:
+1. Open **Settings** (⌘,) → **Account**, enter your Longbridge API credentials and click **Test connection**. Demo mode needs none.
+2. Switch the sidebar to **Live** (Demo is the default) and positions load as soon as the server is up and credentials are saved; **⌘R** refreshes.
+3. Tick the positions to operate on in the sidebar (all selected by default); click one to see its details (⌘D toggles the panel).
+4. Pick a tab in the main view:
    - **Liquidate** — market sell selected positions at full / ½ / ⅓ / ¼
-   - **Buy Back** — market buy back previously liquidated positions
-   - **Conditional Sell** — batch set take-profit / stop-loss / trailing stop orders
+   - **Conditional** — batch set take-profit / stop-loss / trailing stop orders
+   - **Buy back** — market buy back previously liquidated positions
+5. Review the confirmation dialog and confirm with the button or **⌘↩**.
+6. Open **Orders** (⌘2) to review everything submitted from this app.
+
+Press **⌘/** any time for the shortcut list.
 
 ---
 
 ## Security
 
-- API credentials stored in browser localStorage — never leave your machine
+- API credentials stored in local storage (app or browser) — never leave your machine
 - Server binds to `127.0.0.1` only — not accessible from the network
-- Mac App embeds the server inside the `.app` bundle — zero network exposure
+- Mac App embeds the UI and the server inside the `.app` bundle — zero network exposure; the UI loads no remote scripts, fonts or icons (strict CSP)
+- The API accepts cross-origin calls only from the app's own origins (`tauri://localhost` and `localhost:3456`), never a wildcard
 - Open source — audit the code yourself
 
 ---
