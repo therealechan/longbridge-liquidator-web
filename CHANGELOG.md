@@ -2,6 +2,17 @@
 
 All notable changes to LB Liquidator are documented here.
 
+## [1.2.1] — 2026-10-10
+
+### Changes
+- **Orders view** — the details panel starts collapsed and only opens when the selected order's symbol is still held; no more empty "No position selected" panel
+- **Updater** — a release that is still publishing now shows "Update Server Busy — try again in a few minutes" instead of a misleading network error
+- **Release pipeline** — releases are created as drafts and published only after every asset (including `latest.json`) is uploaded, closing the window where an update check could 404
+- **Screenshots** — all product screenshots retaken with the 1.2 UI; landing page refreshed
+
+### Download
+[LB Liquidator v1.2.1](https://github.com/therealechan/longbridge-liquidator-web/releases/tag/v1.2.1)
+
 ## [1.2.0] — 2026-10-10
 
 ### Changes

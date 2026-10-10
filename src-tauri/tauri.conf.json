@@ -1,6 +1,6 @@
 {
   "productName": "LB Liquidator",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "identifier": "work.echan.liquidator",
   "build": {
     "frontendDist": "../public",
