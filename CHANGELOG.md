@@ -2,7 +2,7 @@
 
 All notable changes to LB Liquidator are documented here.
 
-## [Unreleased]
+## [1.2.0] — 2026-10-10
 
 ### Changes
 - **Real-time chart** — the details panel gains a price chart for the selected position: an intraday line with volume strip and previous-close reference (Today), plus daily / weekly candles (1M, 3M, 1Y). Hover shows a tooltip; the chosen range is remembered
@@ -11,6 +11,9 @@ All notable changes to LB Liquidator are documented here.
 - **Real-time quotes toggle** — Settings → Account → "Real-time quotes" turns live polling on or off (on by default)
 - **New API endpoints** — `POST /api/intraday`, `POST /api/candles` (`period` day / week / month, `count` 1–500) and `POST /api/quotes` (up to 50 symbols)
 - **SDK connection cache fix** — Longbridge trade and quote contexts are cached per credentials as promises, so concurrent requests share one connection instead of each opening their own; a failed connect no longer sticks in the cache
+
+### Download
+[LB Liquidator v1.2.0](https://github.com/therealechan/longbridge-liquidator-web/releases/tag/v1.2.0)
 
 ## [1.1.1] — 2026-10-10
 
