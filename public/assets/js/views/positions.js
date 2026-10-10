@@ -122,6 +122,7 @@
     S.positionsLoaded = true;
     S.loadError = null;
     S.lastUpdated = Date.now();
+    LB.bus.emit('positions');
   }
 
   /**
@@ -283,11 +284,13 @@
       return '<div class="pos-row' + (checked ? ' is-checked' : '') + (active ? ' is-active' : '') + '" role="option" aria-selected="' + (active ? 'true' : 'false') + '" data-symbol="' + esc(p.symbol) + '">' +
         '<label class="cb"><input type="checkbox" tabindex="-1"' + (checked ? ' checked' : '') + ' aria-label="' + esc(p.symbol) + '"></label>' +
         '<div class="pos-main"><div class="pos-sym">' + esc(p.symbol) + '</div><div class="pos-name" title="' + esc(p.symbol_name) + '">' + esc(p.symbol_name) + '</div></div>' +
-        '<div class="pos-side"><div class="pos-price">' + esc(fmt.money(p.market_price, p.currency)) +
+        '<canvas class="pos-spark" width="48" height="16" aria-hidden="true" data-spark="' + esc(p.symbol) + '"></canvas>' +
+        '<div class="pos-side"><div class="pos-price"><span class="pos-px">' + esc(fmt.money(p.market_price, p.currency)) + '</span>' +
           '<span class="chg ' + fmt.tone(ch && ch.abs) + '">' + (ch ? esc(fmt.pct(ch.pct)) : '—') + '</span></div>' +
           '<div class="pos-qty">' + esc(fmt.qty(p.quantity) + t('shareUnit')) + '</div></div>' +
         '</div>';
     }).join('');
+    if (LB.quotes) LB.quotes.paintSparks();
   }
 
   function renderSidebar() {
@@ -340,16 +343,16 @@
     var sel = selectedPositions();
     var rows = sel.map(function (p) {
       var q = fmt.adjustedQty(p.quantity, ratio);
-      return '<tr>' + symCell(p) +
+      return '<tr data-sym="' + esc(p.symbol) + '">' + symCell(p) +
         '<td class="r mono">' + esc(fmt.qty(q)) + (q !== p.quantity ? ' <span class="cell-muted">/ ' + esc(fmt.qty(p.quantity)) + '</span>' : '') + '</td>' +
-        '<td class="r mono">' + esc(fmt.money(p.market_price, p.currency)) + '</td>' +
-        '<td class="r mono">' + esc(fmt.money(q * p.market_price, p.currency)) + '</td></tr>';
+        '<td class="r mono" data-c="price">' + esc(fmt.money(p.market_price, p.currency)) + '</td>' +
+        '<td class="r mono" data-c="value">' + esc(fmt.money(q * p.market_price, p.currency)) + '</td></tr>';
     }).join('');
     var sums = fmt.sumByCurrency(sel, function (p) { return fmt.adjustedQty(p.quantity, ratio) * p.market_price; });
     $('liqContent').innerHTML = tableHtml(
       '<th>' + esc(t('symbol')) + '</th><th class="r">' + esc(t('colQtyToSell')) + '</th><th class="r">' + esc(t('price')) + '</th><th class="r">' + esc(t('estValue')) + '</th>',
       rows,
-      '<td colspan="3">' + esc(t('total')) + '</td><td class="r mono">' + totalsCell(sums) + '</td>'
+      '<td colspan="3">' + esc(t('total')) + '</td><td class="r mono" data-c="total">' + totalsCell(sums) + '</td>'
     );
   }
 
@@ -398,9 +401,9 @@
       rows = '<tr><td colspan="4" class="c cell-muted">—</td></tr>';
     } else {
       rows = condRows().map(function (r) {
-        return '<tr>' + symCell(r.pos) +
-          '<td class="r mono">' + esc(fmt.money(r.pos.market_price, r.pos.currency)) + '</td>' +
-          '<td class="r mono">' + triggerHtml(r) + '</td>' +
+        return '<tr data-sym="' + esc(r.pos.symbol) + '">' + symCell(r.pos) +
+          '<td class="r mono" data-c="price">' + esc(fmt.money(r.pos.market_price, r.pos.currency)) + '</td>' +
+          '<td class="r mono" data-c="trigger">' + triggerHtml(r) + '</td>' +
           '<td class="r mono">' + esc(fmt.qty(r.qty)) + '</td></tr>';
       }).join('');
     }
@@ -421,11 +424,11 @@
       var ref = priceFor(s.symbol);
       var cur = fmt.currencyOf(ref || s);
       var price = ref ? ref.market_price : null;
-      return '<tr>' + symCell({ symbol: s.symbol, symbol_name: ref ? ref.symbol_name : '' }) +
+      return '<tr data-sym="' + esc(s.symbol) + '">' + symCell({ symbol: s.symbol, symbol_name: ref ? ref.symbol_name : '' }) +
         '<td class="r mono">' + esc(fmt.qty(q)) + '</td>' +
         '<td class="r mono cell-muted">' + esc(fmt.qty(s.quantity)) + '</td>' +
-        '<td class="r mono">' + (price != null ? esc(fmt.money(price, cur)) : '—') + '</td>' +
-        '<td class="r mono">' + (price != null ? esc(fmt.money(price * q, cur)) : '—') + '</td></tr>';
+        '<td class="r mono" data-c="price">' + (price != null ? esc(fmt.money(price, cur)) : '—') + '</td>' +
+        '<td class="r mono" data-c="value">' + (price != null ? esc(fmt.money(price * q, cur)) : '—') + '</td></tr>';
     }).join('');
     $('bbContent').innerHTML = tableHtml(
       '<th>' + esc(t('symbol')) + '</th><th class="r">' + esc(t('colQtyToBuy')) + '</th><th class="r">' + esc(t('colRecorded')) + '</th><th class="r">' + esc(t('colLastPrice')) + '</th><th class="r">' + esc(t('estValue')) + '</th>',
@@ -512,13 +515,15 @@
       (sub ? '<div class="stat-sub ' + (cls || '') + '">' + sub + '</div>' : '') + '</div>';
   }
 
-  function renderDetails() {
-    var body = $('detailsBody');
-    var p = activePosition();
-    if (!p) {
-      body.innerHTML = LB.ui.empty({ icon: 'panel-right', title: t('detailsEmptyTitle'), desc: t('detailsEmptyDesc'), compact: true });
-      return;
-    }
+  /** The big price + day change; re-rendered on its own by quote ticks. */
+  function priceBlockHtml(p) {
+    var ch = fmt.change(p);
+    return '<span class="big selectable">' + esc(fmt.money(p.market_price, p.currency)) + '</span>' +
+      '<span class="chg ' + fmt.tone(ch && ch.abs) + '">' + (ch ? esc(fmt.signed(ch.abs) + ' (' + fmt.pct(ch.pct) + ')') : '—') + '</span>';
+  }
+
+  /** The 2x3 stat grid; re-rendered on its own by quote ticks. */
+  function statGridHtml(p) {
     var cur = p.currency;
     var ch = fmt.change(p);
     var value = p.quantity * p.market_price;
@@ -526,6 +531,23 @@
     var unreal = hasCost ? p.quantity * (p.market_price - p.cost_price) : null;
     var unrealPct = hasCost ? ((p.market_price - p.cost_price) / p.cost_price) * 100 : null;
     var dayChg = ch ? ch.abs * p.quantity : null;
+    return stat(t('quantity'), esc(fmt.qty(p.quantity))) +
+      stat(t('statAvailable'), esc(fmt.qty(p.available_quantity))) +
+      stat(t('statCost'), hasCost ? esc(fmt.money(p.cost_price, cur)) : '—') +
+      stat(t('value'), esc(fmt.money(value, cur))) +
+      stat(t('statUnrealized'), unreal == null ? '—' : esc(fmt.signedMoney(unreal, cur)), fmt.tone(unreal), unrealPct == null ? '' : esc(fmt.pct(unrealPct))) +
+      stat(t('statDayChange'), dayChg == null ? '—' : esc(fmt.signedMoney(dayChg, cur)), fmt.tone(dayChg), ch ? esc(fmt.pct(ch.pct)) : '');
+  }
+
+  function renderDetails() {
+    var body = $('detailsBody');
+    var p = activePosition();
+    if (!p) {
+      if (LB.chartCard) LB.chartCard.unmount();
+      body.innerHTML = LB.ui.empty({ icon: 'panel-right', title: t('detailsEmptyTitle'), desc: t('detailsEmptyDesc'), compact: true });
+      return;
+    }
+    var cur = p.currency;
     var included = S.selected.has(p.symbol);
 
     var orders = LB.history.forSymbol(p.symbol, 5);
@@ -541,19 +563,89 @@
     body.innerHTML = '<div class="dt">' +
       '<div class="dt-head"><div class="dt-sym-row"><span class="dt-sym selectable">' + esc(p.symbol) + '</span><span class="badge">' + esc(cur) + '</span></div>' +
         '<div class="dt-name selectable">' + esc(p.symbol_name) + '</div></div>' +
-      '<div class="dt-price"><span class="big selectable">' + esc(fmt.money(p.market_price, cur)) + '</span>' +
-        '<span class="chg ' + fmt.tone(ch && ch.abs) + '">' + (ch ? esc(fmt.signed(ch.abs) + ' (' + fmt.pct(ch.pct) + ')') : '—') + '</span></div>' +
-      '<div class="stat-grid">' +
-        stat(t('quantity'), esc(fmt.qty(p.quantity))) +
-        stat(t('statAvailable'), esc(fmt.qty(p.available_quantity))) +
-        stat(t('statCost'), hasCost ? esc(fmt.money(p.cost_price, cur)) : '—') +
-        stat(t('value'), esc(fmt.money(value, cur))) +
-        stat(t('statUnrealized'), unreal == null ? '—' : esc(fmt.signedMoney(unreal, cur)), fmt.tone(unreal), unrealPct == null ? '' : esc(fmt.pct(unrealPct))) +
-        stat(t('statDayChange'), dayChg == null ? '—' : esc(fmt.signedMoney(dayChg, cur)), fmt.tone(dayChg), ch ? esc(fmt.pct(ch.pct)) : '') +
-      '</div>' +
+      '<div class="dt-price">' + priceBlockHtml(p) + '</div>' +
+      '<div class="dt-chart-slot"></div>' +
+      '<div class="stat-grid">' + statGridHtml(p) + '</div>' +
       '<button type="button" class="btn btn-outline btn-sm" data-action="toggle_active_selection"><i data-lucide="' + (included ? 'minus-circle' : 'plus-circle') + '"></i><span>' + esc(t(included ? 'excludeFromSelection' : 'includeInSelection')) + '</span></button>' +
       '<div class="dt-section-title">' + esc(t('recentOrders')) + '</div>' + ordersHtml +
       '</div>';
+    if (LB.chartCard) LB.chartCard.mount(body.querySelector('.dt-chart-slot'), p);
+  }
+
+  // ------------------------------------------------------------------ live price updates
+  // Quote ticks change only prices. Rather than re-rendering (which would
+  // drop text selection and rebuild tables), patch just the numbers.
+  function setText(el, text) {
+    if (el && el.textContent !== text) el.textContent = text;
+  }
+  function setHtml(el, html) {
+    if (el && el._html !== html) { el.innerHTML = html; el._html = html; }
+  }
+  function setTone(el, value) {
+    if (!el) return;
+    var tone = fmt.tone(value);
+    ['pos', 'neg', 'flat'].forEach(function (c) { el.classList.toggle(c, c === tone); });
+  }
+  function bySymbol(symbol) {
+    for (var i = 0; i < S.positions.length; i++) if (S.positions[i].symbol === symbol) return S.positions[i];
+    return null;
+  }
+
+  function updatePrices() {
+    renderSummary();
+
+    document.querySelectorAll('#posList .pos-row[data-symbol]').forEach(function (row) {
+      var p = bySymbol(row.getAttribute('data-symbol'));
+      if (!p) return;
+      var ch = fmt.change(p);
+      setText(row.querySelector('.pos-px'), fmt.money(p.market_price, p.currency));
+      var chg = row.querySelector('.pos-price .chg');
+      setText(chg, ch ? fmt.pct(ch.pct) : '—');
+      setTone(chg, ch && ch.abs);
+    });
+
+    if (S.view === 'positions' && !blockingState()) {
+      renderSelStrip(false);
+      if (S.tab === 'liquidate' && !dataState()) {
+        var ratio = S.ratios.liquidate;
+        $('liqContent').querySelectorAll('tr[data-sym]').forEach(function (tr) {
+          var p = bySymbol(tr.getAttribute('data-sym'));
+          if (!p) return;
+          setText(tr.querySelector('[data-c="price"]'), fmt.money(p.market_price, p.currency));
+          setText(tr.querySelector('[data-c="value"]'), fmt.money(fmt.adjustedQty(p.quantity, ratio) * p.market_price, p.currency));
+        });
+        setHtml($('liqContent').querySelector('[data-c="total"]'),
+          totalsCell(fmt.sumByCurrency(selectedPositions(), function (p) { return fmt.adjustedQty(p.quantity, ratio) * p.market_price; })));
+      } else if (S.tab === 'conditional' && !dataState() && condPctValid()) {
+        var rows = {};
+        condRows().forEach(function (r) { rows[r.pos.symbol] = r; });
+        $('condPreview').querySelectorAll('tr[data-sym]').forEach(function (tr) {
+          var r = rows[tr.getAttribute('data-sym')];
+          if (!r) return;
+          setText(tr.querySelector('[data-c="price"]'), fmt.money(r.pos.market_price, r.pos.currency));
+          setHtml(tr.querySelector('[data-c="trigger"]'), triggerHtml(r));
+        });
+      } else if (S.tab === 'buyback') {
+        var bbRatio = S.ratios.buyback;
+        var snap = {};
+        LB.snapshot.get().forEach(function (s) { snap[s.symbol] = s; });
+        $('bbContent').querySelectorAll('tr[data-sym]').forEach(function (tr) {
+          var s = snap[tr.getAttribute('data-sym')];
+          var ref = s && priceFor(s.symbol);
+          if (!ref) return;
+          var cur = fmt.currencyOf(ref);
+          setText(tr.querySelector('[data-c="price"]'), fmt.money(ref.market_price, cur));
+          setText(tr.querySelector('[data-c="value"]'), fmt.money(ref.market_price * fmt.adjustedQty(s.quantity, bbRatio), cur));
+        });
+      }
+    }
+
+    var p = activePosition();
+    var body = $('detailsBody');
+    if (p && body.querySelector('.dt')) {
+      setHtml(body.querySelector('.dt-price'), priceBlockHtml(p));
+      setHtml(body.querySelector('.stat-grid'), statGridHtml(p));
+    }
   }
 
   function render() {
@@ -970,6 +1062,7 @@
     selectAll: function () { selectAllVisible(true); },
     primary: primary,
     normalize: normalize,
+    updatePrices: updatePrices,
     /** Use a /api/positions response obtained elsewhere (Settings → Test connection). */
     ingest: function (data) {
       if (S.demoMode) return;

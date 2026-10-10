@@ -25,6 +25,7 @@
     LB.ui.setSeg('settingsModeSeg', S.demoMode ? 'demo' : 'live');
     LB.ui.setSeg('themeSeg', S.theme);
     LB.ui.setSeg('langSeg', LB.i18n.getLang());
+    $('liveQuotesToggle').checked = LB.quotes.isEnabled();
     var btn = $('testConnBtn');
     btn.disabled = testing;
     btn.classList.toggle('spin', testing);
@@ -103,6 +104,8 @@
         btn.setAttribute('aria-pressed', show ? 'true' : 'false');
       });
     });
+
+    $('liveQuotesToggle').addEventListener('change', function (e) { LB.quotes.setEnabled(e.target.checked); });
 
     $('testConnBtn').addEventListener('click', testConnection);
     $('credForm').addEventListener('submit', function (e) { e.preventDefault(); testConnection(); });

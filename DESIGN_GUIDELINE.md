@@ -223,6 +223,27 @@ Centred column: 40px rounded tile (radius 10, `--overlay`, 1px border, 20px mute
 ### Status bar
 26px, 11px `--muted`, `--surface-2`, three zones (left, centre, right), 7px status dots: grey pending (pulse), green OK, red error, amber Live.
 
+**Live indicator** (centre zone, shown only while quote polling is active, i.e. Positions view with positions): a 6px dot plus label, tooltip gives the refresh interval.
+
+| State | Dot | Label |
+|---|---|---|
+| Live, polling | `--success`, pulsing (1.6s) | "Live" |
+| Demo | `--muted-foreground`, still pulse | "Demo ticks" (synthetic prices) |
+| Failure streak | `--danger` | unchanged; interval backs off, one toast per streak |
+| Paused (window hidden or dialog open) | dot at 50% opacity, no pulse | tooltip reads "paused" |
+
+### Chart
+Details-panel card for the active position, placed between the price header and the stat grid. One persistent element (re-attached after every details re-render, so the canvas never flickers). Drawn on `<canvas>` with colours read from tokens at draw time, so a theme flip only redraws.
+
+- **Card** — `--background`, 1px `--border`, radius `--radius`, padding 8x8x7, 8px gap. Anatomy top to bottom: range control, 216px plot, 11px `--muted` caption (`Session {date} · prev close {price}` for Today, `{from} – {to}` for ranges; tabular numerals, single line, ellipsis).
+- **Range control** — segmented control (24px high, 11px text, 6px padding): Today | 1M | 3M | 1Y. Today is the intraday line; 1M and 3M are daily candles, 1Y is weekly candles. The choice persists (`lb_chartRange`).
+- **Line colour** — intraday line and its soft gradient fill are `--success` when the last price is above the previous close, `--danger` when below, `--accent` when flat. A dashed previous-close line with a "Prev {price}" label is the reference. Candles colour each body by close vs open (`--success` / `--danger`).
+- **Grid and axes** — horizontal grid in `--border-soft`; 10px mono `--muted` price labels on the right and time labels (session open / midpoint / close, or dates) under the plot. No vertical grid, no legend.
+- **Volume strip** — bars along the bottom of the plot at 45% alpha of the up / down colour, scaled to the visible max.
+- **Hover** — crosshair plus a tooltip chip: `--surface`, 1px `--border`, radius `--radius-sm`, `--shadow-menu`, 10px mono, 2-column key / value grid with a `--muted` time or date header. Line: price, change vs prev close (toned), volume. Candle: O / H / L / C (close toned), volume. The chip flips to the left of the crosshair near the right edge and never takes pointer events.
+- **Sparkline** (sidebar row) — 48x16 canvas between name and price, 1px line using the same green / red logic (grey `--muted-foreground` when flat), no axes, no fill, `pointer-events: none`. It has `flex: 0 1 48px; min-width: 0`, so it yields space first when the sidebar is narrow, before the symbol, name or price truncate.
+- **States** — all render inside the plot area on a `--background` overlay with 12px centred text: loading uses a `--skeleton` block (no spinner); empty reads "No data" in `--muted`; error reads "Market data unavailable: {error}" in `--danger`, selectable so the message can be copied. Switching symbol or range keeps the card in place and shows loading rather than collapsing it.
+
 ### Kbd
 20px min, radius 4, 1px border with a 2px bottom border, 11px sans. Inside buttons it is unstyled text.
 

@@ -222,6 +222,44 @@
   opacity: 1;
 }
 
+/* ---- switch (checkbox styled as a toggle) ---- */
+.switch-row { display: flex; align-items: center; gap: 16px; }
+.switch-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.switch-title { font-size: 13px; font-weight: 500; color: var(--foreground); }
+.switch { position: relative; flex: none; width: 30px; height: 18px; }
+.switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: default;
+}
+.switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 9px;
+  background: var(--border-strong);
+  transition: background-color 120ms ease;
+  pointer-events: none;
+}
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--background);
+  box-shadow: 0 0 0 1px var(--overlay-strong);
+  transition: transform 140ms var(--ease-out);
+}
+.switch input:checked + .switch-track { background: var(--accent); }
+.switch input:checked + .switch-track::after { transform: translateX(12px); background: var(--accent-foreground); }
+.switch input:focus-visible + .switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 /* ---- fields ---- */
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field > .segmented:not(.block) { align-self: flex-start; }

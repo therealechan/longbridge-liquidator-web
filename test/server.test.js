@@ -224,3 +224,124 @@ describe('POST /api/conditional-order', () => {
     assert.ok([400, 503].includes(res.status));
   });
 });
+
+describe('POST /api/intraday', () => {
+  it('rejects missing symbol', async () => {
+    const res = await request(app)
+      .post('/api/intraday')
+      .send({ app_key: 'k', app_secret: 's' });
+    assert.ok([400, 503].includes(res.status));
+    if (res.status === 400) assert.equal(typeof res.body.error, 'string');
+  });
+
+  it('rejects invalid symbol format', async () => {
+    const res = await request(app)
+      .post('/api/intraday')
+      .send({ app_key: 'k', app_secret: 's', symbol: '<script>' });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('rejects non-string symbol', async () => {
+    const res = await request(app)
+      .post('/api/intraday')
+      .send({ app_key: 'k', app_secret: 's', symbol: 123 });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('returns error without credentials', async () => {
+    const res = await request(app)
+      .post('/api/intraday')
+      .send({ symbol: 'AAPL.US' });
+    assert.ok([500, 503].includes(res.status));
+    assert.equal(typeof res.body.error, 'string');
+  });
+});
+
+describe('POST /api/candles', () => {
+  it('rejects missing symbol', async () => {
+    const res = await request(app)
+      .post('/api/candles')
+      .send({ app_key: 'k', app_secret: 's', period: 'day', count: 60 });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('rejects invalid symbol format', async () => {
+    const res = await request(app)
+      .post('/api/candles')
+      .send({ app_key: 'k', app_secret: 's', symbol: 'DROP TABLE', period: 'day' });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('rejects invalid period', async () => {
+    const res = await request(app)
+      .post('/api/candles')
+      .send({ app_key: 'k', app_secret: 's', symbol: 'AAPL.US', period: 'minute' });
+    assert.ok([400, 503].includes(res.status));
+    if (res.status === 400) assert.match(res.body.error, /period/);
+  });
+
+  for (const count of [0, 501, 1.5, -10, '60']) {
+    it(`rejects out-of-range or non-integer count (${JSON.stringify(count)})`, async () => {
+      const res = await request(app)
+        .post('/api/candles')
+        .send({ app_key: 'k', app_secret: 's', symbol: 'AAPL.US', period: 'day', count });
+      assert.ok([400, 503].includes(res.status));
+      if (res.status === 400) assert.match(res.body.error, /count/);
+    });
+  }
+
+  it('returns error without credentials', async () => {
+    const res = await request(app)
+      .post('/api/candles')
+      .send({ symbol: 'AAPL.US', period: 'week', count: 10 });
+    assert.ok([500, 503].includes(res.status));
+    assert.equal(typeof res.body.error, 'string');
+  });
+});
+
+describe('POST /api/quotes', () => {
+  it('rejects symbols that is not an array', async () => {
+    const res = await request(app)
+      .post('/api/quotes')
+      .send({ app_key: 'k', app_secret: 's', symbols: 'AAPL.US' });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('rejects missing symbols', async () => {
+    const res = await request(app)
+      .post('/api/quotes')
+      .send({ app_key: 'k', app_secret: 's' });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('rejects empty symbols array', async () => {
+    const res = await request(app)
+      .post('/api/quotes')
+      .send({ app_key: 'k', app_secret: 's', symbols: [] });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('rejects more than 50 symbols', async () => {
+    const symbols = Array.from({ length: 51 }, (_, i) => `S${i}.US`);
+    const res = await request(app)
+      .post('/api/quotes')
+      .send({ app_key: 'k', app_secret: 's', symbols });
+    assert.ok([400, 503].includes(res.status));
+    if (res.status === 400) assert.match(res.body.error, /50/);
+  });
+
+  it('rejects an invalid symbol in the list', async () => {
+    const res = await request(app)
+      .post('/api/quotes')
+      .send({ app_key: 'k', app_secret: 's', symbols: ['AAPL.US', '<script>'] });
+    assert.ok([400, 503].includes(res.status));
+  });
+
+  it('returns error without credentials', async () => {
+    const res = await request(app)
+      .post('/api/quotes')
+      .send({ symbols: ['AAPL.US', 'AAPL.US', '700.HK'] });
+    assert.ok([500, 503].includes(res.status));
+    assert.equal(typeof res.body.error, 'string');
+  });
+});

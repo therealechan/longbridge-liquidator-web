@@ -389,7 +389,14 @@ body:not(.no-sidebar) .tabbar > [data-action="toggle_sidebar"] { display: none; 
 }
 .sb-left, .sb-right { display: flex; align-items: center; gap: 10px; min-width: 0; overflow: hidden; }
 .sb-right { justify-content: flex-end; }
-.sb-center { text-align: center; font-variant-numeric: tabular-nums; }
+.sb-center { text-align: center; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.sb-live { display: inline-flex; align-items: center; gap: 6px; }
+.sb-live[hidden] { display: none; }
+.sb-live .sb-sep { margin-right: 4px; }
+.sb-live .dot { width: 6px; height: 6px; background: var(--success); animation: pulse 1.6s ease-in-out infinite; }
+.sb-live.is-demo .dot { background: var(--muted-foreground); }
+.sb-live.is-error .dot { background: var(--danger); }
+.sb-live.is-paused .dot { animation: none; opacity: 0.5; }
 .sb-item { display: inline-flex; align-items: center; gap: 6px; }
 .sb-secure .lucide { width: 12px; height: 12px; stroke-width: 1.75; flex: none; }
 .sb-sep { color: var(--muted-foreground); opacity: 0.6; }

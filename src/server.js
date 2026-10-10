@@ -41,6 +41,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ── Longbridge SDK (lazy-loaded) ──
 let Config, TradeContext, QuoteContext, OrderType, OrderSide, TimeInForceType, TriggerPriceType, Decimal;
+let Period, AdjustType, TradeSessions, TradeStatus;
 let sdkAvailable = false;
 
 try {
@@ -53,6 +54,10 @@ try {
   TimeInForceType = lb.TimeInForceType;
   TriggerPriceType = lb.TriggerPriceType;
   Decimal = lb.Decimal;
+  Period = lb.Period;
+  AdjustType = lb.AdjustType;
+  TradeSessions = lb.TradeSessions;
+  TradeStatus = lb.TradeStatus;
   sdkAvailable = true;
 } catch (e) {
   console.warn('⚠️  longport SDK not installed. Run: npm install');
@@ -90,6 +95,32 @@ function toNumber(value, fallback) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+// ── Helper: Date / NaiveDate / epoch-ish → epoch milliseconds (or null) ──
+function toEpochMs(value) {
+  if (value === null || value === undefined) return null;
+  if (value instanceof Date) {
+    const ms = value.getTime();
+    return Number.isFinite(ms) ? ms : null;
+  }
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'object' && 'year' in value && 'month' in value && 'day' in value) {
+    return Date.UTC(value.year, value.month - 1, value.day);
+  }
+  const ms = new Date(String(value)).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+// ── Helper: numeric SDK enum value → member name (napi enums have no reverse map) ──
+function enumName(enumObj, value) {
+  if (typeof value === 'string') return value;
+  if (enumObj) {
+    for (const name of Object.getOwnPropertyNames(enumObj)) {
+      if (enumObj[name] === value) return name;
+    }
+  }
+  return value === null || value === undefined ? 'Unknown' : String(value);
+}
+
 // ── Helper: infer settlement currency from the symbol suffix ──
 function inferCurrency(symbol) {
   const suffix = String(symbol || '').split('.').pop().toUpperCase();
@@ -111,21 +142,34 @@ function credentialKey(body) {
   return `${appKey}:${appSecret}:${accessToken}`;
 }
 
-async function getTradeContext(config, body) {
-  const key = credentialKey(body);
-  if (cachedTradeCtx && cachedKey === key) return cachedTradeCtx;
-  // Credentials changed — drop old cache
-  cachedTradeCtx = null;
-  cachedQuoteCtx = null;
-  cachedKey = key;
-  cachedTradeCtx = await TradeContext.new(config);
+// Contexts are cached as promises so concurrent requests (e.g. a chart
+// polling quotes + intraday at once) share one connection instead of each
+// opening their own. A rejected promise clears its own slot.
+function resetIfCredentialsChanged(key) {
+  if (cachedKey !== key) {
+    cachedKey = key;
+    cachedTradeCtx = null;
+    cachedQuoteCtx = null;
+  }
+}
+
+function getTradeContext(config, body) {
+  resetIfCredentialsChanged(credentialKey(body));
+  if (!cachedTradeCtx) {
+    const p = TradeContext.new(config);
+    cachedTradeCtx = p;
+    p.catch(() => { if (cachedTradeCtx === p) cachedTradeCtx = null; });
+  }
   return cachedTradeCtx;
 }
 
-async function getQuoteContext(config, body) {
-  const key = credentialKey(body);
-  if (cachedQuoteCtx && cachedKey === key) return cachedQuoteCtx;
-  cachedQuoteCtx = await QuoteContext.new(config);
+function getQuoteContext(config, body) {
+  resetIfCredentialsChanged(credentialKey(body));
+  if (!cachedQuoteCtx) {
+    const p = QuoteContext.new(config);
+    cachedQuoteCtx = p;
+    p.catch(() => { if (cachedQuoteCtx === p) cachedQuoteCtx = null; });
+  }
   return cachedQuoteCtx;
 }
 
@@ -425,6 +469,175 @@ app.post('/api/conditional-order', async (req, res) => {
     res.json({ success: allSucceeded, results });
   } catch (err) {
     console.error('conditional-order error:', err.message);
+    invalidateCache();
+    res.status(500).json({ error: sanitizeError(err.message) });
+  }
+});
+
+// ── Market data (real-time chart) ──
+const CANDLE_PERIODS = new Set(['day', 'week', 'month']);
+const MAX_QUOTE_SYMBOLS = 50;
+
+function validateSymbol(symbol) {
+  if (symbol === undefined || symbol === null || symbol === '') {
+    return 'symbol is required';
+  }
+  if (typeof symbol !== 'string' || !SYMBOL_RE.test(symbol)) {
+    return `Invalid symbol: ${String(symbol).substring(0, 20)}`;
+  }
+  return null;
+}
+
+// ── POST /api/intraday ──
+app.post('/api/intraday', async (req, res) => {
+  if (!sdkAvailable) {
+    return res.status(503).json({
+      error: 'longport SDK not installed. Run: npm install',
+    });
+  }
+
+  const symbol = req.body.symbol;
+  const symbolError = validateSymbol(symbol);
+  if (symbolError) {
+    return res.status(400).json({ error: symbolError });
+  }
+
+  try {
+    const config = createConfig(req.body);
+    const ctx = await getQuoteContext(config, req.body);
+
+    const [rawLines, prevClose] = await Promise.all([
+      ctx.intraday(symbol, TradeSessions.Intraday),
+      ctx.quote([symbol])
+        .then((quotes) => {
+          const q = (quotes || []).find((x) => x.symbol === symbol) || (quotes || [])[0];
+          return q ? toNumber(q.prevClose, null) : null;
+        })
+        .catch((quoteErr) => {
+          console.warn('intraday prevClose quote failed:', quoteErr.message);
+          return null;
+        }),
+    ]);
+
+    const lines = (rawLines || [])
+      .map((l) => ({
+        t: toEpochMs(l.timestamp),
+        price: toNumber(l.price, 0),
+        volume: toNumber(l.volume, 0),
+        avgPrice: toNumber(l.avgPrice, null),
+      }))
+      .filter((l) => l.t !== null)
+      .sort((a, b) => a.t - b.t);
+
+    res.json({ symbol, prevClose, lines });
+  } catch (err) {
+    console.error('intraday error:', err.message);
+    invalidateCache();
+    res.status(500).json({ error: sanitizeError(err.message) });
+  }
+});
+
+// ── POST /api/candles ──
+app.post('/api/candles', async (req, res) => {
+  if (!sdkAvailable) {
+    return res.status(503).json({
+      error: 'longport SDK not installed. Run: npm install',
+    });
+  }
+
+  const symbol = req.body.symbol;
+  const symbolError = validateSymbol(symbol);
+  if (symbolError) {
+    return res.status(400).json({ error: symbolError });
+  }
+
+  const period = req.body.period === undefined ? 'day' : req.body.period;
+  if (!CANDLE_PERIODS.has(period)) {
+    return res.status(400).json({ error: `Invalid period: must be one of ${[...CANDLE_PERIODS].join(', ')}` });
+  }
+
+  const count = req.body.count === undefined || req.body.count === null ? 60 : req.body.count;
+  if (!Number.isInteger(count) || count < 1 || count > 500) {
+    return res.status(400).json({ error: 'count must be an integer between 1 and 500' });
+  }
+
+  const sdkPeriod = { day: Period.Day, week: Period.Week, month: Period.Month }[period];
+
+  try {
+    const config = createConfig(req.body);
+    const ctx = await getQuoteContext(config, req.body);
+    const raw = await ctx.candlesticks(
+      symbol,
+      sdkPeriod,
+      count,
+      AdjustType.NoAdjust,
+      TradeSessions.Intraday
+    );
+
+    const candles = (raw || [])
+      .map((c) => ({
+        t: toEpochMs(c.timestamp),
+        open: toNumber(c.open, 0),
+        high: toNumber(c.high, 0),
+        low: toNumber(c.low, 0),
+        close: toNumber(c.close, 0),
+        volume: toNumber(c.volume, 0),
+        turnover: toNumber(c.turnover, 0),
+      }))
+      .filter((c) => c.t !== null)
+      .sort((a, b) => a.t - b.t);
+
+    res.json({ symbol, period, candles });
+  } catch (err) {
+    console.error('candles error:', err.message);
+    invalidateCache();
+    res.status(500).json({ error: sanitizeError(err.message) });
+  }
+});
+
+// ── POST /api/quotes ──
+app.post('/api/quotes', async (req, res) => {
+  if (!sdkAvailable) {
+    return res.status(503).json({
+      error: 'longport SDK not installed. Run: npm install',
+    });
+  }
+
+  const symbols = req.body.symbols;
+  if (!Array.isArray(symbols) || symbols.length === 0) {
+    return res.status(400).json({ error: 'symbols must be a non-empty array' });
+  }
+  if (symbols.length > MAX_QUOTE_SYMBOLS) {
+    return res.status(400).json({ error: `symbols must contain at most ${MAX_QUOTE_SYMBOLS} entries` });
+  }
+  for (const sym of symbols) {
+    if (typeof sym !== 'string' || !SYMBOL_RE.test(sym)) {
+      return res.status(400).json({ error: `Invalid symbol: ${String(sym).substring(0, 20)}` });
+    }
+  }
+  const unique = [...new Set(symbols)];
+
+  try {
+    const config = createConfig(req.body);
+    const ctx = await getQuoteContext(config, req.body);
+    const raw = await ctx.quote(unique);
+
+    const quotes = (raw || []).map((q) => ({
+      symbol: q.symbol,
+      last: toNumber(q.lastDone, null),
+      prevClose: toNumber(q.prevClose, null),
+      open: toNumber(q.open, null),
+      high: toNumber(q.high, null),
+      low: toNumber(q.low, null),
+      volume: toNumber(q.volume, 0),
+      turnover: toNumber(q.turnover, 0),
+      t: toEpochMs(q.timestamp),
+      tradeStatus: enumName(TradeStatus, q.tradeStatus),
+    }));
+
+    res.json({ quotes });
+  } catch (err) {
+    console.error('quotes error:', err.message);
     invalidateCache();
     res.status(500).json({ error: sanitizeError(err.message) });
   }

@@ -226,6 +226,15 @@
               <p class="help" data-i18n="modeHelp">Demo uses mock data and never places orders. Live connects to your real Longbridge account.</p>
             </div>
           </div>
+          <div class="settings-group">
+            <label class="switch-row" for="liveQuotesToggle">
+              <span class="switch-text">
+                <span class="switch-title" data-i18n="liveQuotes">Real-time quotes</span>
+                <span class="help" data-i18n="liveQuotesHelp">Polls prices every 5 s while Positions is open. Charts still load on demand.</span>
+              </span>
+              <span class="switch"><input type="checkbox" id="liveQuotesToggle" role="switch"><span class="switch-track" aria-hidden="true"></span></span>
+            </label>
+          </div>
           <form class="settings-group" id="credForm" autocomplete="off" novalidate>
             <div class="field">
               <label class="field-label" for="appKey" data-i18n="appKey">App Key</label>
@@ -367,7 +376,7 @@
       <span class="sb-sep">·</span>
       <span class="sb-item" id="sbServer"><span class="dot is-pending" id="sbServerDot"></span><span class="mono">127.0.0.1:3456</span></span>
     </div>
-    <div class="sb-center" id="sbUpdated"></div>
+    <div class="sb-center"><span id="sbUpdated"></span><span class="sb-live" id="sbLive" hidden><span class="sb-sep">·</span><span class="dot"></span><span id="sbLiveText"></span></span></div>
     <div class="sb-right">
       <span class="mono" id="sbVersion"></span>
       <span class="sb-sep">·</span>
@@ -525,6 +534,9 @@
   <script src="/assets/js/toast.js"></script>
   <script src="/assets/js/modals.js"></script>
   <script src="/assets/js/shell.js"></script>
+  <script src="/assets/js/chart.js"></script>
+  <script src="/assets/js/quotes.js"></script>
+  <script src="/assets/js/views/chart-card.js"></script>
   <script src="/assets/js/views/positions.js"></script>
   <script src="/assets/js/views/orders.js"></script>
   <script src="/assets/js/views/settings.js"></script>

@@ -19,6 +19,8 @@
     try {
       data = JSON.parse(text);
     } catch (e) {
+      // e.g. Express's HTML 404 page while an endpoint does not exist yet
+      if (!resp.ok) throw new Error((fallbackError || 'API request failed') + ' (HTTP ' + resp.status + ')');
       throw new Error('Invalid JSON response: ' + text.substring(0, 100));
     }
     if (!resp.ok) throw new Error(data.error || fallbackError || 'API request failed');
@@ -51,6 +53,15 @@
     },
     conditional: function (creds, positions, orderConfig) {
       return post('/api/conditional-order', Object.assign({}, creds, { positions: positions, orderConfig: orderConfig }), 'Conditional order request failed');
+    },
+    intraday: function (creds, symbol) {
+      return post('/api/intraday', Object.assign({}, creds, { symbol: symbol }), 'Intraday request failed');
+    },
+    candles: function (creds, symbol, period, count) {
+      return post('/api/candles', Object.assign({}, creds, { symbol: symbol, period: period, count: count }), 'Candlestick request failed');
+    },
+    quotes: function (creds, symbols) {
+      return post('/api/quotes', Object.assign({}, creds, { symbols: symbols }), 'Quote request failed');
     }
   };
 })(window);

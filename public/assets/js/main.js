@@ -42,6 +42,7 @@
     LB.positions.init();
     LB.orders.init();
     LB.settings.init();
+    LB.quotes.init();
 
     LB.bus.on('lang', function () { LB.render(); });
     LB.bus.on('action', function (a) {

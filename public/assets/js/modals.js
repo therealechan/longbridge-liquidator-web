@@ -37,6 +37,7 @@
     var focusEl = el.querySelector('[data-autofocus]') || el.querySelector('[data-confirm]') || el.querySelector('button');
     if (focusEl) setTimeout(function () { try { focusEl.focus({ preventScroll: true }); } catch (e) { focusEl.focus(); } }, 0);
     if (LB.shell) LB.shell.closePopover();
+    if (LB.bus) LB.bus.emit('modal', stack.length);
   }
 
   function close(id) {
@@ -54,6 +55,7 @@
       }
       if (entry.onClose) entry.onClose();
     }
+    if (LB.bus) LB.bus.emit('modal', stack.length);
   }
 
   function top() { return stack.length ? stack[stack.length - 1] : null; }

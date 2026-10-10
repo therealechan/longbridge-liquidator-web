@@ -21,16 +21,9 @@
 |-----------------|---------------|
 | ![Conditional sell view](docs/screenshots/conditional-sell.png) | ![Orders view](docs/screenshots/orders.png) |
 
-| Settings (Account) |
-|--------------------|
-| ![Settings - account and API configuration](docs/screenshots/api-config.png) |
-
------------|------------|
-| ![Dark mode - positions view](docs/screenshots/dark-positions.png) | ![Light mode - positions view](docs/screenshots/light-positions.png) |
-
-| Conditional Sell | API Setup |
-|-----------------|-----------|
-| ![Conditional sell dialog](docs/screenshots/conditional-sell.png) | ![API configuration](docs/screenshots/api-config.png) |
+| Real-time Chart | Settings (Account) |
+|-----------------|--------------------|
+| ![Real-time chart in the details panel with sidebar sparklines](docs/screenshots/chart.png) | ![Settings - account and API configuration](docs/screenshots/api-config.png) |
 
 ---
 
@@ -50,6 +43,7 @@
 - **Conditional sell** — batch set take-profit, stop-loss, or trailing stop orders with a live trigger-price preview
 - **Buy back** — re-buy what you just liquidated
 - **Order history** — every order you submit is logged in the Orders view (stored locally), filterable by Sell / Buy / Conditional
+- **Real-time chart and quotes** — the details panel charts the selected position (intraday line with volume and previous-close reference, or 1M / 3M / 1Y candles); prices refresh every 5 s with sparklines in the position list and a live indicator in the status bar. Polling pauses while the window is hidden or a dialog is open, and can be turned off in Settings → Account. Demo mode ticks synthetic prices
 - **Live positions** — multi-currency (USD / HKD / SGD) totals, daily P/L, cost price and unrealized P/L in the details panel
 - **Settings** — account and API credentials, appearance (System / Light / Dark), language, and About
 - **Keyboard shortcuts** — ⌘R refresh, ⌘A select all, ⌘↩ confirm, ⌘, settings, ⌘B sidebar, ⌘D details, ⌘/ shortcuts, ⌘1/2/3 views, ⌘F filter
@@ -148,6 +142,8 @@ The app updates itself automatically — on launch it checks for newer versions 
 Enter them in **Settings → Account** (⌘,). Get credentials from [Longbridge Developer Center](https://open.longportapp.com/) → User Center → App Credentials.
 
 > 📖 Docs: https://open.longportapp.com/docs
+
+**Market data permissions:** chart and quote data come from your own Longbridge account, so what you see depends on its market-data permissions. For example, Hong Kong real-time quotes need an LV2 subscription; without it, HK data is delayed. If a market is not covered, the chart shows an "unavailable" message instead.
 
 ---
 

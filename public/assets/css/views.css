@@ -52,9 +52,13 @@
 }
 .pos-row:hover { background: var(--overlay); }
 .pos-row.is-active { background: var(--surface-hover); box-shadow: inset 2px 0 var(--accent); }
-.pos-main { flex: 1; min-width: 0; }
-.pos-sym { font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+/* the symbol column never gets narrower than the symbol (the name truncates
+   and adds nothing to its min-content); the sparkline yields space first */
+.pos-main { flex: 1 1 0; min-width: min-content; }
+.pos-sym { font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
 .pos-name {
+  width: 0;
+  min-width: 100%;
   font-size: 11px;
   color: var(--muted);
   white-space: nowrap;
@@ -62,6 +66,7 @@
   text-overflow: ellipsis;
   margin-top: 1px;
 }
+.pos-spark { flex: 0 1 48px; min-width: 0; display: block; width: 48px; height: 16px; pointer-events: none; }
 .pos-side { text-align: right; flex: none; font-variant-numeric: tabular-nums; }
 .pos-price { font-family: var(--font-mono); font-size: 12px; }
 .pos-price .chg { margin-left: 6px; font-size: 11px; }
@@ -155,6 +160,72 @@
 .dt-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
 .dt-price .big { font-family: var(--font-mono); font-size: 24px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .dt-price .chg { font-family: var(--font-mono); font-size: 12px; }
+
+/* ---- price chart card (canvas drawn by chart.js) ---- */
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 8px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+}
+.chart-range { height: 24px; }
+.chart-range > button { font-size: 11px; padding: 0 6px; }
+.chart-wrap { position: relative; height: 216px; }
+.chart-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+.chart-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+  background: var(--background);
+  user-select: text;
+  -webkit-user-select: text;
+}
+.chart-state.is-error { color: var(--danger); }
+.chart-state .chart-skel { position: absolute; inset: 6px 0 14px; height: auto; border-radius: var(--radius-sm); }
+.chart-tip {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 10px;
+  row-gap: 1px;
+  padding: 5px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-menu);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--foreground);
+  pointer-events: none;
+}
+.chart-tip[hidden] { display: none; }
+.chart-tip .tip-head { grid-column: 1 / -1; color: var(--muted); margin-bottom: 1px; }
+.chart-tip .tip-k { color: var(--muted); font-family: var(--font-sans); }
+.chart-tip .tip-v { text-align: right; }
+.chart-caption {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .stat-grid {
   display: grid;
