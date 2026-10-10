@@ -353,42 +353,11 @@ fn report_server_error(app: &AppHandle, slot: &Arc<Mutex<Option<String>>>, msg: 
 
 /// Silent background update check on launch — prompts user if an update is found.
 async fn check_for_updates(app: tauri::AppHandle) {
-    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
     use tauri_plugin_updater::UpdaterExt;
 
     match app.updater() {
         Ok(updater) => match updater.check().await {
-            Ok(Some(update)) => {
-                let version = update.version.clone();
-                eprintln!("[lb-liquidator] update available: v{}", version);
-
-                let confirmed = app
-                    .dialog()
-                    .message(format!(
-                        "LB Liquidator v{version} is available.\n\nWould you like to download and install it now? The app will restart automatically.",
-                    ))
-                    .title("Update Available")
-                    .buttons(MessageDialogButtons::OkCancelCustom(
-                        "Install Update".to_string(),
-                        "Later".to_string(),
-                    ))
-                    .blocking_show();
-
-                if confirmed {
-                    app.dialog()
-                        .message(format!("Downloading v{version}…\n\nThe app will restart when the update is ready."))
-                        .title("Updating LB Liquidator")
-                        .blocking_show();
-
-                    if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
-                        eprintln!("[lb-liquidator] update install error: {e}");
-                        app.dialog()
-                            .message(format!("Update failed: {e}\n\nPlease download the latest version from GitHub manually."))
-                            .title("Update Error")
-                            .blocking_show();
-                    }
-                }
-            }
+            Ok(Some(update)) => offer_update(&app, update).await,
             Ok(None) => eprintln!("[lb-liquidator] app is up to date"),
             Err(e) => eprintln!("[lb-liquidator] update check failed: {e}"),
         },
@@ -398,57 +367,146 @@ async fn check_for_updates(app: tauri::AppHandle) {
 
 /// Manual update check triggered from the menu — always shows feedback to the user.
 async fn check_for_updates_manual(app: tauri::AppHandle) {
-    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
+    use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
     use tauri_plugin_updater::UpdaterExt;
 
     match app.updater() {
         Ok(updater) => match updater.check().await {
-            Ok(Some(update)) => {
-                let version = update.version.clone();
-                eprintln!("[lb-liquidator] update available: v{}", version);
-
-                let confirmed = app
-                    .dialog()
-                    .message(format!(
-                        "LB Liquidator v{version} is available.\n\nWould you like to download and install it now? The app will restart automatically.",
-                    ))
-                    .title("Update Available")
-                    .buttons(MessageDialogButtons::OkCancelCustom(
-                        "Install Update".to_string(),
-                        "Later".to_string(),
-                    ))
-                    .blocking_show();
-
-                if confirmed {
-                    app.dialog()
-                        .message(format!("Downloading v{version}…\n\nThe app will restart when the update is ready."))
-                        .title("Updating LB Liquidator")
-                        .blocking_show();
-
-                    if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
-                        eprintln!("[lb-liquidator] update install error: {e}");
-                        app.dialog()
-                            .message(format!("Update failed: {e}\n\nPlease download the latest version from GitHub manually."))
-                            .title("Update Error")
-                            .blocking_show();
-                    }
-                }
-            }
+            Ok(Some(update)) => offer_update(&app, update).await,
             Ok(None) => {
-                app.dialog()
-                    .message("LB Liquidator is up to date.")
-                    .title("No Updates Available")
-                    .blocking_show();
+                show_app_alert(&app, "No Updates Available", "LB Liquidator is up to date.", &["OK"]);
             }
             Err(e) => {
                 eprintln!("[lb-liquidator] update check failed: {e}");
                 app.dialog()
                     .message(format!("Update check failed: {e}\n\nPlease check your internet connection and try again."))
                     .title("Update Error")
+                    .kind(MessageDialogKind::Error)
                     .blocking_show();
             }
         },
         Err(e) => eprintln!("[lb-liquidator] updater init error: {e}"),
+    }
+}
+
+/// Asks the user whether to install `update`, then downloads and installs it.
+async fn offer_update(app: &AppHandle, update: tauri_plugin_updater::Update) {
+    use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
+
+    let version = update.version.clone();
+    eprintln!("[lb-liquidator] update available: v{version}");
+
+    let choice = show_app_alert(
+        app,
+        "Update Available",
+        &format!(
+            "LB Liquidator v{version} is available.\n\nWould you like to download and install it now? The app will restart automatically.",
+        ),
+        &["Install Update", "Later"],
+    );
+    if choice != Some(0) {
+        return;
+    }
+
+    show_app_alert(
+        app,
+        "Updating LB Liquidator",
+        &format!("Downloading v{version}…\n\nThe app will restart when the update is ready."),
+        &["OK"],
+    );
+
+    if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+        eprintln!("[lb-liquidator] update install error: {e}");
+        app.dialog()
+            .message(format!("Update failed: {e}\n\nPlease download the latest version from GitHub manually."))
+            .title("Update Error")
+            .kind(MessageDialogKind::Error)
+            .blocking_show();
+    }
+}
+
+/// Shows an informational alert and blocks until it is dismissed, returning
+/// the index of the pressed button (`None` if the alert could not be shown).
+/// The last of several buttons acts as Cancel (Escape). Never call this on the
+/// main thread: it waits for the main thread to run the alert.
+///
+/// On macOS the alert is a native `NSAlert` carrying the app icon; the stock
+/// dialog plugin leaves the icon to AppKit, which shows a generic placeholder.
+#[cfg(target_os = "macos")]
+fn show_app_alert(app: &AppHandle, title: &str, message: &str, buttons: &[&str]) -> Option<usize> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    let (owned_title, message) = (title.to_owned(), message.to_owned());
+    let buttons: Vec<String> = buttons.iter().map(|b| (*b).to_owned()).collect();
+    let scheduled = app.run_on_main_thread(move || {
+        let _ = tx.send(macos_alert::run(&owned_title, &message, &buttons));
+    });
+    if let Err(e) = scheduled {
+        eprintln!("[lb-liquidator] failed to show alert '{title}': {e}");
+        return None;
+    }
+    rx.recv().ok().flatten()
+}
+
+#[cfg(not(target_os = "macos"))]
+fn show_app_alert(app: &AppHandle, title: &str, message: &str, buttons: &[&str]) -> Option<usize> {
+    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
+
+    let dialog = app.dialog().message(message).title(title).kind(MessageDialogKind::Info);
+    match buttons {
+        [ok, cancel] => {
+            let buttons = MessageDialogButtons::OkCancelCustom((*ok).to_owned(), (*cancel).to_owned());
+            Some(if dialog.buttons(buttons).blocking_show() { 0 } else { 1 })
+        }
+        _ => {
+            dialog.blocking_show();
+            Some(0)
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+mod macos_alert {
+    use objc2::rc::Retained;
+    use objc2::{AllocAnyThread, MainThreadMarker};
+    use objc2_app_kit::{NSAlert, NSAlertFirstButtonReturn, NSAlertStyle, NSApplication, NSImage};
+    use objc2_foundation::{NSBundle, NSString};
+
+    /// Runs an app-modal alert. Must be called on the main thread.
+    pub fn run(title: &str, message: &str, buttons: &[String]) -> Option<usize> {
+        let mtm = MainThreadMarker::new()?;
+        let app = NSApplication::sharedApplication(mtm);
+        let key_window = app.keyWindow();
+
+        let alert = NSAlert::new(mtm);
+        alert.setAlertStyle(NSAlertStyle::Informational);
+        alert.setMessageText(&NSString::from_str(title));
+        alert.setInformativeText(&NSString::from_str(message));
+        for (i, title) in buttons.iter().enumerate() {
+            let button = alert.addButtonWithTitle(&NSString::from_str(title));
+            if i > 0 && i + 1 == buttons.len() {
+                button.setKeyEquivalent(&NSString::from_str("\u{1b}"));
+            }
+        }
+        if let Some(icon) = app_icon(&app) {
+            unsafe { alert.setIcon(Some(&icon)) };
+        }
+
+        let response = alert.runModal();
+        if let Some(window) = key_window {
+            window.makeKeyAndOrderFront(None);
+        }
+        usize::try_from(response - NSAlertFirstButtonReturn).ok()
+    }
+
+    /// The app's icon, falling back to the bundled `icon.icns`.
+    fn app_icon(app: &NSApplication) -> Option<Retained<NSImage>> {
+        app.applicationIconImage().or_else(|| {
+            let path = NSBundle::mainBundle().pathForResource_ofType(
+                Some(&NSString::from_str("icon")),
+                Some(&NSString::from_str("icns")),
+            )?;
+            NSImage::initWithContentsOfFile(NSImage::alloc(), &path)
+        })
     }
 }
 

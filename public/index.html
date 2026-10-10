@@ -42,9 +42,7 @@
   <!-- ================================================================ Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-band" data-tauri-drag-region>
-      <img class="brand-icon" src="/icon.png" alt="" data-tauri-drag-region>
-      <span class="brand-name" data-tauri-drag-region>Liquidator</span>
-      <span class="brand-tag" data-tauri-drag-region data-i18n="badge">Local Secure Mode</span>
+      <button type="button" class="icon-btn" data-action="toggle_sidebar" data-i18n-title="toggleSidebarTip"><i data-lucide="panel-left"></i></button>
     </div>
 
     <!-- Positions -->
@@ -363,6 +361,8 @@
   <!-- ================================================================ Status bar -->
   <footer class="statusbar">
     <div class="sb-left">
+      <span class="sb-item sb-secure"><i data-lucide="shield-check"></i><span data-i18n="badge">Local Secure Mode</span></span>
+      <span class="sb-sep">·</span>
       <span class="sb-item"><span class="dot" id="sbModeDot"></span><span id="sbModeText"></span></span>
       <span class="sb-sep">·</span>
       <span class="sb-item" id="sbServer"><span class="dot is-pending" id="sbServerDot"></span><span class="mono">127.0.0.1:3456</span></span>

@@ -7,6 +7,13 @@
    The top 44px of the rail, sidebar, tab bar and details panel sit under the
    transparent macOS title bar (titleBarStyle: Overlay), so they are drag
    regions (data-tauri-drag-region) and the traffic lights live at x13 y13.
+
+   The top --band-h of the window is ONE toolbar row (--surface, a single 1px
+   bottom border at y = --band-h - 1 across the full width): rail top, sidebar
+   band, tab bar and details header all share it. Every vertical column
+   border (rail, sidebar, details) starts BELOW the row, so the traffic lights
+   (x13..~65, centre y = --band-h / 2) and the sidebar toggle at x84 sit on a
+   clean, uninterrupted strip.
    ========================================================================== */
 
 body.app {
@@ -57,17 +64,34 @@ body.app.no-details .details { display: none; }
    ========================================================================== */
 .rail {
   grid-area: rail;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   padding-bottom: 10px;
   background: var(--surface-2);
-  border-right: 1px solid var(--border);
   min-height: 0;
   z-index: 2;
 }
-.rail-top { flex: none; width: 100%; height: var(--band-h); }
+/* the rail's right border, drawn only below the title band */
+.rail::after {
+  content: "";
+  position: absolute;
+  top: var(--band-h);
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
+.rail-top {
+  flex: none;
+  width: 100%;
+  height: var(--band-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
 .rail-nav { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .rail-bottom { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 
@@ -165,29 +189,34 @@ body.is-live .account-btn .mode-dot { background: var(--warning); }
   grid-area: sidebar;
   display: flex;
   flex-direction: column;
+  position: relative;
   min-height: 0;
   min-width: 0;
   background: var(--surface);
-  border-right: 1px solid var(--border);
+}
+/* the sidebar's right border, drawn only below the toolbar row */
+.sidebar::after {
+  content: "";
+  position: absolute;
+  top: var(--band-h);
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+  pointer-events: none;
 }
 .sidebar-band {
   flex: none;
   height: var(--band-h);
   display: flex;
   align-items: center;
-  gap: 8px;
-  /* the traffic lights reach ~x70; keep the band's contents clear of them */
-  padding: 0 12px 0 34px;
-}
-.sidebar-band > * { pointer-events: none; }
-.brand-icon { width: 18px; height: 18px; border-radius: 4px; }
-.brand-name { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
-.brand-tag {
-  margin-left: auto;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
+  /* the sidebar toggle sits at x84 in window coordinates (the sidebar starts
+     at --rail-w), clear of the traffic lights, which need the first ~78px.
+     The 1px top padding puts its centre on --band-h / 2 despite the bottom
+     border. */
+  padding: 1px 12px 0 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
 .pane { display: flex; flex-direction: column; min-height: 0; flex: 1; }
@@ -196,7 +225,7 @@ body.is-live .account-btn .mode-dot { background: var(--warning); }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 2px 12px 12px;
+  padding: 10px 12px 12px;
   border-bottom: 1px solid var(--border);
 }
 .pane-title {
@@ -249,7 +278,12 @@ body.is-live .account-btn .mode-dot { background: var(--warning); }
   border-bottom: 1px solid var(--border);
 }
 /* with the sidebar folded the tab bar starts at x52, under the lights */
-body.no-sidebar .tabbar { padding-left: 36px; }
+/* with the sidebar folded the band is gone: the toggle moves here, first in
+   the row, at the same x84 it has in the band. When open it lives in the band. */
+body.no-sidebar .tabbar { padding-left: 32px; }
+body:not(.no-sidebar) .tabbar > [data-action="toggle_sidebar"] { display: none; }
+/* the 1px margin centres it on y22 (the row is 43px of content + the border), as in the band */
+.tabbar > [data-action="toggle_sidebar"] { margin-top: 1px; }
 .tabbar > .icon-btn { align-self: center; }
 .tabbar-group { display: flex; align-items: stretch; gap: 2px; min-width: 0; }
 .tabbar-spacer { flex: 1; min-width: 16px; }
@@ -308,8 +342,19 @@ body.no-sidebar .tabbar { padding-left: 36px; }
   flex-direction: column;
   min-height: 0;
   min-width: 0;
+  position: relative;
   background: var(--surface);
-  border-left: 1px solid var(--border);
+}
+/* the details panel's left border, drawn only below the toolbar row */
+.details::before {
+  content: "";
+  position: absolute;
+  top: var(--band-h);
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+  pointer-events: none;
 }
 .details-band {
   flex: none;
@@ -346,6 +391,7 @@ body.no-sidebar .tabbar { padding-left: 36px; }
 .sb-right { justify-content: flex-end; }
 .sb-center { text-align: center; font-variant-numeric: tabular-nums; }
 .sb-item { display: inline-flex; align-items: center; gap: 6px; }
+.sb-secure .lucide { width: 12px; height: 12px; stroke-width: 1.75; flex: none; }
 .sb-sep { color: var(--muted-foreground); opacity: 0.6; }
 .dot {
   width: 7px;
