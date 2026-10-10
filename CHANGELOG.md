@@ -2,7 +2,7 @@
 
 All notable changes to LB Liquidator are documented here.
 
-## [Unreleased]
+## [1.1.0] — 2026-10-10
 
 ### Changes
 - **Native app shell** — full UI refactor into a fixed-window desktop layout: icon rail, positions sidebar, Liquidate / Conditional / Buy back tabs, details panel and status bar. Nothing scrolls at page level; `index.html` is now a ~530-line shell with CSS and JS split into `public/assets/`
@@ -13,6 +13,9 @@ All notable changes to LB Liquidator are documented here.
 - **System theme** — follows macOS appearance by default; System / Light / Dark choice in Settings and on the rail
 - **Tauri overlay title bar + menus** — transparent title bar with drag regions, native menu (Settings, View, Help → Keyboard Shortcuts, GitHub) wired to the UI, window size and position remembered, links open in the default browser
 - **API** — `/api/health` returns `version`; `/api/positions` items gain `symbol_name`, `available_quantity`, `cost_price` and `currency`
+
+### Download
+[LB Liquidator v1.1.0](https://github.com/therealechan/longbridge-liquidator-web/releases/tag/v1.1.0)
 
 ## [1.0.13] — 2026-03-08
 
