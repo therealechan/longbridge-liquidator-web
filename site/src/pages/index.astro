@@ -1,1000 +1,1341 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { dict, t, VERSION } from '../i18n';
+
+const REPO = 'https://github.com/therealechan/longbridge-liquidator-web';
+const LATEST = `${REPO}/releases/latest`;
+const RELEASES = `${REPO}/releases`;
+const CHANGELOG = `${REPO}/blob/master/CHANGELOG.md`;
+const WHATSNEW = `${REPO}/releases/tag/${VERSION}`;
+
+// Lucide icons (ISC), inlined so the page makes no CDN requests.
+const ICONS: Record<string, string> = {
+  window: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/>',
+  zap: '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
+  crosshair: '<circle cx="12" cy="12" r="10"/><path d="M22 12h-4"/><path d="M6 12H2"/><path d="M12 6V2"/><path d="M12 22v-4"/>',
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"/>',
+  candles: '<path d="M9 5v4"/><rect width="4" height="6" x="7" y="9" rx="1"/><path d="M9 15v2"/><path d="M17 3v2"/><rect width="4" height="8" x="15" y="5" rx="1"/><path d="M17 13v3"/><path d="M3 3v16a2 2 0 0 0 2 2h16"/>',
+  history: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  command: '<path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/>',
+  network: '<rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/>',
+  key: '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  toggle: '<rect width="20" height="12" x="2" y="6" rx="6" ry="6"/><circle cx="8" cy="12" r="2"/>',
+  code: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>',
+  download: '<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
+  arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+};
+const icon = (name: string, size = 18) =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+const GITHUB_PATH =
+  'M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.745 0 .268.18.58.688.482A10.019 10.019 0 0 0 22 12.017C22 6.484 17.522 2 12 2Z';
+
+// Screenshot crops (source images are 1280×800). Percent margins resolve
+// against the frame width, so one image crops to any rectangle.
+const SRC_W = 1280;
+const crop = (x: number, y: number, w: number, h: number) => ({
+  frame: `aspect-ratio:${w}/${h}`,
+  img: `width:${(SRC_W / w) * 100}%;max-width:none;margin-left:-${(x / w) * 100}%;margin-top:-${(y / w) * 100}%`,
+});
+const C_POS = crop(0, 0, 660, 500);
+const C_SELL = crop(332, 0, 648, 430);
+const C_DETAILS = crop(640, 0, 640, 660);
+const C_ORDERS = crop(0, 0, 820, 400);
+
+// Anatomy regions on the 1280×800 window.
+const pct = (v: number, of: number) => `${(v / of) * 100}%`;
+const REGIONS = [
+  { n: '01', k: 'rail', x: 0, y: 0, w: 52, h: 774 },
+  { n: '02', k: 'sidebar', x: 52, y: 0, w: 280, h: 774 },
+  { n: '03', k: 'tabs', x: 332, y: 0, w: 648, h: 44 },
+  { n: '04', k: 'details', x: 980, y: 0, w: 300, h: 774 },
+  { n: '05', k: 'status', x: 0, y: 774, w: 1280, h: 26 },
+] as const;
+
+const FEATURES = [
+  { i: 'window', k: 'shell', meta: '⌘B · ⌘D · ⌘1/2/3' },
+  { i: 'zap', k: 'liq', meta: 'All · 1/2 · 1/3 · 1/4' },
+  { i: 'crosshair', k: 'cond', meta: 'SL · TP · Trailing' },
+  { i: 'undo', k: 'buy', meta: 'Snapshot → market' },
+  { i: 'candles', k: 'chart', meta: 'Today · 1M · 3M · 1Y' },
+  { i: 'history', k: 'orders', meta: 'Sell · Buy · Cond.' },
+  { i: 'shield', k: 'sec', meta: '127.0.0.1:3456' },
+  { i: 'command', k: 'kbd', meta: '⌘/ all shortcuts' },
+] as const;
+
+const SECURITY = [
+  { i: 'network', n: 1 },
+  { i: 'key', n: 2 },
+  { i: 'lock', n: 3 },
+  { i: 'toggle', n: 4 },
+  { i: 'code', n: 5 },
+] as const;
+
+const SHOTS = [
+  { k: 'dark', src: '/screenshots/dark-positions.png' },
+  { k: 'light', src: '/screenshots/light-positions.png' },
+  { k: 'chart', src: '/screenshots/chart.png' },
+  { k: 'orders', src: '/screenshots/orders.png' },
+  { k: 'settings', src: '/screenshots/api-config.png' },
+] as const;
+
+const MODAL_ROWS = [
+  ['AAPL.US', '100', '$18,550.00'],
+  ['TSLA.US', '50', '$12,115.00'],
+  ['NVDA.US', '25', '$21,880.00'],
+  ['00700.HK', '200', 'HK$77,120.00'],
+];
+
+const T = t as (k: string) => string;
 ---
 
 <Layout>
-  <!-- ═══════════════════════════════════════════════════════════
-       HEADER / NAV
-  ═══════════════════════════════════════════════════════════ -->
-  <header id="site-header">
-    <div class="header-inner">
-      <!-- Logo -->
-      <a href="/" class="logo" aria-label="LB Liquidator">
-        <span class="logo-icon">
-          <img src="/icon.png" width="22" height="22" alt="" aria-hidden="true" style="border-radius:5px;display:block" />
-        </span>
-        <span class="logo-text">LB Liquidator</span>
+  <a class="skip" href="#main" data-i18n="skip">{t('skip')}</a>
+
+  <!-- Hero background: the generated loop. Sources are attached by script
+       after load (desktop, motion allowed, no Save-Data); otherwise the
+       poster (frame 0) stays as a still. -->
+  <div class="hero-bg" aria-hidden="true">
+    <video
+      class="hero-video"
+      muted
+      loop
+      playsinline
+      autoplay
+      preload="none"
+      poster="/video/hero-poster.jpg"
+      width="1600"
+      height="900"
+      disablepictureinpicture
+      disableremoteplayback
+      tabindex="-1"
+      data-src-webm="/video/hero-loop.webm"
+      data-src-mp4="/video/hero-loop.mp4"></video>
+  </div>
+
+  <!-- ═══ Header ═══════════════════════════════════════════════════════ -->
+  <header class="site-header" id="top">
+    <div class="wrap header-row">
+      <a href="#top" class="brand" aria-label="LB Liquidator">
+        <img src="/icon.png" width="26" height="26" alt="" />
+        <span class="brand-word">LB Liquidator</span>
       </a>
 
-      <!-- Right controls -->
-      <div class="header-controls">
-        <!-- Language switcher -->
-        <div class="lang-switcher" role="group" aria-label="Language">
-          <button class="lang-btn active" data-lang="en" onclick="switchLang('en')">EN</button>
-          <button class="lang-btn" data-lang="zh-hans" onclick="switchLang('zh-hans')">中文</button>
-          <button class="lang-btn" data-lang="zh-hant" onclick="switchLang('zh-hant')">繁中</button>
+      <nav class="nav" aria-label="Primary">
+        <a href="#features" data-i18n="nav_features">{t('nav_features')}</a>
+        <a href="#native" data-i18n="nav_native">{t('nav_native')}</a>
+        <a href="#security" data-i18n="nav_security">{t('nav_security')}</a>
+        <a href="#screenshots" data-i18n="nav_screens">{t('nav_screens')}</a>
+      </nav>
+
+      <div class="header-tools">
+        <div class="seg" role="group" aria-label="Language">
+          <button class="seg-btn is-active" data-lang="en" aria-pressed="true" lang="en">EN</button>
+          <button class="seg-btn" data-lang="zh-hans" aria-pressed="false" lang="zh-Hans">中文</button>
+          <button class="seg-btn" data-lang="zh-hant" aria-pressed="false" lang="zh-Hant">繁中</button>
         </div>
-
-        <!-- Theme toggle -->
-        <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme">
-          <i data-lucide="sun" class="theme-icon-light" style="display:none;width:18px;height:18px"></i>
-          <i data-lucide="moon" class="theme-icon-dark" style="width:18px;height:18px"></i>
+        <button id="theme-toggle" class="icon-btn" aria-label={t('theme_toggle')} title={t('theme_toggle')} data-i18n-aria="theme_toggle">
+          <span class="when-dark" set:html={icon('sun', 17)} />
+          <span class="when-light" set:html={icon('moon', 17)} />
         </button>
-
-        <!-- GitHub -->
-        <a href="https://github.com/therealechan/longbridge-liquidator-web" target="_blank" rel="noopener" class="icon-btn" aria-label="View on GitHub">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M12 2C6.477 2 2 6.484 2 12.017C2 16.442 4.865 20.197 8.839 21.521C9.339 21.613 9.521 21.304 9.521 21.04C9.521 20.802 9.512 20.17 9.508 19.351C6.726 19.959 6.139 18.016 6.139 18.016C5.685 16.859 5.029 16.554 5.029 16.554C4.121 15.937 5.098 15.951 5.098 15.951C6.101 16.018 6.629 16.979 6.629 16.979C7.521 18.498 8.97 18.054 9.539 17.799C9.631 17.155 9.889 16.713 10.175 16.464C7.954 16.211 5.62 15.36 5.62 11.538C5.62 10.445 6.009 9.549 6.649 8.851C6.546 8.599 6.203 7.575 6.747 6.196C6.747 6.196 7.587 5.928 9.497 7.222C10.308 6.999 11.15 6.888 12 6.884C12.85 6.888 13.693 6.999 14.507 7.222C16.413 5.928 17.251 6.196 17.251 6.196C17.797 7.575 17.454 8.599 17.351 8.851C17.994 9.549 18.38 10.445 18.38 11.538C18.38 15.369 16.043 16.208 13.814 16.455C14.172 16.764 14.491 17.372 14.491 18.302C14.491 19.638 14.479 20.716 14.479 21.04C14.479 21.307 14.659 21.618 15.167 21.52C19.137 20.194 22 16.44 22 12.017C22 6.484 17.522 2 12 2Z" fill="currentColor"/>
-          </svg>
+        <a href={REPO} class="icon-btn" target="_blank" rel="noopener" aria-label="GitHub">
+          <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d={GITHUB_PATH} /></svg>
         </a>
+        <a href="#download" class="btn btn-primary btn-sm header-cta" data-i18n="nav_download">{t('nav_download')}</a>
       </div>
     </div>
   </header>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       HERO
-  ═══════════════════════════════════════════════════════════ -->
-  <section class="hero">
-    <div class="container">
-      <div class="hero-badge animate-fade-up">
-        <span class="status-dot"></span>
-        <span data-i18n="hero_badge">Mac App · Open Source</span>
-      </div>
-
-      <h1 class="hero-title animate-fade-up animate-fade-up-delay-1" data-i18n="hero_title">
-        LB Liquidator
-      </h1>
-
-      <p class="hero-tagline animate-fade-up animate-fade-up-delay-2" data-i18n="hero_tagline">
-        One-click position liquidation for Longbridge.<br />
-        Local-only. Secure.
-      </p>
-
-      <div class="hero-actions animate-fade-up animate-fade-up-delay-3">
-        <!-- Download button — filled by JS -->
-        <a id="download-btn" href="https://github.com/therealechan/longbridge-liquidator-web/releases" class="btn btn-primary" target="_blank" rel="noopener">
-          <span id="download-btn-icon">
-            <i data-lucide="download" style="width:16px;height:16px"></i>
-          </span>
-          <span id="download-btn-text" data-i18n="download_mac">Download for Mac</span>
-          <span id="download-version" class="version-badge" style="display:none"></span>
-        </a>
-
-        <a href="https://github.com/therealechan/longbridge-liquidator-web" target="_blank" rel="noopener" class="btn btn-secondary">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2C6.477 2 2 6.484 2 12.017C2 16.442 4.865 20.197 8.839 21.521C9.339 21.613 9.521 21.304 9.521 21.04C9.521 20.802 9.512 20.17 9.508 19.351C6.726 19.959 6.139 18.016 6.139 18.016C5.685 16.859 5.029 16.554 5.029 16.554C4.121 15.937 5.098 15.951 5.098 15.951C6.101 16.018 6.629 16.979 6.629 16.979C7.521 18.498 8.97 18.054 9.539 17.799C9.631 17.155 9.889 16.713 10.175 16.464C7.954 16.211 5.62 15.36 5.62 11.538C5.62 10.445 6.009 9.549 6.649 8.851C6.546 8.599 6.203 7.575 6.747 6.196C6.747 6.196 7.587 5.928 9.497 7.222C10.308 6.999 11.15 6.888 12 6.884C12.85 6.888 13.693 6.999 14.507 7.222C16.413 5.928 17.251 6.196 17.251 6.196C17.797 7.575 17.454 8.599 17.351 8.851C17.994 9.549 18.38 10.445 18.38 11.538C18.38 15.369 16.043 16.208 13.814 16.455C14.172 16.764 14.491 17.372 14.491 18.302C14.491 19.638 14.479 20.716 14.479 21.04C14.479 21.307 14.659 21.618 15.167 21.52C19.137 20.194 22 16.44 22 12.017C22 6.484 17.522 2 12 2Z" fill="currentColor"/></svg>
-          <span data-i18n="view_github">View on GitHub</span>
-        </a>
-      </div>
-
-      <p class="hero-note animate-fade-up animate-fade-up-delay-4" data-i18n="hero_note">
-        macOS 12+ · Apple Silicon &amp; Intel · Free &amp; Open Source
-      </p>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       FEATURES GRID
-  ═══════════════════════════════════════════════════════════ -->
-  <section class="features" id="features">
-    <div class="container">
-      <h2 class="section-label" data-i18n="features_label">FEATURES</h2>
-
-      <div class="features-grid">
-        <!-- Security -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i data-lucide="shield" style="width:18px;height:18px"></i>
-          </div>
-          <h3 class="feature-title" data-i18n="feat_security_title">Local-only Security</h3>
-          <p class="feature-desc" data-i18n="feat_security_desc">
-            API keys stored in your browser's localStorage — never transmitted. Server binds to 127.0.0.1 only.
-          </p>
-        </div>
-
-        <!-- Native App -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i data-lucide="monitor" style="width:18px;height:18px"></i>
-          </div>
-          <h3 class="feature-title" data-i18n="feat_native_title">Native Mac App</h3>
-          <p class="feature-desc" data-i18n="feat_native_desc">
-            Built with Tauri v2. Double-click to launch — no terminal, no Node.js, no setup required.
-          </p>
-        </div>
-
-        <!-- Auto-updates -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i data-lucide="refresh-cw" style="width:18px;height:18px"></i>
-          </div>
-          <h3 class="feature-title" data-i18n="feat_updates_title">Auto-updates</h3>
-          <p class="feature-desc" data-i18n="feat_updates_desc">
-            Sparkle-powered update system checks for new releases on launch and installs them silently.
-          </p>
-        </div>
-
-        <!-- Selective Liquidation -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i data-lucide="sliders" style="width:18px;height:18px"></i>
-          </div>
-          <h3 class="feature-title" data-i18n="feat_selective_title">Selective Liquidation</h3>
-          <p class="feature-desc" data-i18n="feat_selective_desc">
-            Choose individual positions and sell at full, 1/2, 1/3, or 1/4 of your holding.
-          </p>
-        </div>
-
-        <!-- Conditional Sell -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i data-lucide="trending-up" style="width:18px;height:18px"></i>
-          </div>
-          <h3 class="feature-title" data-i18n="feat_conditional_title">Conditional Sell</h3>
-          <p class="feature-desc" data-i18n="feat_conditional_desc">
-            Batch set take-profit, stop-loss, and trailing stop orders across multiple positions at once.
-          </p>
-        </div>
-
-        <!-- Multi-language -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i data-lucide="globe" style="width:18px;height:18px"></i>
-          </div>
-          <h3 class="feature-title" data-i18n="feat_i18n_title">Multi-language</h3>
-          <p class="feature-desc" data-i18n="feat_i18n_desc">
-            Full support for Simplified Chinese, Traditional Chinese, and English — switch instantly.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       SCREENSHOTS
-  ═══════════════════════════════════════════════════════════ -->
-  <section class="screenshots" id="screenshots">
-    <div class="container">
-      <h2 class="section-label" data-i18n="screenshots_label">SCREENSHOTS</h2>
-
-      <div class="screenshot-tabs">
-        <button class="tab-btn active" data-tab="dark" onclick="switchTab('dark')" data-i18n="tab_dark">Dark Mode</button>
-        <button class="tab-btn" data-tab="light" onclick="switchTab('light')" data-i18n="tab_light">Light Mode</button>
-        <button class="tab-btn" data-tab="conditional" onclick="switchTab('conditional')" data-i18n="tab_conditional">Conditional Sell</button>
-        <button class="tab-btn" data-tab="apiconfig" onclick="switchTab('apiconfig')" data-i18n="tab_api">API Setup</button>
-      </div>
-
-      <div class="screenshot-frame">
-        <div class="tab-panel active" id="tab-dark">
-          <img src="/screenshots/dark-positions.png" alt="Dark mode — positions view" class="screenshot-img" loading="lazy" />
-        </div>
-        <div class="tab-panel" id="tab-light">
-          <img src="/screenshots/light-positions.png" alt="Light mode — positions view" class="screenshot-img" loading="lazy" />
-        </div>
-        <div class="tab-panel" id="tab-conditional">
-          <img src="/screenshots/conditional-sell.png" alt="Conditional sell dialog" class="screenshot-img" loading="lazy" />
-        </div>
-        <div class="tab-panel" id="tab-apiconfig">
-          <img src="/screenshots/api-config.png" alt="API configuration" class="screenshot-img" loading="lazy" />
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       DOWNLOAD CTA
-  ═══════════════════════════════════════════════════════════ -->
-  <section class="download-cta" id="download">
-    <div class="container">
-      <div class="cta-card">
-        <div class="cta-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M12 3L20 7V13C20 17.4183 16.4183 21 12 21C7.58172 21 4 17.4183 4 13V7L12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-            <path d="M9.5 12.5L11.5 14.5L15.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h2 class="cta-title" data-i18n="cta_title">Ready to take control?</h2>
-        <p class="cta-subtitle" data-i18n="cta_subtitle">
-          Download LB Liquidator for Mac and manage your Longbridge positions with confidence.
-        </p>
-        <div class="cta-actions">
-          <a id="download-btn-2" href="https://github.com/therealechan/longbridge-liquidator-web/releases" class="btn btn-primary btn-large" target="_blank" rel="noopener">
-            <i data-lucide="download" style="width:16px;height:16px"></i>
-            <span data-i18n="download_mac">Download for Mac</span>
-            <span id="download-version-2" class="version-badge" style="display:none"></span>
+  <main id="main">
+    <!-- ═══ Hero ═══════════════════════════════════════════════════════ -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-copy">
+        <p class="eyebrow"><span class="sq" aria-hidden="true"></span><span data-i18n="hero_eyebrow">{t('hero_eyebrow')}</span></p>
+        <h1 id="hero-title" class="h1">
+          <span data-i18n="hero_title_a">{T('hero_title_a')}</span>
+          <span class="punch" data-i18n="hero_title_b">{T('hero_title_b')}</span>
+        </h1>
+        <p class="lede" data-i18n="hero_sub">{t('hero_sub')}</p>
+        <div class="cta-row">
+          <a href={LATEST} class="btn btn-primary" target="_blank" rel="noopener">
+            <Fragment set:html={icon('download', 17)} />
+            <span data-i18n="cta_download">{t('cta_download')}</span>
+            <span class="arr" set:html={icon('arrow', 16)} />
           </a>
-          <a href="https://github.com/therealechan/longbridge-liquidator-web/releases" target="_blank" rel="noopener" class="release-link" data-i18n="all_releases">
-            All releases
-            <i data-lucide="arrow-right" style="width:13px;height:13px"></i>
+          <a href={REPO} class="btn btn-ghost" target="_blank" rel="noopener">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d={GITHUB_PATH} /></svg>
+            <span data-i18n="cta_github">{t('cta_github')}</span>
           </a>
+          <a href={WHATSNEW} class="text-link" target="_blank" rel="noopener" data-i18n="cta_whatsnew">{T('cta_whatsnew')}</a>
         </div>
-        <p class="cta-note" data-i18n="cta_note">macOS 12 Monterey or later · Apple Silicon &amp; Intel</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       FOOTER
-  ═══════════════════════════════════════════════════════════ -->
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-top">
-        <a href="/" class="logo" aria-label="LB Liquidator">
-          <span class="logo-icon">
-            <img src="/icon.png" width="18" height="18" alt="" aria-hidden="true" style="border-radius:4px;display:block" />
-          </span>
-          <span class="logo-text" style="font-size:14px">LB Liquidator</span>
-        </a>
-
-        <nav class="footer-links" aria-label="Footer navigation">
-          <a href="https://github.com/therealechan/longbridge-liquidator-web" target="_blank" rel="noopener" data-i18n="footer_github">GitHub</a>
-          <a href="https://github.com/therealechan/longbridge-liquidator-web/releases" target="_blank" rel="noopener" data-i18n="footer_releases">Releases</a>
-          <a href="https://github.com/therealechan/longbridge-liquidator-web/issues" target="_blank" rel="noopener" data-i18n="footer_issues">Issues</a>
-        </nav>
+        <p class="note" data-i18n="hero_note">{t('hero_note')}</p>
       </div>
 
-      <div class="footer-bottom">
-        <p class="footer-copy">
-          &copy; 2026 <a href="https://echan.xyz" target="_blank" rel="noopener">echanxyz</a> &middot;
-          <a href="https://nowornever.work" target="_blank" rel="noopener">Now or Never</a> &middot;
-          <a href="https://github.com/therealechan/longbridge-liquidator-web" target="_blank" rel="noopener" data-i18n="footer_open_source">Open source on GitHub</a>
+      <figure class="hero-shot">
+        <div class="window">
+          <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+          <img
+            src="/screenshots/chart.png"
+            width="1280"
+            height="800"
+            alt={t('hero_shot_alt')}
+            data-i18n-alt="hero_shot_alt"
+            fetchpriority="high"
+            decoding="async"
+          />
+        </div>
+        <figcaption class="cap" data-i18n="shot_cap">{T('shot_cap')}</figcaption>
+      </figure>
+
+      <dl class="wrap stats">
+        {[1, 2, 3, 4].map((n) => (
+          <div class="stat">
+            <dt data-i18n={`stat_${n}_k`}>{T(`stat_${n}_k`)}</dt>
+            <dd class="mono num" data-i18n={`stat_${n}_v`}>{T(`stat_${n}_v`)}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+
+    <!-- ═══ 01 Features ═════════════════════════════════════════════════ -->
+    <section class="section wrap" id="features" aria-labelledby="feat-title">
+      <div class="label-row"><span class="label-num">01</span><span class="rule"></span><span class="label-name" data-i18n="feat_name">{T('feat_name')}</span></div>
+      <h2 id="feat-title" class="h2" data-i18n="feat_title">{t('feat_title')}</h2>
+      <p class="lead" data-i18n="feat_sub">{t('feat_sub')}</p>
+      <ul class="feat-grid">
+        {FEATURES.map((f) => (
+          <li class="feat">
+            <span class="feat-icon" set:html={icon(f.i, 18)} />
+            <h3 class="feat-title" data-i18n={`f_${f.k}_t`}>{T(`f_${f.k}_t`)}</h3>
+            <p class="feat-desc" data-i18n={`f_${f.k}_d`}>{T(`f_${f.k}_d`)}</p>
+            <p class="feat-meta mono">{f.meta}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- ═══ 02 Positions ════════════════════════════════════════════════ -->
+    <section class="section wrap" aria-labelledby="ch2-title">
+      <div class="label-row"><span class="label-num">02</span><span class="rule"></span><span class="label-name" data-i18n="ch2_name">{T('ch2_name')}</span></div>
+      <div class="split">
+        <div class="split-text">
+          <h2 id="ch2-title" class="h2 h2-sm" data-i18n="ch2_title">{T('ch2_title')}</h2>
+          <p class="lead" data-i18n="ch2_lead">{T('ch2_lead')}</p>
+          <ul class="points">
+            <li data-i18n="ch2_p1">{T('ch2_p1')}</li>
+            <li data-i18n="ch2_p2">{T('ch2_p2')}</li>
+            <li data-i18n="ch2_p3">{T('ch2_p3')}</li>
+          </ul>
+        </div>
+        <figure class="media">
+          <div class="frame crop fade-r" style={C_POS.frame}>
+            <img src="/screenshots/chart.png" width="1280" height="800" style={C_POS.img} alt={T('ch2_alt')} data-i18n-alt="ch2_alt" loading="lazy" decoding="async" />
+          </div>
+          <figcaption class="cap" data-i18n="ch2_cap">{T('ch2_cap')}</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ═══ 03 Liquidate ════════════════════════════════════════════════ -->
+    <section class="section wrap" aria-labelledby="ch3-title">
+      <div class="label-row"><span class="label-num">03</span><span class="rule"></span><span class="label-name" data-i18n="ch3_name">{T('ch3_name')}</span></div>
+      <div class="split flip">
+        <div class="split-text">
+          <h2 id="ch3-title" class="h2 h2-sm" data-i18n="ch3_title">{T('ch3_title')}</h2>
+          <p class="lead" data-i18n="ch3_lead">{T('ch3_lead')}</p>
+          <ul class="points">
+            <li data-i18n="ch3_p1">{T('ch3_p1')}</li>
+            <li data-i18n="ch3_p2">{T('ch3_p2')}</li>
+            <li data-i18n="ch3_p3">{T('ch3_p3')}</li>
+          </ul>
+        </div>
+        <figure class="media">
+          <div class="stage">
+            <div class="frame crop" style={C_SELL.frame}>
+              <img src="/screenshots/chart.png" width="1280" height="800" style={C_SELL.img} alt={T('ch3_alt')} data-i18n-alt="ch3_alt" loading="lazy" decoding="async" />
+            </div>
+            <!-- The app's liquidation confirmation, rebuilt with its tokens. -->
+            <div class="modal" aria-hidden="true">
+              <div class="modal-head">
+                <span class="modal-icon" set:html={icon('zap', 16)} />
+                <span data-i18n="mm_title">{T('mm_title')}</span>
+                <span class="badge">Demo</span>
+              </div>
+              <p class="modal-body" data-i18n="mm_body">{T('mm_body')}</p>
+              <table class="modal-table mono num">
+                <tbody>
+                  {MODAL_ROWS.map(([s, q, v]) => (
+                    <tr><td>{s}</td><td>{q}</td><td>{v}</td></tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr><td data-i18n="mm_total">{T('mm_total')}</td><td></td><td>$52,545.00<br />HK$77,120.00</td></tr>
+                </tfoot>
+              </table>
+              <div class="modal-actions">
+                <span class="mbtn mbtn-outline" data-i18n="mm_cancel">{T('mm_cancel')}</span>
+                <span class="mbtn mbtn-danger"><span data-i18n="mm_confirm">{T('mm_confirm')}</span><span class="kbd-hint">⌘↩</span></span>
+              </div>
+            </div>
+          </div>
+          <figcaption class="cap" data-i18n="ch3_cap">{T('ch3_cap')}</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ═══ 04 Details ══════════════════════════════════════════════════ -->
+    <section class="section wrap" aria-labelledby="ch4-title">
+      <div class="label-row"><span class="label-num">04</span><span class="rule"></span><span class="label-name" data-i18n="ch4_name">{T('ch4_name')}</span></div>
+      <div class="split">
+        <div class="split-text">
+          <h2 id="ch4-title" class="h2 h2-sm" data-i18n="ch4_title">{T('ch4_title')}</h2>
+          <p class="lead" data-i18n="ch4_lead">{T('ch4_lead')}</p>
+          <ul class="points">
+            <li data-i18n="ch4_p1">{T('ch4_p1')}</li>
+            <li data-i18n="ch4_p2">{T('ch4_p2')}</li>
+            <li data-i18n="ch4_p3">{T('ch4_p3')}</li>
+          </ul>
+        </div>
+        <figure class="media">
+          <div class="frame crop fade-l" style={C_DETAILS.frame}>
+            <img src="/screenshots/chart.png" width="1280" height="800" style={C_DETAILS.img} alt={T('ch4_alt')} data-i18n-alt="ch4_alt" loading="lazy" decoding="async" />
+          </div>
+          <figcaption class="cap" data-i18n="ch4_cap">{T('ch4_cap')}</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ═══ 05 History ══════════════════════════════════════════════════ -->
+    <section class="section wrap" aria-labelledby="ch5-title">
+      <div class="label-row"><span class="label-num">05</span><span class="rule"></span><span class="label-name" data-i18n="ch5_name">{T('ch5_name')}</span></div>
+      <div class="split flip">
+        <div class="split-text">
+          <h2 id="ch5-title" class="h2 h2-sm" data-i18n="ch5_title">{T('ch5_title')}</h2>
+          <p class="lead" data-i18n="ch5_lead">{T('ch5_lead')}</p>
+          <ul class="points">
+            <li data-i18n="ch5_p1">{T('ch5_p1')}</li>
+            <li data-i18n="ch5_p2">{T('ch5_p2')}</li>
+            <li data-i18n="ch5_p3">{T('ch5_p3')}</li>
+          </ul>
+        </div>
+        <figure class="media">
+          <div class="frame crop fade-r" style={C_ORDERS.frame}>
+            <img src="/screenshots/orders.png" width="1280" height="800" style={C_ORDERS.img} alt={T('ch5_alt')} data-i18n-alt="ch5_alt" loading="lazy" decoding="async" />
+          </div>
+          <figcaption class="cap" data-i18n="ch5_cap">{T('ch5_cap')}</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ═══ 06 Native ═══════════════════════════════════════════════════ -->
+    <section class="section wrap" id="native" aria-labelledby="native-title">
+      <div class="label-row"><span class="label-num">06</span><span class="rule"></span><span class="label-name" data-i18n="native_name">{T('native_name')}</span></div>
+      <p class="kicker" data-i18n="native_label">{t('native_label')}</p>
+      <h2 id="native-title" class="h2" data-i18n="native_title">{t('native_title')}</h2>
+      <p class="lead" data-i18n="native_sub">{t('native_sub')}</p>
+
+      <figure class="anatomy">
+        <div class="window anatomy-window">
+          <img src="/screenshots/dark-positions.png" width="1280" height="800" alt={T('anat_alt')} data-i18n-alt="anat_alt" loading="lazy" decoding="async" />
+          {REGIONS.map((r) => (
+            <span
+              class={`region region-${r.k}`}
+              style={`left:${pct(r.x, 1280)};top:${pct(r.y, 800)};width:${pct(r.w, 1280)};height:${pct(r.h, 800)}`}
+              aria-hidden="true"><b class="mono">{r.n}</b></span>
+          ))}
+        </div>
+        <figcaption class="cap" data-i18n="anat_cap">{T('anat_cap')}</figcaption>
+      </figure>
+
+      <ol class="legend">
+        {REGIONS.map((r) => (
+          <li>
+            <span class="legend-n mono">{r.n}</span>
+            <h3 data-i18n={`anat_${r.k === 'status' ? 'status' : r.k}_t`}>{T(`anat_${r.k}_t`)}</h3>
+            <p data-i18n={`anat_${r.k}_d`}>{T(`anat_${r.k}_d`)}</p>
+          </li>
+        ))}
+      </ol>
+
+      <div class="compare">
+        <p class="kicker" data-i18n="cmp_label">{T('cmp_label')}</p>
+        <table class="cmp">
+          <thead>
+            <tr>
+              <th scope="col" data-i18n="cmp_before">{t('cmp_before')}</th>
+              <th scope="col"><span data-i18n="cmp_after">{t('cmp_after')}</span> <span class="mono ver">{VERSION}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <tr>
+                <td data-i18n={`cmp_${n}_b`}>{T(`cmp_${n}_b`)}</td>
+                <td data-i18n={`cmp_${n}_a`}>{T(`cmp_${n}_a`)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══ 07 Security ═════════════════════════════════════════════════ -->
+    <section class="section wrap" id="security" aria-labelledby="sec-title">
+      <div class="label-row"><span class="label-num">07</span><span class="rule"></span><span class="label-name" data-i18n="sec_name">{T('sec_name')}</span></div>
+      <div class="split sec-split">
+        <div class="split-text">
+          <h2 id="sec-title" class="h2 h2-sm" data-i18n="sec_title">{t('sec_title')}</h2>
+          <p class="lead" data-i18n="sec_sub">{t('sec_sub')}</p>
+          <figure class="code">
+            <pre class="mono"><code><span class="c">// src/server.js</span>
+app.listen(<span class="n">3456</span>, <span class="s">'127.0.0.1'</span>)
+
+<span class="c">// CORS: an allowlist, never "*"</span>
+tauri://localhost
+http://127.0.0.1:3456
+
+<span class="c">// tauri.conf.json → CSP</span>
+script-src <span class="s">'self'</span>; font-src <span class="s">'self'</span> data:</code></pre>
+            <figcaption class="cap" data-i18n="sec_code_cap">{T('sec_code_cap')}</figcaption>
+          </figure>
+        </div>
+        <ol class="sec-list">
+          {SECURITY.map((s) => (
+            <li>
+              <span class="sec-icon" set:html={icon(s.i, 18)} />
+              <div>
+                <h3 data-i18n={`sec_${s.n}_t`}>{T(`sec_${s.n}_t`)}</h3>
+                <p data-i18n={`sec_${s.n}_d`}>{T(`sec_${s.n}_d`)}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <!-- ═══ 08 Screenshots ══════════════════════════════════════════════ -->
+    <section class="section wrap" id="screenshots" aria-labelledby="shots-title">
+      <div class="label-row"><span class="label-num">08</span><span class="rule"></span><span class="label-name" data-i18n="shots_name">{T('shots_name')}</span></div>
+      <h2 id="shots-title" class="h2 h2-sm" data-i18n="shots_title">{t('shots_title')}</h2>
+      <div class="tabs" role="tablist" aria-label="Screenshots">
+        {SHOTS.map((s, i) => (
+          <button
+            class={`tab${i === 0 ? ' is-active' : ''}`}
+            role="tab"
+            id={`tab-${s.k}`}
+            aria-selected={i === 0 ? 'true' : 'false'}
+            aria-controls={`panel-${s.k}`}
+            tabindex={i === 0 ? 0 : -1}
+            data-i18n={`tab_${s.k}`}>{T(`tab_${s.k}`)}</button>
+        ))}
+      </div>
+      <div class="shots">
+        {SHOTS.map((s, i) => (
+          <figure class="shot" role="tabpanel" id={`panel-${s.k}`} aria-labelledby={`tab-${s.k}`} hidden={i !== 0}>
+            <div class="window">
+              <img src={s.src} width="1280" height="800" alt={T(`alt_${s.k}`)} data-i18n-alt={`alt_${s.k}`} loading="lazy" decoding="async" />
+            </div>
+            <figcaption class="cap">// <span data-i18n={`cap_${s.k}`}>{T(`cap_${s.k}`)}</span></figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+
+    <!-- ═══ Download band ═══════════════════════════════════════════════ -->
+    <section class="band" id="download" aria-labelledby="dl-title">
+      <div class="wrap band-inner">
+        <p class="eyebrow eyebrow-band"><span class="sq" aria-hidden="true"></span><span data-i18n="dl_label">{T('dl_label')}</span><span> · {VERSION}</span></p>
+        <h2 id="dl-title" class="band-title" data-i18n="dl_title">{t('dl_title')}</h2>
+        <p class="band-sub" data-i18n="dl_sub">{t('dl_sub')}</p>
+        <div class="cta-row cta-row-band">
+          <a href={LATEST} class="btn btn-invert" target="_blank" rel="noopener">
+            <Fragment set:html={icon('download', 17)} />
+            <span data-i18n="cta_download">{t('cta_download')}</span>
+            <span class="arr" set:html={icon('arrow', 16)} />
+          </a>
+          <a href={RELEASES} class="btn btn-ghost-invert" target="_blank" rel="noopener" data-i18n="dl_releases">{t('dl_releases')}</a>
+          <a href={CHANGELOG} class="text-link text-link-invert" target="_blank" rel="noopener" data-i18n="dl_changelog">{t('dl_changelog')}</a>
+        </div>
+        <p class="band-update">
+          <span set:html={icon('refresh', 15)} />
+          <span data-i18n="dl_update">{t('dl_update')}</span>
         </p>
-        <p class="footer-disclaimer" data-i18n="footer_disclaimer">
-          For educational purposes only. Trading involves risk.
-        </p>
       </div>
+    </section>
+  </main>
+
+  <!-- ═══ Footer ═════════════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <a href="#top" class="footer-word mono" aria-label="LB Liquidator, back to top">LB Liquidator</a>
+      <nav class="footer-links" aria-label="Footer">
+        <a href={REPO} target="_blank" rel="noopener" data-i18n="github">{t('github')}</a>
+        <a href={RELEASES} target="_blank" rel="noopener" data-i18n="footer_releases">{t('footer_releases')}</a>
+        <a href={CHANGELOG} target="_blank" rel="noopener" data-i18n="dl_changelog">{t('dl_changelog')}</a>
+        <a href={`${REPO}/issues`} target="_blank" rel="noopener" data-i18n="footer_issues">{t('footer_issues')}</a>
+      </nav>
+      <p class="footer-copy">
+        &copy; 2026 <a href="https://echan.xyz" target="_blank" rel="noopener">echanxyz</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://nowornever.work" target="_blank" rel="noopener">Now or Never</a>
+        <span aria-hidden="true">·</span>
+        <span class="mono">{VERSION}</span>
+      </p>
+      <p class="footer-legal">
+        <span data-i18n="footer_disclaimer">{t('footer_disclaimer')}</span>
+        <span data-i18n="footer_unaffiliated">{t('footer_unaffiliated')}</span>
+      </p>
     </div>
   </footer>
 </Layout>
 
-<!-- ═══════════════════════════════════════════════════════════
-     STYLES
-═══════════════════════════════════════════════════════════ -->
+<script is:inline define:vars={{ dict, VERSION }}>
+  /* ── Language ─────────────────────────────────────────────────────── */
+  var LANGS = { en: 'en', 'zh-hans': 'zh-Hans', 'zh-hant': 'zh-Hant' };
+  function tr(lang, key) {
+    var d = dict[lang] || dict.en;
+    var s = d[key] != null ? d[key] : dict.en[key];
+    return s == null ? null : String(s).replace('{v}', VERSION);
+  }
+  function applyLang(lang) {
+    if (!dict[lang]) lang = 'en';
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var s = tr(lang, el.getAttribute('data-i18n'));
+      if (s != null) el.textContent = s;
+    });
+    document.querySelectorAll('[data-i18n-alt]').forEach(function (el) {
+      var s = tr(lang, el.getAttribute('data-i18n-alt'));
+      if (s != null) el.setAttribute('alt', s);
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
+      var s = tr(lang, el.getAttribute('data-i18n-aria'));
+      if (s != null) { el.setAttribute('aria-label', s); el.setAttribute('title', s); }
+    });
+    document.querySelectorAll('.seg-btn[data-lang]').forEach(function (b) {
+      var on = b.getAttribute('data-lang') === lang;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    document.documentElement.lang = LANGS[lang];
+  }
+  var saved = 'en';
+  try { saved = localStorage.getItem('lb-lang') || 'en'; } catch (e) {}
+  if (saved !== 'en') applyLang(saved);
+  else document.documentElement.lang = 'en';
+  document.querySelectorAll('.seg-btn[data-lang]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var lang = b.getAttribute('data-lang');
+      try { localStorage.setItem('lb-lang', lang); } catch (e) {}
+      applyLang(lang);
+    });
+  });
+
+  /* ── Theme (same key as before: lb-theme, default dark) ───────────── */
+  document.getElementById('theme-toggle').addEventListener('click', function () {
+    var dark = !document.documentElement.classList.contains('dark');
+    document.documentElement.classList.toggle('dark', dark);
+    try { localStorage.setItem('lb-theme', dark ? 'dark' : 'light'); } catch (e) {}
+  });
+
+  /* ── Header: solid once the page scrolls ──────────────────────────── */
+  var header = document.querySelector('.site-header');
+  function onScroll() { header.classList.toggle('is-stuck', window.scrollY > 8); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ── Screenshot tabs ──────────────────────────────────────────────── */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab[role="tab"]'));
+  function selectTab(tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.classList.toggle('is-active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) tab.focus();
+  }
+  tabs.forEach(function (tab, i) {
+    tab.addEventListener('click', function () { selectTab(tab); });
+    tab.addEventListener('keydown', function (e) {
+      var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!d) return;
+      e.preventDefault();
+      selectTab(tabs[(i + d + tabs.length) % tabs.length], true);
+    });
+  });
+
+  /* ── Hero video: attach sources only when it makes sense ──────────── */
+  (function () {
+    var v = document.querySelector('.hero-video');
+    if (!v) return;
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    var wide = window.matchMedia('(min-width: 721px)');
+    function allowed() {
+      var c = navigator.connection;
+      var slow = c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || ''));
+      return !reduce.matches && wide.matches && !slow;
+    }
+    var attached = false, visible = true;
+    function attach() {
+      if (attached || !allowed()) return;
+      attached = true;
+      [['webm', 'video/webm; codecs="vp9"'], ['mp4', 'video/mp4; codecs="avc1.640028"']].forEach(function (s) {
+        var el = document.createElement('source');
+        el.src = v.getAttribute('data-src-' + s[0]);
+        el.type = s[1];
+        v.appendChild(el);
+      });
+      v.load();
+      sync();
+    }
+    function sync() {
+      if (!attached) return;
+      if (visible && !document.hidden && !reduce.matches) {
+        var p = v.play();
+        if (p && p.catch) p.catch(function () {});
+      } else v.pause();
+    }
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) { visible = es[0].isIntersecting; sync(); }).observe(v);
+    }
+    document.addEventListener('visibilitychange', sync);
+    reduce.addEventListener && reduce.addEventListener('change', function () { attach(); sync(); });
+    wide.addEventListener && wide.addEventListener('change', attach);
+    if (document.readyState === 'complete') attach();
+    else window.addEventListener('load', attach);
+  })();
+</script>
+
 <style>
-  /* ── Layout ── */
-  .container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 24px;
+  /* ── Layout primitives ─────────────────────────────────────────────── */
+  .wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: var(--maxw);
+    margin-inline: auto;
+    padding-inline: var(--pad);
   }
 
-  /* ── Header ── */
-  #site-header {
+  .skip {
+    position: absolute;
+    left: 12px;
+    top: -60px;
+    z-index: 100;
+    padding: 8px 12px;
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-radius: var(--radius);
+    font-size: 13px;
+  }
+  .skip:focus { top: 12px; }
+
+  /* ── Hero background video ─────────────────────────────────────────── */
+  .hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 0;
+    height: clamp(520px, 56.25vw, 900px);
+    overflow: hidden;
+    pointer-events: none;
+    mix-blend-mode: lighten;
+    -webkit-mask-image: linear-gradient(180deg, #000 0 50%, transparent 92%);
+    mask-image: linear-gradient(180deg, #000 0 50%, transparent 92%);
+  }
+  .hero-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 0;
+    background: #0a0a0a;
+  }
+  /* Light theme: the same loop as a negative — ink on paper — with the red
+     pulse kept red (hue-rotate undoes the inversion's hue flip). */
+  :global(html:not(.dark)) .hero-bg {
+    mix-blend-mode: darken;
+    filter: invert(1) hue-rotate(180deg) contrast(0.9) brightness(1.1);
+    opacity: 0.9;
+  }
+  @media (max-width: 720px) {
+    .hero-video { object-position: 78% 0; }
+    .hero-bg { height: 520px; opacity: 0.75; }
+  }
+
+  /* ── Header ───────────────────────────────────────────────────────── */
+  .site-header {
     position: sticky;
     top: 0;
-    z-index: 100;
-    background: var(--background);
-    border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    z-index: 50;
+    border-bottom: 1px solid transparent;
+    transition: background-color 0.18s var(--ease), border-color 0.18s var(--ease);
   }
-
-  .header-inner {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 24px;
-    height: 56px;
+  .site-header.is-stuck {
+    background: var(--header-bg);
+    border-bottom-color: var(--border);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    backdrop-filter: saturate(140%) blur(14px);
+  }
+  .header-row {
+    height: 64px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    gap: 28px;
   }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--foreground);
-    transition: opacity 0.2s;
-  }
-  .logo:hover { opacity: 0.75; }
-
-  .logo-icon {
-    display: flex;
-    align-items: center;
-    color: var(--foreground);
-  }
-
-  .logo-text {
-    letter-spacing: -0.02em;
-  }
-
-  .header-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  /* Language switcher */
-  .lang-switcher {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 3px;
-  }
-
-  .lang-btn {
-    font-size: 12px;
-    font-weight: 500;
-    font-family: inherit;
-    padding: 3px 8px;
-    border-radius: 4px;
-    color: var(--muted);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-
-  .lang-btn:hover { color: var(--foreground); }
-  .lang-btn.active {
-    background: var(--background);
-    color: var(--foreground);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-  }
-
-  .dark .lang-btn.active {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-  }
-
-  /* Icon buttons */
-  .icon-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: var(--radius);
-    color: var(--muted);
-    background: transparent;
-    border: 1px solid transparent;
-    transition: all 0.15s;
-    cursor: pointer;
-    font-family: inherit;
-  }
-
-  .icon-btn:hover {
-    color: var(--foreground);
-    background: var(--surface);
-    border-color: var(--border);
-  }
-
-  /* ── Hero ── */
-  .hero {
-    padding: 96px 0 80px;
-    text-align: center;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    border-radius: 100px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--muted);
-    margin-bottom: 28px;
-    letter-spacing: 0.01em;
-  }
-
-  .status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--success);
-    animation: pulse-dot 2s ease-in-out infinite;
-    flex-shrink: 0;
-  }
-
-  .hero-title {
-    font-size: clamp(36px, 6vw, 56px);
+  .brand { display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .brand img { border-radius: 6px; box-shadow: 0 0 0 1px var(--border); }
+  .brand-word {
+    font-family: var(--font-mono);
+    font-size: 14px;
     font-weight: 700;
-    letter-spacing: -0.04em;
-    line-height: 1.05;
-    color: var(--foreground);
-    margin-bottom: 20px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
-
-  .hero-tagline {
-    font-size: clamp(16px, 2.5vw, 19px);
-    line-height: 1.6;
-    color: var(--foreground-secondary);
-    max-width: 520px;
-    margin: 0 auto 36px;
-  }
-
-  .hero-actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-  }
-
-  .hero-note {
+  .nav { display: flex; gap: 26px; }
+  .nav a, .footer-links a {
+    font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--muted-foreground);
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color 0.15s;
   }
+  .nav a:hover, .footer-links a:hover { color: var(--fg); }
+  .header-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 
-  /* ── Buttons ── */
+  .seg {
+    display: inline-flex;
+    padding: 2px;
+    gap: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+  }
+  .seg-btn {
+    height: 26px;
+    padding: 0 9px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: color 0.12s, background-color 0.12s;
+  }
+  .seg-btn[lang='en'] { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; }
+  .seg-btn:hover { color: var(--fg); }
+  .seg-btn.is-active { background: var(--overlay-strong); color: var(--fg); }
+
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: var(--radius);
+    color: var(--muted);
+    transition: color 0.12s, background-color 0.12s;
+  }
+  .icon-btn:hover { color: var(--fg); background: var(--overlay-strong); }
+  .when-light { display: none; }
+  :global(html:not(.dark)) .when-dark { display: none; }
+  :global(html:not(.dark)) .when-light { display: block; }
+
+  /* ── Buttons ──────────────────────────────────────────────────────── */
   .btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border-radius: var(--radius);
-    font-size: 14px;
-    font-weight: 500;
-    font-family: inherit;
-    cursor: pointer;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 26px;
+    border-radius: var(--radius-lg);
     border: 1px solid transparent;
-    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-  .btn:active { transform: translateY(0) scale(0.98); }
-
-  .btn-primary {
-    background: var(--accent);
-    color: var(--accent-foreground);
-    border-color: var(--accent);
-  }
-
-  .btn-secondary {
-    background: var(--background);
-    color: var(--foreground);
-    border-color: var(--border);
-  }
-
-  .btn-secondary:hover { background: var(--surface); }
-
-  .btn-large {
-    padding: 12px 24px;
+    font-family: var(--font-mono);
     font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+    transition: filter 0.15s, background-color 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .btn { text-shadow: none; }
+  .btn:active { transform: translateY(1px); }
+  .btn .arr { display: inline-flex; transition: transform 0.18s var(--ease); }
+  .btn:hover .arr { transform: translateX(4px); }
+  .btn-sm { padding: 9px 14px; font-size: 12px; letter-spacing: 1px; border-radius: var(--radius); }
+  .btn-primary { background: var(--accent); color: var(--accent-fg); }
+  .btn-primary:hover { filter: brightness(0.9); }
+  :global(html:not(.dark)) .btn-primary:hover { filter: brightness(1.35); }
+  .btn-ghost { border-color: var(--border-strong); color: var(--fg); background: color-mix(in srgb, var(--bg) 55%, transparent); }
+  .btn-ghost:hover { border-color: var(--fg); }
+  .text-link {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 4px 2px;
+    border-bottom: 1px solid var(--border-strong);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .text-link:hover { color: var(--fg); border-color: var(--fg); }
+
+  /* ── Hero ─────────────────────────────────────────────────────────── */
+  .hero { position: relative; z-index: 1; padding-top: clamp(40px, 4.4vw, 64px); }
+  .hero-copy { text-shadow: 0 0 2px var(--bg), 0 0 14px var(--bg); }
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2.8px;
+    text-transform: uppercase;
+    color: var(--punch);
+  }
+  .sq { width: 8px; height: 8px; background: currentColor; flex-shrink: 0; }
+  .h1 {
+    margin-top: 18px;
+    font-family: var(--font-mono);
+    font-size: clamp(30px, 3.05vw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 0.98;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+  .h1 > span { display: block; }
+  .punch { color: var(--punch); }
+  .lede {
+    margin-top: 22px;
+    max-width: 62ch;
+    font-size: clamp(16px, 1.35vw, 18px);
+    font-weight: 450;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 28px; }
+  .cta-row .text-link { margin-left: 8px; }
+  .note {
+    margin-top: 18px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--muted-2);
   }
 
-  .version-badge {
-    font-size: 11px;
-    font-weight: 400;
-    opacity: 0.7;
-    font-family: 'Geist Mono', monospace;
+  /* Window frame used by every full screenshot. */
+  .window {
+    position: relative;
+    container-type: inline-size;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #0a0a0a;
+    box-shadow: var(--shadow-frame);
   }
-
-  /* Download spinner */
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+  .window img { width: 100%; height: auto; }
+  /* macOS traffic lights at (13,13) of the 1280px window, inactive grey. */
+  .lights {
+    position: absolute;
+    left: calc(13 / 1280 * 100cqw);
+    top: calc(13 / 1280 * 100cqw);
+    display: flex;
+    gap: calc(8 / 1280 * 100cqw);
+    pointer-events: none;
   }
-
-  .download-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid transparent;
-    border-top-color: currentColor;
+  .lights i {
+    width: calc(12 / 1280 * 100cqw);
+    height: calc(12 / 1280 * 100cqw);
     border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex-shrink: 0;
+    background: #3a3a3c;
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.08);
   }
 
-  /* ── Section labels ── */
-  .section-label {
+  .hero-shot {
+    position: relative;
+    z-index: 1;
+    width: calc(100% - 2 * var(--pad));
+    max-width: 1318px;
+    margin: clamp(36px, 3.6vw, 52px) auto 0;
+  }
+  .hero-shot .window { border-radius: 12px; box-shadow: var(--shadow-hero); }
+
+  .cap {
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 2.2px;
+    text-transform: uppercase;
+    color: var(--muted-2);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    margin-top: 36px;
+  }
+  .stat {
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    margin: -1px 0 0 -1px;
+    background: color-mix(in srgb, var(--surface) 55%, transparent);
+  }
+  .stat:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
+  .stat:last-child { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+  .stat dt {
+    font-family: var(--font-mono);
     font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.1em;
-    color: var(--muted);
+    letter-spacing: 1.6px;
     text-transform: uppercase;
-    margin-bottom: 32px;
-    text-align: center;
+    color: var(--muted);
   }
+  .stat dd { margin-top: 6px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
 
-  /* ── Features ── */
-  .features {
-    padding: 80px 0;
-    border-bottom: 1px solid var(--border);
+  /* ── Sections ─────────────────────────────────────────────────────── */
+  .section { margin-top: clamp(96px, 10vw, 148px); }
+  .label-row { display: flex; align-items: center; gap: 18px; margin-bottom: 28px; }
+  .label-num {
+    font-family: var(--font-mono);
+    font-size: clamp(26px, 3.4vw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--punch);
   }
+  .rule { flex: 1; height: 1px; background: var(--border); }
+  .label-name {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 2.4px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2.4px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .h2 {
+    font-family: var(--font-mono);
+    font-size: clamp(30px, 4.6vw, 58px);
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 0.98;
+    text-transform: uppercase;
+    text-wrap: balance;
+    max-width: 22ch;
+  }
+  .h2-sm { font-size: clamp(26px, 3.2vw, 40px); max-width: 18ch; letter-spacing: -0.04em; }
+  .lead {
+    margin-top: 20px;
+    max-width: 62ch;
+    font-size: 17px;
+    line-height: 1.66;
+    color: var(--muted);
+  }
+  :global(html:lang(zh)) .h1,
+  :global(html:lang(zh)) .h2,
+  :global(html:lang(zh)) .band-title,
+  :global(html:lang(zh)) .label-num { letter-spacing: 0; }
+  :global(html:lang(zh)) .h1, :global(html:lang(zh)) .h2 { line-height: 1.18; font-weight: 700; }
+  :global(html:lang(zh)) .lead, :global(html:lang(zh)) .lede { line-height: 1.8; }
+  :global(html:lang(zh)) .h2 { font-size: clamp(28px, 3.6vw, 46px); }
+  :global(html:lang(zh)) .h2-sm { font-size: clamp(24px, 2.8vw, 36px); }
+  /* CJK has no case; keep product names as written (macOS, Mac, GitHub). */
+  :global(html:lang(zh)) :is(.h1, .h2, .band-title, .btn, .eyebrow, .note, .points li, .text-link, .kicker, .nav a, .tab, .cap, .stat dt) { text-transform: none; }
 
-  .features-grid {
+  /* Feature grid */
+  .feat-grid {
+    list-style: none;
+    margin-top: 44px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1px;
     background: var(--border);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: 10px;
     overflow: hidden;
   }
-
-  .feature-card {
-    background: var(--background);
-    padding: 28px;
-    transition: background 0.15s;
-  }
-
-  .feature-card:hover { background: var(--surface); }
-
-  .feature-icon {
-    width: 36px;
-    height: 36px;
+  .feat {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--surface);
+    flex-direction: column;
+    padding: 24px 22px 20px;
+    background: var(--bg);
+    transition: background-color 0.15s;
+  }
+  .feat:hover { background: var(--surface-2); }
+  .feat-icon {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    color: var(--muted);
-    margin-bottom: 16px;
-    transition: all 0.15s;
+    color: var(--fg-2);
+    background: var(--surface-2);
+    margin-bottom: 18px;
+  }
+  .feat-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .feat-desc { margin-top: 8px; font-size: 13.5px; line-height: 1.6; color: var(--muted); flex: 1; }
+  .feat-meta {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--muted-2);
   }
 
-  .feature-card:hover .feature-icon {
-    color: var(--foreground);
-    border-color: var(--muted);
+  /* Chapter split */
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+    gap: clamp(26px, 4vw, 64px);
+    align-items: center;
   }
+  .split.flip .media { order: -1; }
+  .points { list-style: none; margin-top: 26px; display: grid; gap: 10px; }
+  .points li {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    color: var(--fg-2);
+  }
+  .points li::before { content: ''; width: 6px; height: 6px; background: var(--punch); flex-shrink: 0; transform: translateY(-1px); }
+  .media { min-width: 0; }
+  .frame {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #0a0a0a;
+    box-shadow: var(--shadow-frame);
+  }
+  .crop img { display: block; height: auto; }
+  /* A crop that ends mid-window dissolves instead of cutting a column. */
+  .fade-r { -webkit-mask-image: linear-gradient(90deg, #000 70%, transparent 99%); mask-image: linear-gradient(90deg, #000 70%, transparent 99%); }
+  .fade-l { -webkit-mask-image: linear-gradient(270deg, #000 70%, transparent 99%); mask-image: linear-gradient(270deg, #000 70%, transparent 99%); }
+  /* On white the fade reads as a smudge; light theme keeps a clean edge. */
+  :global(html:not(.dark)) .fade-r, :global(html:not(.dark)) .fade-l { -webkit-mask-image: none; mask-image: none; }
 
-  .feature-title {
+  /* Confirmation modal, rebuilt from the app's modal tokens */
+  .stage { position: relative; padding-bottom: 72px; }
+  .modal {
+    position: absolute;
+    right: -18px;
+    bottom: 0;
+    width: min(340px, 74%);
+    background: #171717;
+    color: #ededed;
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 24px 64px rgba(0, 0, 0, 0.6);
+    font-size: 13px;
+    text-shadow: none;
+  }
+  .modal-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px 6px;
     font-size: 14px;
     font-weight: 600;
-    color: var(--foreground);
-    margin-bottom: 8px;
-    letter-spacing: -0.01em;
   }
-
-  .feature-desc {
-    font-size: 13px;
-    line-height: 1.65;
-    color: var(--muted);
-  }
-
-  /* ── Screenshots ── */
-  .screenshots {
-    padding: 80px 0;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .screenshot-tabs {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 20px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .tab-btn {
-    font-size: 13px;
-    font-weight: 500;
-    font-family: inherit;
-    padding: 6px 14px;
-    border-radius: var(--radius);
-    color: var(--muted);
-    background: transparent;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-
-  .tab-btn:hover {
-    color: var(--foreground);
-    background: var(--surface);
-    border-color: var(--border);
-  }
-
-  .tab-btn.active {
-    color: var(--foreground);
-    background: var(--surface);
-    border-color: var(--border);
-  }
-
-  .screenshot-frame {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: var(--surface);
-  }
-
-  .tab-panel {
-    display: none;
-  }
-
-  .tab-panel.active {
-    display: block;
-  }
-
-  .screenshot-img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
-  /* ── Download CTA ── */
-  .download-cta {
-    padding: 80px 0;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .cta-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 56px 40px;
-    text-align: center;
-  }
-
-  .cta-icon {
-    width: 56px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--background);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--foreground);
-    margin: 0 auto 24px;
-  }
-
-  .cta-title {
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    color: var(--foreground);
-    margin-bottom: 12px;
-  }
-
-  .cta-subtitle {
-    font-size: 15px;
-    color: var(--muted);
-    max-width: 440px;
-    margin: 0 auto 32px;
-    line-height: 1.65;
-  }
-
-  .cta-actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
-
-  .release-link {
+  .modal-icon { color: #ef4444; display: inline-flex; }
+  .badge {
+    margin-left: auto;
+    height: 18px;
+    padding: 0 6px;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #a3a3a3;
+  }
+  .modal-body { padding: 0 16px 10px; font-size: 12px; color: #a3a3a3; }
+  .modal-table { width: calc(100% - 32px); margin: 0 16px; border-collapse: collapse; font-size: 11.5px; }
+  .modal-table td { padding: 5px 0; border-top: 1px solid #1f1f1f; color: #d4d4d4; }
+  .modal-table td:nth-child(2), .modal-table td:nth-child(3) { text-align: right; }
+  .modal-table td:first-child { font-weight: 600; color: #ededed; }
+  .modal-table tfoot td { border-top: 1px solid #262626; font-weight: 600; color: #ededed; line-height: 1.45; vertical-align: top; font-family: var(--font-sans); }
+  .modal-table tfoot td:last-child { font-family: var(--font-mono); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px 14px; }
+  .mbtn {
+    height: 30px;
+    padding: 0 12px;
+    min-width: 84px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 6px;
     font-size: 13px;
-    color: var(--muted);
-    transition: color 0.15s;
+    font-weight: 500;
   }
+  .mbtn-outline { border: 1px solid #3f3f46; color: #ededed; }
+  .mbtn-danger { background: #dc2626; color: #fff; }
+  .kbd-hint { font-size: 11px; opacity: 0.7; }
 
-  .release-link:hover { color: var(--foreground); }
-
-  .cta-note {
-    font-size: 12px;
-    color: var(--muted-foreground);
+  /* Anatomy */
+  .anatomy { margin-top: 48px; }
+  .anatomy-window { border-radius: 12px; }
+  .region {
+    position: absolute;
+    outline: 1px dashed color-mix(in srgb, var(--punch) 70%, transparent);
+    outline-offset: -2px;
+    background: color-mix(in srgb, var(--punch) 5%, transparent);
+    border-radius: 3px;
+    pointer-events: none;
   }
-
-  /* ── Footer ── */
-  .site-footer {
-    padding: 40px 0 48px;
+  .region b {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    min-width: calc(26 / 1280 * 100cqw);
+    height: calc(20 / 1280 * 100cqw);
+    padding: 0 4px;
+    border-radius: 4px;
+    background: var(--punch);
+    color: #fff;
+    font-size: max(9px, calc(11 / 1280 * 100cqw));
+    font-weight: 700;
+    letter-spacing: 0.04em;
   }
+  .region-rail b { left: 50%; top: 52%; transform: translateX(-50%); }
+  .region-sidebar b { right: 10px; top: 82%; }
+  .region-tabs b { right: calc(108 / 1280 * 100cqw); top: 50%; transform: translateY(-50%); }
+  .region-details b { left: 10px; top: 58%; }
+  .region-status b { left: 50%; top: -6px; transform: translate(-50%, -100%); }
 
-  .footer-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 24px;
-    flex-wrap: wrap;
+  .legend {
+    list-style: none;
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 24px;
   }
+  .legend li { border-top: 1px solid var(--border); padding-top: 14px; }
+  .legend-n { font-size: 12px; font-weight: 700; color: var(--punch); letter-spacing: 0.06em; }
+  .legend h3 { margin-top: 6px; font-size: 15px; font-weight: 600; }
+  .legend p { margin-top: 6px; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
 
-  .footer-links {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
+  .compare { margin-top: 64px; }
+  .cmp {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 14px;
   }
-
-  .footer-links a {
-    font-size: 13px;
-    color: var(--muted);
-    transition: color 0.15s;
-  }
-
-  .footer-links a:hover { color: var(--foreground); }
-
-  .footer-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .footer-copy {
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  .footer-copy a {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  .footer-copy a:hover { color: var(--foreground); }
-
-  .footer-disclaimer {
+  .cmp th {
+    text-align: left;
+    padding: 12px 18px;
+    background: var(--surface);
+    font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--muted-foreground);
+    font-weight: 600;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
   }
+  .cmp th + th { color: var(--fg); }
+  .cmp .ver { color: var(--punch); letter-spacing: 0.04em; margin-left: 6px; }
+  .cmp td { padding: 13px 18px; border-top: 1px solid var(--border-soft); vertical-align: top; }
+  .cmp tbody tr:first-child td { border-top: 0; }
+  .cmp td:first-child { width: 42%; color: var(--muted-2); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted-2) 60%, transparent); }
+  .cmp td + td { color: var(--fg); border-left: 1px solid var(--border-soft); }
 
-  /* ── Responsive ── */
+  /* Security */
+  .sec-split { align-items: start; }
+  .code { margin-top: 30px; }
+  .code pre {
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-2);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--fg-2);
+    overflow-x: auto;
+    user-select: text;
+  }
+  .code .c { color: var(--muted-2); }
+  .code .s { color: var(--fg); }
+  .code .n { color: var(--punch); }
+  .sec-list { list-style: none; display: grid; border-top: 1px solid var(--border); }
+  .sec-list li {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 16px;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .sec-icon {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    color: var(--fg-2);
+    background: var(--surface-2);
+  }
+  .sec-list h3 { font-size: 15px; font-weight: 600; }
+  .sec-list p { margin-top: 6px; font-size: 14px; line-height: 1.6; color: var(--muted); }
+
+  /* Screenshots */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-top: 32px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: color 0.12s, background-color 0.12s, border-color 0.12s;
+  }
+  .tab:hover { color: var(--fg); border-color: var(--border-strong); }
+  .tab.is-active { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+  .shots { margin-top: 22px; }
+  .shot[hidden] { display: none; }
+
+  /* ── Download band ────────────────────────────────────────────────── */
+  .band {
+    position: relative;
+    z-index: 1;
+    margin-top: clamp(110px, 12vw, 170px);
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+  .band-inner { padding-block: clamp(64px, 8vw, 112px); }
+  .eyebrow-band { color: var(--accent-fg); }
+  .eyebrow-band .sq { background: var(--punch); }
+  .band-title {
+    margin-top: 20px;
+    font-family: var(--font-mono);
+    font-size: clamp(36px, 6vw, 76px);
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    line-height: 0.95;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+  .band-sub { margin-top: 22px; max-width: 58ch; font-size: 17px; line-height: 1.6; opacity: 0.72; }
+  .cta-row-band { margin-top: 32px; }
+  .btn-invert { background: var(--accent-fg); color: var(--accent); }
+  .btn-invert:hover { filter: brightness(1.4); }
+  :global(html:not(.dark)) .btn-invert:hover { filter: brightness(0.94); }
+  .btn-ghost-invert { border-color: color-mix(in srgb, var(--accent-fg) 30%, transparent); color: var(--accent-fg); }
+  .btn-ghost-invert:hover { border-color: var(--accent-fg); }
+  .text-link-invert { color: color-mix(in srgb, var(--accent-fg) 70%, transparent); border-color: color-mix(in srgb, var(--accent-fg) 30%, transparent); }
+  .text-link-invert:hover { color: var(--accent-fg); border-color: var(--accent-fg); }
+  .band-update {
+    margin-top: 28px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    max-width: 70ch;
+    font-size: 14px;
+    line-height: 1.55;
+    opacity: 0.72;
+  }
+  .band-update > span:first-child { margin-top: 2px; flex-shrink: 0; }
+
+  /* ── Footer ───────────────────────────────────────────────────────── */
+  .footer { position: relative; z-index: 1; border-top: 1px solid var(--border); background: var(--bg); }
+  .footer-inner { padding-block: 72px 56px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px; }
+  .footer-word {
+    font-size: clamp(34px, 7vw, 92px);
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    line-height: 0.9;
+    text-transform: uppercase;
+    color: var(--fg);
+  }
+  .footer-word:hover { color: var(--muted); }
+  .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 26px; }
+  .footer-copy { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .footer-copy a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-strong); }
+  .footer-copy a:hover { color: var(--fg); }
+  .footer-legal { max-width: 70ch; font-size: 12px; line-height: 1.6; color: var(--muted-2); }
+  .footer-legal span + span::before { content: ' '; }
+
+  /* ── Responsive ───────────────────────────────────────────────────── */
+  @media (max-width: 1080px) {
+    .nav { display: none; }
+    .feat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .legend { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 860px) {
+    .split { grid-template-columns: minmax(0, 1fr); }
+    .split.flip .media { order: 0; }
+    .modal { right: 8px; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stat:first-child { border-radius: var(--radius-lg) 0 0 0; }
+    .stat:nth-child(2) { border-radius: 0 var(--radius-lg) 0 0; }
+    .stat:nth-child(3) { border-radius: 0 0 0 var(--radius-lg); }
+    .stat:last-child { border-radius: 0 0 var(--radius-lg) 0; }
+  }
+  @media (max-width: 720px) {
+    .region { display: none; }
+    .legend { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .legend li { display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 8px; padding-block: 14px; }
+    .legend li h3 { margin-top: 0; }
+    .legend li p { grid-column: 2; }
+    .cmp td, .cmp th { padding: 11px 12px; font-size: 13px; }
+  }
   @media (max-width: 640px) {
-    .hero { padding: 64px 0 56px; }
-    .features { padding: 56px 0; }
-    .screenshots { padding: 56px 0; }
-    .download-cta { padding: 56px 0; }
-    .cta-card { padding: 40px 24px; }
-    .footer-top { flex-direction: column; align-items: flex-start; }
-    .footer-bottom { flex-direction: column; align-items: flex-start; }
-    .header-controls { gap: 4px; }
+    .header-row { gap: 12px; }
+    .header-cta { display: none; }
+    .brand-word { display: none; }
+    .feat-grid { grid-template-columns: minmax(0, 1fr); }
+    .cta-row .btn { width: 100%; }
+    .cta-row .text-link { margin-left: 0; }
+    .hero-shot { width: calc(100% - 2 * var(--pad)); }
+    .modal { position: relative; right: auto; width: 100%; margin-top: -40px; }
+    .stage { padding-bottom: 0; }
+    .eyebrow { letter-spacing: 1.6px; font-size: 11px; }
   }
 </style>
-
-<!-- ═══════════════════════════════════════════════════════════
-     CLIENT SCRIPTS
-═══════════════════════════════════════════════════════════ -->
-<script is:inline>
-/* ── Translations ── */
-const i18n = {
-  en: {
-    hero_badge: 'Mac App · Open Source',
-    hero_title: 'LB Liquidator',
-    hero_tagline: 'One-click position liquidation for Longbridge.\nLocal-only. Secure.',
-    download_mac: 'Download for Mac',
-    view_github: 'View on GitHub',
-    hero_note: 'macOS 12+ · Apple Silicon & Intel · Free & Open Source',
-    features_label: 'FEATURES',
-    feat_security_title: 'Local-only Security',
-    feat_security_desc: 'API keys stored in your browser\'s localStorage — never transmitted. Server binds to 127.0.0.1 only.',
-    feat_native_title: 'Native Mac App',
-    feat_native_desc: 'Built with Tauri v2. Double-click to launch — no terminal, no Node.js, no setup required.',
-    feat_updates_title: 'Auto-updates',
-    feat_updates_desc: 'Sparkle-powered update system checks for new releases on launch and installs them silently.',
-    feat_selective_title: 'Selective Liquidation',
-    feat_selective_desc: 'Choose individual positions and sell at full, 1/2, 1/3, or 1/4 of your holding.',
-    feat_conditional_title: 'Conditional Sell',
-    feat_conditional_desc: 'Batch set take-profit, stop-loss, and trailing stop orders across multiple positions at once.',
-    feat_i18n_title: 'Multi-language',
-    feat_i18n_desc: 'Full support for Simplified Chinese, Traditional Chinese, and English — switch instantly.',
-    screenshots_label: 'SCREENSHOTS',
-    tab_dark: 'Dark Mode',
-    tab_light: 'Light Mode',
-    tab_conditional: 'Conditional Sell',
-    tab_api: 'API Setup',
-    cta_title: 'Ready to take control?',
-    cta_subtitle: 'Download LB Liquidator for Mac and manage your Longbridge positions with confidence.',
-    all_releases: 'All releases',
-    cta_note: 'macOS 12 Monterey or later · Apple Silicon & Intel',
-    footer_github: 'GitHub',
-    footer_releases: 'Releases',
-    footer_issues: 'Issues',
-    footer_open_source: 'Open source on GitHub',
-    footer_disclaimer: 'For educational purposes only. Trading involves risk.',
-  },
-  'zh-hans': {
-    hero_badge: 'Mac 应用 · 开源',
-    hero_title: 'LB Liquidator',
-    hero_tagline: '长桥一键清仓工具\n本地运行，安全可靠',
-    download_mac: '下载 Mac 版',
-    view_github: '查看 GitHub',
-    hero_note: 'macOS 12+ · Apple Silicon & Intel · 免费开源',
-    features_label: '功能特性',
-    feat_security_title: '本地安全运行',
-    feat_security_desc: 'API 密钥仅存储在浏览器 localStorage 中，从不上传。服务器仅绑定 127.0.0.1。',
-    feat_native_title: '原生 Mac 应用',
-    feat_native_desc: '基于 Tauri v2 构建，双击启动，无需终端、无需 Node.js，开箱即用。',
-    feat_updates_title: '自动更新',
-    feat_updates_desc: '集成 Sparkle 更新框架，启动时自动检测新版本并静默安装。',
-    feat_selective_title: '灵活清仓',
-    feat_selective_desc: '自由选择持仓，按全仓、1/2、1/3 或 1/4 比例卖出。',
-    feat_conditional_title: '条件卖出',
-    feat_conditional_desc: '批量为多个持仓设置止盈、止损、追踪止损委托。',
-    feat_i18n_title: '多语言支持',
-    feat_i18n_desc: '完整支持简体中文、繁体中文和英文，即时切换。',
-    screenshots_label: '截图展示',
-    tab_dark: '深色模式',
-    tab_light: '浅色模式',
-    tab_conditional: '条件卖出',
-    tab_api: 'API 设置',
-    cta_title: '准备好了吗？',
-    cta_subtitle: '下载 LB Liquidator Mac 版，轻松管理您的长桥持仓。',
-    all_releases: '所有版本',
-    cta_note: 'macOS 12 Monterey 及以上 · Apple Silicon & Intel',
-    footer_github: 'GitHub',
-    footer_releases: '版本发布',
-    footer_issues: '问题反馈',
-    footer_open_source: '在 GitHub 上开源',
-    footer_disclaimer: '仅供学习交流使用，投资有风险，操作需谨慎。',
-  },
-  'zh-hant': {
-    hero_badge: 'Mac 應用 · 開源',
-    hero_title: 'LB Liquidator',
-    hero_tagline: '長橋一鍵清倉工具\n本地運行，安全可靠',
-    download_mac: '下載 Mac 版',
-    view_github: '查看 GitHub',
-    hero_note: 'macOS 12+ · Apple Silicon & Intel · 免費開源',
-    features_label: '功能特性',
-    feat_security_title: '本地安全運行',
-    feat_security_desc: 'API 金鑰僅儲存在瀏覽器 localStorage 中，從不上傳。伺服器僅綁定 127.0.0.1。',
-    feat_native_title: '原生 Mac 應用',
-    feat_native_desc: '基於 Tauri v2 構建，雙擊啟動，無需終端機、無需 Node.js，開箱即用。',
-    feat_updates_title: '自動更新',
-    feat_updates_desc: '整合 Sparkle 更新框架，啟動時自動檢測新版本並靜默安裝。',
-    feat_selective_title: '靈活清倉',
-    feat_selective_desc: '自由選擇持倉，按全倉、1/2、1/3 或 1/4 比例賣出。',
-    feat_conditional_title: '條件賣出',
-    feat_conditional_desc: '批次為多個持倉設定停利、停損、追蹤停損委託。',
-    feat_i18n_title: '多語言支援',
-    feat_i18n_desc: '完整支援簡體中文、繁體中文和英文，即時切換。',
-    screenshots_label: '截圖展示',
-    tab_dark: '深色模式',
-    tab_light: '淺色模式',
-    tab_conditional: '條件賣出',
-    tab_api: 'API 設定',
-    cta_title: '準備好了嗎？',
-    cta_subtitle: '下載 LB Liquidator Mac 版，輕鬆管理您的長橋持倉。',
-    all_releases: '所有版本',
-    cta_note: 'macOS 12 Monterey 及以上 · Apple Silicon & Intel',
-    footer_github: 'GitHub',
-    footer_releases: '版本發布',
-    footer_issues: '問題回報',
-    footer_open_source: '在 GitHub 上開源',
-    footer_disclaimer: '僅供學習交流使用，投資有風險，操作需謹慎。',
-  },
-};
-
-let currentLang = localStorage.getItem('lb-lang') || 'en';
-
-function applyLang(lang) {
-  const t = i18n[lang] || i18n.en;
-  document.querySelectorAll('[data-i18n]').forEach(function(el) {
-    const key = el.getAttribute('data-i18n');
-    if (t[key] !== undefined) {
-      // Preserve children (like version badge in download btn)
-      const badge = el.querySelector('.version-badge');
-      if (badge) {
-        el.childNodes.forEach(function(node) {
-          if (node.nodeType === Node.TEXT_NODE) node.remove();
-        });
-        el.insertBefore(document.createTextNode(t[key]), el.firstChild);
-      } else if (key === 'hero_tagline') {
-        el.innerHTML = t[key].replace(/\n/g, '<br />');
-      } else {
-        el.textContent = t[key];
-      }
-    }
-  });
-
-  // Update lang buttons
-  document.querySelectorAll('.lang-btn').forEach(function(btn) {
-    btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
-  });
-
-  // Update html lang
-  document.documentElement.lang = lang === 'zh-hans' ? 'zh-Hans' : lang === 'zh-hant' ? 'zh-Hant' : 'en';
-}
-
-function switchLang(lang) {
-  currentLang = lang;
-  localStorage.setItem('lb-lang', lang);
-  applyLang(lang);
-}
-
-/* ── Theme toggle ── */
-function getTheme() {
-  return localStorage.getItem('lb-theme') || 'dark';
-}
-
-function applyTheme(theme) {
-  document.documentElement.classList.toggle('dark', theme === 'dark');
-  var lightIcon = document.querySelector('.theme-icon-light');
-  var darkIcon = document.querySelector('.theme-icon-dark');
-  if (lightIcon) lightIcon.style.display = theme === 'dark' ? 'block' : 'none';
-  if (darkIcon) darkIcon.style.display = theme === 'dark' ? 'none' : 'block';
-}
-
-document.getElementById('theme-toggle').addEventListener('click', function() {
-  var next = getTheme() === 'dark' ? 'light' : 'dark';
-  localStorage.setItem('lb-theme', next);
-  applyTheme(next);
-});
-
-/* ── Screenshot tabs ── */
-function switchTab(name) {
-  document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
-  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-  var panel = document.getElementById('tab-' + name);
-  if (panel) panel.classList.add('active');
-  var btn = document.querySelector('[data-tab="' + name + '"]');
-  if (btn) btn.classList.add('active');
-}
-
-/* ── Dynamic download button ── */
-function setDownloadLoading(loading) {
-  var icon1 = document.getElementById('download-btn-icon');
-  if (loading) {
-    icon1.innerHTML = '<div class="download-spinner"></div>';
-  } else {
-    icon1.innerHTML = '<i data-lucide="download" style="width:16px;height:16px"></i>';
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-  }
-}
-
-function setDownloadUrl(url, version) {
-  var btn1 = document.getElementById('download-btn');
-  var btn2 = document.getElementById('download-btn-2');
-  var v1 = document.getElementById('download-version');
-  var v2 = document.getElementById('download-version-2');
-
-  if (btn1) btn1.href = url;
-  if (btn2) btn2.href = url;
-
-  if (version) {
-    if (v1) { v1.textContent = version; v1.style.display = 'inline'; }
-    if (v2) { v2.textContent = version; v2.style.display = 'inline'; }
-  }
-}
-
-async function fetchRelease() {
-  setDownloadLoading(true);
-  try {
-    var res = await fetch('https://api.github.com/repos/therealechan/longbridge-liquidator-web/releases/latest');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    var data = await res.json();
-    var version = data.tag_name || '';
-    var asset = (data.assets || []).find(function(a) { return a.name && a.name.endsWith('.dmg'); });
-    if (asset && asset.browser_download_url) {
-      setDownloadUrl(asset.browser_download_url, version);
-    } else {
-      setDownloadUrl('https://github.com/therealechan/longbridge-liquidator-web/releases', version);
-    }
-  } catch (e) {
-    // Keep fallback URL already set
-    console.warn('Release fetch failed:', e);
-  } finally {
-    setDownloadLoading(false);
-  }
-}
-
-/* ── Init ── */
-(function init() {
-  applyTheme(getTheme());
-  applyLang(currentLang);
-  fetchRelease();
-})();
-</script>

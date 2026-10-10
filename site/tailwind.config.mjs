@@ -5,7 +5,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Geist Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['Geist Variable', 'Geist', '-apple-system', 'BlinkMacSystemFont', 'PingFang SC', 'sans-serif'],
         mono: ['Geist Mono', 'monospace'],
       },
       colors: {

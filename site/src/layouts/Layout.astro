@@ -1,13 +1,25 @@
 ---
+import '@fontsource-variable/geist';
+import '@fontsource/geist-mono/400.css';
+import '@fontsource/geist-mono/500.css';
+import '@fontsource/geist-mono/600.css';
+import '@fontsource/geist-mono/700.css';
+import '@fontsource/geist-mono/800.css';
+
 export interface Props {
   title?: string;
   description?: string;
+  ogImage?: string;
 }
 
 const {
-  title = 'LB Liquidator — One-click position liquidation for Longbridge',
-  description = 'Local-only, secure Mac app for Longbridge position management. Selective liquidation, conditional sell orders, auto-updates.',
+  title = 'LB Liquidator — One-click liquidation for Longbridge, built like a native Mac app',
+  description = 'A local-only macOS app for Longbridge Securities: one-click liquidation with ratios and confirmation, conditional orders, buy back, real-time charts and live quotes, order history and keyboard shortcuts. Free and open source.',
+  ogImage = '/screenshots/chart.png',
 } = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+const ogUrl = new URL(ogImage, Astro.site ?? Astro.url);
 ---
 
 <!doctype html>
@@ -17,144 +29,165 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark light" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="LB Liquidator" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogUrl} />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="800" />
+    <meta property="og:image:alt" content="LB Liquidator in dark mode with positions, the liquidation table and a real-time chart" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogUrl} />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" as="image" href="/screenshots/chart.png" fetchpriority="high" />
 
-    <!-- Geist Sans -->
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap');
-    </style>
-
-    <!-- Design tokens & global styles -->
-    <style is:global>
-      :root {
-        --background: #ffffff;
-        --surface: #f4f4f5;
-        --surface-hover: #e4e4e7;
-        --border: #e4e4e7;
-        --foreground: #18181b;
-        --foreground-secondary: #3f3f46;
-        --muted: #71717a;
-        --muted-foreground: #a1a1aa;
-        --accent: #18181b;
-        --accent-foreground: #fafafa;
-        --danger: #dc2626;
-        --danger-hover: #b91c1c;
-        --success: #16a34a;
-        --radius: 6px;
-        --radius-sm: 4px;
-      }
-
-      .dark {
-        --background: #0a0a0a;
-        --surface: #171717;
-        --surface-hover: #262626;
-        --border: #262626;
-        --foreground: #ededed;
-        --foreground-secondary: #d4d4d4;
-        --muted: #737373;
-        --muted-foreground: #a3a3a3;
-        --accent: #fafafa;
-        --accent-foreground: #171717;
-      }
-
-      *, *::before, *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      html {
-        font-family: 'Geist', 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        font-size: 15px;
-        line-height: 1.6;
-        background: var(--background);
-        color: var(--foreground);
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        scroll-behavior: smooth;
-      }
-
-      body {
-        background: var(--background);
-        color: var(--foreground);
-        transition: background 0.2s ease, color 0.2s ease;
-        min-height: 100vh;
-      }
-
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      button {
-        cursor: pointer;
-        border: none;
-        background: none;
-        font-family: inherit;
-      }
-
-      .font-mono {
-        font-family: 'Geist Mono', 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
-      }
-
-      /* Scrollbar */
-      ::-webkit-scrollbar { width: 6px; height: 6px; }
-      ::-webkit-scrollbar-track { background: var(--background); }
-      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-      ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
-      /* Animations */
-      @keyframes fadeSlideIn {
-        from { opacity: 0; transform: translateY(16px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-
-      @keyframes pulse-dot {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.4; }
-      }
-
-      .animate-fade-up {
-        animation: fadeSlideIn 0.5s ease-out forwards;
-      }
-
-      .animate-fade-up-delay-1 { animation-delay: 0.1s; opacity: 0; }
-      .animate-fade-up-delay-2 { animation-delay: 0.2s; opacity: 0; }
-      .animate-fade-up-delay-3 { animation-delay: 0.3s; opacity: 0; }
-      .animate-fade-up-delay-4 { animation-delay: 0.4s; opacity: 0; }
-
-      @media (prefers-reduced-motion: reduce) {
-        .animate-fade-up,
-        .animate-fade-up-delay-1,
-        .animate-fade-up-delay-2,
-        .animate-fade-up-delay-3,
-        .animate-fade-up-delay-4 {
-          animation: none;
-          opacity: 1;
-        }
-      }
-    </style>
+    <!-- Apply the saved theme before first paint (default: dark). -->
+    <script is:inline>
+      try {
+        if ((localStorage.getItem('lb-theme') || 'dark') === 'light') document.documentElement.classList.remove('dark');
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <slot />
-
-    <!-- Lucide icons CDN -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" is:inline></script>
-    <script is:inline>
-      if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-      }
-    </script>
   </body>
 </html>
+
+<style is:global>
+  /* ── Tokens (from the app's DESIGN_GUIDELINE.md) ─────────────────────── */
+  :root {
+    --bg: #ffffff;
+    --surface: #f4f4f5;
+    --surface-2: #fafafa;
+    --border: #e4e4e7;
+    --border-soft: #f0f0f1;
+    --border-strong: #d4d4d8;
+    --fg: #18181b;
+    --fg-2: #3f3f46;
+    --muted: #71717a;
+    --muted-2: #a1a1aa;
+    --accent: #18181b;
+    --accent-fg: #fafafa;
+    --overlay: rgba(0, 0, 0, 0.05);
+    --overlay-strong: rgba(0, 0, 0, 0.07);
+    --sell: #dc2626;
+    --sell-hover: #b91c1c;
+    --sell-soft: rgba(220, 38, 38, 0.1);
+    --buy: #16a34a;
+    --live: #d97706;
+    --punch: #dc2626;
+    --grid-line: rgba(0, 0, 0, 0.035);
+    --grid-line-2: rgba(0, 0, 0, 0.02);
+    --shadow-frame: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 0 0 1px rgba(0, 0, 0, 0.02), 0 24px 64px rgba(0, 0, 0, 0.12);
+    --shadow-hero: 0 0 0 1px rgba(0, 0, 0, 0.02), 0 30px 90px rgba(0, 0, 0, 0.18), 0 8px 24px rgba(0, 0, 0, 0.06);
+    --shadow-menu: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.12);
+    --header-bg: rgba(255, 255, 255, 0.78);
+
+    --font-sans: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'PingFang TC', 'Helvetica Neue', sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Monaco, 'PingFang SC', 'PingFang TC', monospace;
+    --radius: 6px;
+    --radius-lg: 8px;
+    --maxw: 1240px;
+    --pad: 36px;
+    --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    color-scheme: light;
+  }
+
+  .dark {
+    --bg: #0a0a0a;
+    --surface: #171717;
+    --surface-2: #0f0f0f;
+    --border: #262626;
+    --border-soft: #1f1f1f;
+    --border-strong: #3f3f46;
+    --fg: #ededed;
+    --fg-2: #d4d4d4;
+    --muted: #a1a1aa;
+    --muted-2: #71717a;
+    --accent: #fafafa;
+    --accent-fg: #171717;
+    --overlay: rgba(255, 255, 255, 0.05);
+    --overlay-strong: rgba(255, 255, 255, 0.08);
+    --sell: #dc2626;
+    --sell-hover: #ef4444;
+    --sell-soft: rgba(239, 68, 68, 0.12);
+    --buy: #22c55e;
+    --live: #f59e0b;
+    --punch: #ef4444;
+    --grid-line: rgba(255, 255, 255, 0.026);
+    --grid-line-2: rgba(255, 255, 255, 0.015);
+    --shadow-frame: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 24px 64px rgba(0, 0, 0, 0.4);
+    --shadow-hero: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 0 0 1px rgba(255, 255, 255, 0.02), 0 40px 120px rgba(0, 0, 0, 0.7), 0 0 80px rgba(255, 255, 255, 0.025);
+    --shadow-menu: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.5);
+    --header-bg: rgba(10, 10, 10, 0.72);
+    color-scheme: dark;
+  }
+
+  @media (max-width: 540px) {
+    :root { --pad: 20px; }
+  }
+
+  /* ── Base ───────────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+  }
+
+  body {
+    position: relative;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--fg);
+    overflow-x: hidden;
+  }
+
+  /* The faint page grid behind everything (shows through the video's
+     `lighten` blend, so the hero and the page share one surface). */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 43px, var(--grid-line) 43px 44px),
+      repeating-linear-gradient(90deg, transparent 0 59px, var(--grid-line-2) 59px 60px);
+  }
+
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  img, video, svg { display: block; max-width: 100%; }
+  :focus { outline: none; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  ::selection { background: var(--fg); color: var(--bg); }
+
+  .mono { font-family: var(--font-mono); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  }
+</style>
