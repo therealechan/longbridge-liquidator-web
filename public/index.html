@@ -235,6 +235,21 @@
               <span class="switch"><input type="checkbox" id="liveQuotesToggle" role="switch"><span class="switch-track" aria-hidden="true"></span></span>
             </label>
           </div>
+          <section class="settings-group cred-guide" aria-labelledby="credGuideTitle">
+            <div class="cred-guide-head">
+              <span class="field-label" id="credGuideTitle"><i data-lucide="book-open"></i><span data-i18n="credGuideTitle">How to get your credentials</span></span>
+            </div>
+            <ol class="cred-steps">
+              <li><span class="step-index" aria-hidden="true">1</span><span data-i18n="credStep1">Sign in to the Longbridge Developer Center.</span></li>
+              <li><span class="step-index" aria-hidden="true">2</span><span data-i18n="credStep2">Open User Center → App Credentials and copy your App Key and App Secret.</span></li>
+              <li><span class="step-index" aria-hidden="true">3</span><span data-i18n="credStep3">Generate an Access Token there and make sure trading permission is enabled for your account.</span></li>
+            </ol>
+            <p class="help" data-i18n="credExpiryNote">Access Tokens expire. When the app reports an authentication error, regenerate the token in the Developer Center and paste it below.</p>
+            <div class="field-row">
+              <button type="button" class="btn btn-outline btn-sm" data-href="https://open.longportapp.com/"><i data-lucide="external-link"></i><span data-i18n="credOpenDev">Open Developer Center</span></button>
+              <button type="button" class="btn btn-outline btn-sm" data-href="https://open.longportapp.com/docs"><i data-lucide="book-open"></i><span data-i18n="credApiDocs">API docs</span></button>
+            </div>
+          </section>
           <form class="settings-group" id="credForm" autocomplete="off" novalidate>
             <div class="field">
               <label class="field-label" for="appKey" data-i18n="appKey">App Key</label>
@@ -316,7 +331,7 @@
             </div>
             <div class="about-links">
               <button type="button" class="btn btn-outline btn-sm" data-href="https://github.com/therealechan/longbridge-liquidator-web"><i data-lucide="github"></i>GitHub</button>
-              <button type="button" class="btn btn-outline btn-sm" data-href="https://0xechan.xyz"><i data-lucide="globe"></i>0xechan.xyz</button>
+              <button type="button" class="btn btn-outline btn-sm" data-href="https://echan.xyz"><i data-lucide="globe"></i>echan.xyz</button>
               <button type="button" class="btn btn-outline btn-sm" data-href="https://open.longportapp.com/"><i data-lucide="external-link"></i>Longbridge OpenAPI</button>
               <button type="button" class="btn btn-ghost btn-sm" data-action="shortcuts"><i data-lucide="keyboard"></i><span data-i18n="shortcutsTitle">Keyboard shortcuts</span></button>
             </div>
@@ -376,7 +391,7 @@
       <span class="sb-sep">·</span>
       <span class="sb-item" id="sbServer"><span class="dot is-pending" id="sbServerDot"></span><span class="mono">127.0.0.1:3456</span></span>
     </div>
-    <div class="sb-center"><span id="sbUpdated"></span><span class="sb-live" id="sbLive" hidden><span class="sb-sep">·</span><span class="dot"></span><span id="sbLiveText"></span></span></div>
+    <div class="sb-center"><span class="sb-update" id="sbUpdate" role="status" aria-live="polite" hidden><span class="sb-progress" id="sbUpdateBar"><span class="sb-progress-fill" id="sbUpdateFill"></span></span><span id="sbUpdateText"></span><span class="sb-sep sb-update-sep">·</span></span><span id="sbUpdated"></span><span class="sb-live" id="sbLive" hidden><span class="sb-sep">·</span><span class="dot"></span><span id="sbLiveText"></span></span></div>
     <div class="sb-right">
       <span class="mono" id="sbVersion"></span>
       <span class="sb-sep">·</span>
@@ -390,7 +405,7 @@
     <div class="pop-meta"><span data-i18n="version">Version</span><span class="mono" id="popVersion">—</span></div>
     <div class="pop-sep"></div>
     <button type="button" class="pop-item" role="menuitem" data-href="https://github.com/therealechan/longbridge-liquidator-web"><i data-lucide="github"></i>GitHub<i data-lucide="external-link" class="pop-hint"></i></button>
-    <button type="button" class="pop-item" role="menuitem" data-href="https://0xechan.xyz"><i data-lucide="globe"></i>0xechan.xyz<i data-lucide="external-link" class="pop-hint"></i></button>
+    <button type="button" class="pop-item" role="menuitem" data-href="https://echan.xyz"><i data-lucide="globe"></i>echan.xyz<i data-lucide="external-link" class="pop-hint"></i></button>
     <div class="pop-sep"></div>
     <button type="button" class="pop-item" role="menuitem" data-action="shortcuts"><i data-lucide="keyboard"></i><span data-i18n="shortcutsTitle">Keyboard shortcuts</span><span class="pop-hint">⌘/</span></button>
     <button type="button" class="pop-item" role="menuitem" data-action="about"><i data-lucide="info"></i><span data-i18n="secAbout">About</span></button>

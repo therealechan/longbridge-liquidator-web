@@ -1,5 +1,6 @@
 use std::net::TcpStream;
 use std::process::{Child, Command};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
@@ -77,6 +78,10 @@ fn shutdown(app: &AppHandle) {
     let _ = app.save_window_state(window_state_flags());
     stop_node_server(app);
 }
+
+/// Set right before `app.restart()` after an update is installed, so the
+/// window-destroyed handler doesn't `exit(0)` ahead of Tauri's relaunch.
+static RESTARTING: AtomicBool = AtomicBool::new(false);
 
 /// Last fatal server-startup error, replayed to the frontend after page load
 /// in case the `server-error` event fired before its listener was registered.
@@ -179,6 +184,13 @@ pub fn run() {
                 .build()?;
 
             app.set_menu(menu)?;
+
+            // After an in-app update the relaunched app can start behind other
+            // windows; bring the main window to the front.
+            if let Some(window) = app.get_webview_window(MAIN_WINDOW) {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
 
             #[cfg(target_os = "macos")]
             {
@@ -327,7 +339,11 @@ pub fn run() {
                 // Closing the (only) window quits the app. We exit the process
                 // directly, so RunEvent::Exit never fires — clean up first.
                 shutdown(window.app_handle());
-                std::process::exit(0);
+                // During an update restart the run loop must reach
+                // RunEvent::Exit, where Tauri relaunches the new bundle.
+                if !RESTARTING.load(Ordering::SeqCst) {
+                    std::process::exit(0);
+                }
             }
         })
         .build(tauri::generate_context!())
@@ -351,10 +367,58 @@ fn report_server_error(app: &AppHandle, slot: &Arc<Mutex<Option<String>>>, msg: 
     let _ = app.emit_to(MAIN_WINDOW, "server-error", msg);
 }
 
+/// Version currently being downloaded/installed, if any. Guards against a
+/// second "Install Update" (e.g. launch check + menu check) starting another
+/// download while one is already running.
+static UPDATE_IN_PROGRESS: Mutex<Option<String>> = Mutex::new(None);
+
+/// Version of the update in flight, if any.
+fn update_in_progress() -> Option<String> {
+    match UPDATE_IN_PROGRESS.lock() {
+        Ok(guard) => guard.clone(),
+        Err(poisoned) => poisoned.into_inner().clone(),
+    }
+}
+
+/// Claims the update slot for `version`. Returns the version already in
+/// flight if another download holds it.
+fn begin_update(version: &str) -> Result<(), String> {
+    let mut guard = UPDATE_IN_PROGRESS.lock().unwrap_or_else(|p| p.into_inner());
+    if let Some(current) = guard.as_ref() {
+        return Err(current.clone());
+    }
+    *guard = Some(version.to_owned());
+    Ok(())
+}
+
+fn end_update() {
+    let mut guard = UPDATE_IN_PROGRESS.lock().unwrap_or_else(|p| p.into_inner());
+    *guard = None;
+}
+
+fn show_update_in_progress(app: &AppHandle, version: &str) {
+    show_app_alert(
+        app,
+        "Update Already Downloading",
+        &format!("LB Liquidator v{version} is already downloading. The app will restart automatically when it is ready."),
+        &["OK"],
+    );
+}
+
+/// Sends an `update-progress` event to the main window.
+fn emit_update_progress(app: &AppHandle, payload: serde_json::Value) {
+    if let Err(e) = app.emit_to(MAIN_WINDOW, "update-progress", payload) {
+        eprintln!("[lb-liquidator] failed to emit update-progress: {e}");
+    }
+}
+
 /// Silent background update check on launch — prompts user if an update is found.
 async fn check_for_updates(app: tauri::AppHandle) {
     use tauri_plugin_updater::UpdaterExt;
 
+    if update_in_progress().is_some() {
+        return;
+    }
     match app.updater() {
         Ok(updater) => match updater.check().await {
             Ok(Some(update)) => offer_update(&app, update).await,
@@ -370,6 +434,10 @@ async fn check_for_updates_manual(app: tauri::AppHandle) {
     use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
     use tauri_plugin_updater::UpdaterExt;
 
+    if let Some(version) = update_in_progress() {
+        show_update_in_progress(&app, &version);
+        return;
+    }
     match app.updater() {
         Ok(updater) => match updater.check().await {
             Ok(Some(update)) => offer_update(&app, update).await,
@@ -389,10 +457,9 @@ async fn check_for_updates_manual(app: tauri::AppHandle) {
     }
 }
 
-/// Asks the user whether to install `update`, then downloads and installs it.
+/// Asks the user whether to install `update`; on "Install Update" the download
+/// starts immediately in the background and progress is streamed to the UI.
 async fn offer_update(app: &AppHandle, update: tauri_plugin_updater::Update) {
-    use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
-
     let version = update.version.clone();
     eprintln!("[lb-liquidator] update available: v{version}");
 
@@ -408,21 +475,100 @@ async fn offer_update(app: &AppHandle, update: tauri_plugin_updater::Update) {
         return;
     }
 
-    show_app_alert(
-        app,
-        "Updating LB Liquidator",
-        &format!("Downloading v{version}…\n\nThe app will restart when the update is ready."),
-        &["OK"],
+    // Another prompt (launch check vs. menu check) may already have started it.
+    if let Err(current) = begin_update(&version) {
+        show_update_in_progress(app, &current);
+        return;
+    }
+
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        install_update(app, update).await;
+    });
+}
+
+/// Downloads and installs `update`, reporting progress via `update-progress`
+/// events, then restarts the app. Failures are emitted to the UI and also
+/// shown as a native alert so they are never silent.
+async fn install_update(app: AppHandle, update: tauri_plugin_updater::Update) {
+    use std::time::Instant;
+    use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
+
+    const EMIT_INTERVAL: Duration = Duration::from_millis(100);
+
+    let version = update.version.clone();
+    eprintln!("[lb-liquidator] downloading update v{version}");
+    emit_update_progress(
+        &app,
+        serde_json::json!({ "phase": "downloading", "version": version, "downloaded": 0, "total": null }),
     );
 
-    if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
-        eprintln!("[lb-liquidator] update install error: {e}");
-        app.dialog()
-            .message(format!("Update failed: {e}\n\nPlease download the latest version from GitHub manually."))
-            .title("Update Error")
-            .kind(MessageDialogKind::Error)
-            .blocking_show();
+    let mut downloaded: u64 = 0;
+    let mut last_emit: Option<Instant> = None;
+    let on_chunk = {
+        let app = app.clone();
+        let version = version.clone();
+        move |chunk_len: usize, content_len: Option<u64>| {
+            downloaded += chunk_len as u64;
+            let done = content_len.is_some_and(|total| downloaded >= total);
+            let due = last_emit.map_or(true, |t| t.elapsed() >= EMIT_INTERVAL);
+            if due || done {
+                last_emit = Some(Instant::now());
+                emit_update_progress(
+                    &app,
+                    serde_json::json!({
+                        "phase": "downloading",
+                        "version": version,
+                        "downloaded": downloaded,
+                        "total": content_len,
+                    }),
+                );
+            }
+        }
+    };
+    let on_finish = {
+        let app = app.clone();
+        let version = version.clone();
+        move || {
+            eprintln!("[lb-liquidator] update downloaded, installing v{version}");
+            emit_update_progress(&app, serde_json::json!({ "phase": "installing", "version": version }));
+        }
+    };
+
+    match update.download_and_install(on_chunk, on_finish).await {
+        Ok(()) => {
+            eprintln!("[lb-liquidator] update v{version} installed, restarting");
+            emit_update_progress(&app, serde_json::json!({ "phase": "restarting", "version": version }));
+            // Let the UI paint "Restarting…" before the process goes away.
+            sleep_async(Duration::from_millis(800)).await;
+            // The updater only replaces the bundle; it never relaunches us.
+            // Stop the old Node server first (process-group kill + wait) so
+            // the new version doesn't find :3456 taken and reuse the stale
+            // API server. Idempotent, so the Exit handler running it again
+            // during the restart is harmless.
+            RESTARTING.store(true, Ordering::SeqCst);
+            shutdown(&app);
+            app.restart();
+        }
+        Err(e) => {
+            eprintln!("[lb-liquidator] update install error: {e}");
+            end_update();
+            emit_update_progress(
+                &app,
+                serde_json::json!({ "phase": "error", "version": version, "message": e.to_string() }),
+            );
+            app.dialog()
+                .message(format!("Update failed: {e}\n\nPlease download the latest version from GitHub manually."))
+                .title("Update Error")
+                .kind(MessageDialogKind::Error)
+                .blocking_show();
+        }
     }
+}
+
+/// Async-friendly sleep without pulling in a direct tokio dependency.
+async fn sleep_async(duration: Duration) {
+    let _ = tauri::async_runtime::spawn_blocking(move || std::thread::sleep(duration)).await;
 }
 
 /// Shows an informational alert and blocks until it is dismissed, returning

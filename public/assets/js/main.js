@@ -34,6 +34,55 @@
     }
   }
 
+  // ── Updater progress ────────────────────────────────────────────────────
+  // Rust emits `update-progress` {phase, version, downloaded?, total?, message?}
+  // while an accepted update downloads, installs and restarts the app.
+  var updateToasted = null;
+
+  function renderUpdate(p) {
+    var wrap = document.getElementById('sbUpdate');
+    var bar = document.getElementById('sbUpdateBar');
+    var fill = document.getElementById('sbUpdateFill');
+    var text = document.getElementById('sbUpdateText');
+    if (!wrap || !bar || !fill || !text || !p || !p.phase) return;
+    var version = p.version ? String(p.version) : '';
+
+    if (p.phase === 'error') {
+      wrap.hidden = true;
+      updateToasted = null;
+      LB.toast(p.message ? String(p.message) : '', 'error', t('updateFailedTitle'));
+      return;
+    }
+
+    var label;
+    var pct = null;
+    if (p.phase === 'downloading') {
+      if (updateToasted !== version) {
+        updateToasted = version;
+        LB.toast(t('updateStarting', { version: version }), 'info');
+      }
+      var total = Number(p.total);
+      if (p.total != null && total > 0) {
+        pct = Math.max(0, Math.min(100, Math.floor((Number(p.downloaded) || 0) / total * 100)));
+        label = t('updateDownloading', { version: version, pct: pct });
+      } else {
+        label = t('updateDownloadingNoPct', { version: version });
+      }
+    } else if (p.phase === 'installing') {
+      label = t('updateInstalling');
+    } else if (p.phase === 'restarting') {
+      label = t('updateRestarting');
+      pct = 100;
+    } else {
+      return;
+    }
+
+    bar.classList.toggle('is-indeterminate', pct == null);
+    fill.style.width = pct == null ? '' : pct + '%';
+    text.textContent = label;
+    wrap.hidden = false;
+  }
+
   function boot() {
     document.documentElement.setAttribute('lang', LB.i18n.getLang());
     LB.i18n.apply();
@@ -71,6 +120,7 @@
       LB.render();
       LB.toast(msg, 'error', t('serverErrorTitle'));
     });
+    LB.tauri.listen('update-progress', function (e) { if (e && e.payload) renderUpdate(e.payload); });
     LB.tauri.getVersion().then(function (v) { if (v) { S.version = String(v); LB.shell.renderChrome(); } });
 
     // Keep the window from navigating if something is dropped onto it.
@@ -82,7 +132,7 @@
     if (S.demoMode) LB.positions.autoLoad();
   }
 
-  LB.main = { checkHealth: checkHealth };
+  LB.main = { checkHealth: checkHealth, renderUpdate: renderUpdate };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

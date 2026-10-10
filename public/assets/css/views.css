@@ -363,6 +363,28 @@
 }
 .field-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
+.cred-guide { gap: 12px; }
+.cred-guide-head .field-label { display: inline-flex; align-items: center; gap: 6px; }
+.cred-guide-head .lucide { width: 13px; height: 13px; }
+.cred-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.cred-steps li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.step-index {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--background);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--muted);
+}
+
 .about-app { display: flex; align-items: center; gap: 14px; }
 .about-app img { width: 48px; height: 48px; border-radius: 11px; }
 .about-app .name { font-size: 16px; font-weight: 600; }

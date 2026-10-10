@@ -5,6 +5,9 @@ All notable changes to LB Liquidator are documented here.
 ## [1.2.0] — 2026-10-10
 
 ### Changes
+- **Updater no longer stalls** — "Install Update" starts the download immediately (no second OK dialog); progress shows in the status bar, then the app stops its local server and restarts itself. Previous versions never restarted, so the new version only appeared after a manual quit
+- **Credentials guide** — Settings → Account now explains where to get the App Key, App Secret and Access Token, links to the Longbridge Developer Center, and auth failures (expired token) show a plain-language message
+- Updater alerts show the app icon; the app comes to the front after an update restart; site link updated to echan.xyz
 - **Real-time chart** — the details panel gains a price chart for the selected position: an intraday line with volume strip and previous-close reference (Today), plus daily / weekly candles (1M, 3M, 1Y). Hover shows a tooltip; the chosen range is remembered
 - **Live quote polling** — while the Positions view is open, prices and day change refresh every 5 s (the active symbol's intraday line every 30 s). Polling pauses when the window is hidden or a dialog is open, backs off after failures and toasts once per failure streak. A status-bar indicator shows the state; Demo mode ticks synthetic prices
 - **Sidebar sparklines** — each position row shows a 48x16 intraday sparkline (refreshed every 60 s) that gives up space first on narrow sidebars
