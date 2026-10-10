@@ -49,6 +49,7 @@
     sidebarOpen: storage.get('lb_sidebarOpen', 'true') !== 'false',
     detailsOpen: storage.get('lb_detailsOpen', 'true') !== 'false',
     detailsPeek: false,
+    ordersDetails: false,  // transient: details panel open in Orders (never persisted)
 
     positions: [],          // normalised positions
     positionsLoaded: false,

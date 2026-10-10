@@ -45,7 +45,16 @@
   // ---- view / tab ----
   function setView(view) {
     if (LB.VIEWS.indexOf(view) < 0) return;
+    var prev = S.view;
     S.view = view;
+    // Orders starts with the details panel collapsed (it only opens once an
+    // order for a held symbol is selected); leaving Orders drops that
+    // transient state so Positions shows the persisted lb_detailsOpen again.
+    if (prev !== view && (view === 'orders' || prev === 'orders')) {
+      S.ordersDetails = false;
+      S.detailsPeek = false;
+      lastOrderSel = S.selectedOrderId;
+    }
     // Settings has no details panel; drop a transient peek so Esc isn't
     // swallowed by an invisible overlay. The persisted lb_detailsOpen flag is
     // left alone and applies again on Positions / Orders.
@@ -71,6 +80,28 @@
     return S.view !== 'settings';
   }
 
+  /** Symbol of the selected order if it is still a held position, else null. */
+  function ordersHeld() {
+    return (LB.orders && LB.orders.heldSymbol && LB.orders.heldSymbol()) || null;
+  }
+
+  /** Whether the details panel has anything to show in the current view. */
+  function detailsHasContent() {
+    return S.view !== 'orders' || !!ordersHeld();
+  }
+
+  /** Orders: when the selected order changes, open the panel for a held
+      symbol and close it otherwise. Transient: never written to storage. */
+  var lastOrderSel = null;
+  function syncOrdersDetails() {
+    if (S.view !== 'orders' || S.selectedOrderId === lastOrderSel) return;
+    lastOrderSel = S.selectedOrderId;
+    var sym = ordersHeld();
+    if (sym) S.active = sym;
+    S.ordersDetails = !!sym;
+    S.detailsPeek = !!sym && global.innerWidth < NARROW;
+  }
+
   function toggleSidebar() {
     S.sidebarOpen = !S.sidebarOpen;
     LB.storage.set('lb_sidebarOpen', S.sidebarOpen);
@@ -79,6 +110,19 @@
 
   function toggleDetails() {
     if (!detailsAllowed()) return;  // ⌘D / menu / buttons are no-ops in Settings
+    if (S.view === 'orders') {
+      // Orders: only toggles while a held symbol is selected (a lingering peek
+      // can always be dismissed). Never touches lb_detailsOpen.
+      if (!ordersHeld() && !S.detailsPeek) return;
+      if (global.innerWidth < NARROW) {
+        S.detailsPeek = !S.detailsPeek;
+      } else {
+        S.ordersDetails = !S.ordersDetails;
+        S.detailsPeek = false;
+      }
+      renderChrome();
+      return;
+    }
     if (global.innerWidth < NARROW) {
       S.detailsPeek = !S.detailsPeek;
     } else {
@@ -145,9 +189,13 @@
   function renderChrome() {
     var body = document.body;
     body.classList.toggle('no-sidebar', !S.sidebarOpen);
+    syncOrdersDetails();
     var detailsOk = detailsAllowed();
-    body.classList.toggle('no-details', !detailsOk || !S.detailsOpen);
-    body.classList.toggle('details-peek', detailsOk && S.detailsPeek);
+    var inOrders = S.view === 'orders';
+    var hasContent = detailsOk && detailsHasContent();
+    var wideOpen = inOrders ? S.ordersDetails : S.detailsOpen;
+    body.classList.toggle('no-details', !hasContent || !wideOpen);
+    body.classList.toggle('details-peek', hasContent && S.detailsPeek);
     body.classList.toggle('is-live', !S.demoMode);
     body.setAttribute('data-theme-choice', S.theme);
 
@@ -155,11 +203,15 @@
       b.classList.toggle('is-on', S.sidebarOpen);
       b.setAttribute('aria-pressed', S.sidebarOpen ? 'true' : 'false');
     });
-    var detailsShown = detailsOk && (global.innerWidth < NARROW ? S.detailsPeek : S.detailsOpen);
+    var detailsShown = hasContent && (global.innerWidth < NARROW ? S.detailsPeek : wideOpen);
     var dt = document.getElementById('detailsToggle');
     if (dt) {
+      var noContent = detailsOk && !hasContent;
       dt.hidden = !detailsOk;
-      dt.disabled = !detailsOk;
+      dt.disabled = !detailsOk || (noContent && !S.detailsPeek);
+      var dtTip = t(noContent ? 'noPositionToShow' : 'toggleDetailsTip');
+      dt.setAttribute('title', dtTip);
+      dt.setAttribute('aria-label', dtTip.replace(/\s+⌘.*$/, ''));
       dt.classList.toggle('is-on', detailsShown);
       dt.setAttribute('aria-pressed', detailsShown ? 'true' : 'false');
     }

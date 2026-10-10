@@ -143,11 +143,18 @@
     renderMain(all);
   }
 
+  /** Symbol of the selected order when it is still a held position, else null. */
+  function heldSymbol() {
+    var o = S.selectedOrderId ? find(S.selectedOrderId) : null;
+    return o && S.positions.some(function (p) { return p.symbol === o.symbol; }) ? o.symbol : null;
+  }
+
   function select(id) {
     S.selectedOrderId = S.selectedOrderId === id ? null : id;
-    // Show the order's symbol in the details panel when it is still held.
-    var o = S.selectedOrderId ? find(S.selectedOrderId) : null;
-    if (o && S.positions.some(function (p) { return p.symbol === o.symbol; })) S.active = o.symbol;
+    // Show the order's symbol in the details panel when it is still held; the
+    // shell expands (or collapses) the panel to match on render.
+    var held = heldSymbol();
+    if (held) S.active = held;
     LB.render();
   }
 
@@ -194,6 +201,7 @@
     actionLabel: actionLabel,
     statusLabel: statusLabel,
     statusDot: statusDot,
+    heldSymbol: heldSymbol,
     moveSelection: function (delta) {
       var list = filtered(LB.history.list());
       if (!list.length) return;
