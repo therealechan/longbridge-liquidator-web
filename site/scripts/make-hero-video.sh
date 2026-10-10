@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Regenerates the hero background loop (no external assets, maths only).
+# Regenerates the hero background loop ("ledger flow": maths plus the Geist
+# Mono font from site/node_modules; nothing is downloaded).
 #
 #   site/public/video/hero-loop.mp4    H.264 High@4.0, yuv420p, faststart
 #   site/public/video/hero-loop.webm   VP9
