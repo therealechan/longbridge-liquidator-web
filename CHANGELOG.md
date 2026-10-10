@@ -2,6 +2,16 @@
 
 All notable changes to LB Liquidator are documented here.
 
+## [1.1.1] — 2026-10-10
+
+### Changes
+- **Unified toolbar** — the top 44px is one strip across the whole window: traffic lights, then the sidebar toggle; column borders start below it. The wordmark and local-mode caption left the corner; "Local Secure Mode" now lives in the status bar
+- **Updater alerts show the app icon** — "Update Available", "Updating…" and "No Updates" use a native NSAlert with the app icon instead of the generic caution glyph
+- **Node server stops on every quit path** — ⌘Q, the Quit menu item and the close button all shut down the local API server; it previously stayed behind on port 3456 after ⌘Q
+
+### Download
+[LB Liquidator v1.1.1](https://github.com/therealechan/longbridge-liquidator-web/releases/tag/v1.1.1)
+
 ## [1.1.0] — 2026-10-10
 
 ### Changes
